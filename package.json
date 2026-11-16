@@ -1,0 +1,15 @@
+{
+  "name": "altioris",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Russian-language digital dean’s office prototype",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=runtime/.env server/index.mjs",
+    "demo:setup": "node scripts/setup-demo.mjs",
+    "test": "node --test"
+  }
+}
