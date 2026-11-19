@@ -38,6 +38,9 @@ function render(focus=false) {
 function go(href){
  const next=new URL(href,location.href),same=location.pathname===next.pathname;
  history.pushState(null,'',next);render(!same);if(!same)window.scrollTo(0,0);
+ const selectedDetail=matchMedia('(max-width:680px)').matches&&(next.searchParams.has('item')||next.searchParams.has('lesson'))&&app.querySelector('.request-inspector,.grade-inspector,.teacher-details,.schedule-inspector,.notification-detail');
+ if(selectedDetail){selectedDetail.tabIndex=-1;selectedDetail.focus({preventScroll:true});selectedDetail.scrollIntoView({block:'start'});}
+ else if(same){const selected=[...app.querySelectorAll('main a[href]')].find(link=>link.href===next.href);(selected||app.querySelector('main'))?.focus({preventScroll:true});}
 }
 async function load(){
  try{snapshot=await api('/api/dashboard');render();}
@@ -74,7 +77,7 @@ app.addEventListener('submit',event=>{
 app.addEventListener('click',event=>{
  const button=event.target.closest('button');
  if(button){
-  if(button.dataset.theme||button.dataset.scale){updatePreference(snapshot.student,button.dataset.theme?'theme':'scale',button.dataset.theme||Number(button.dataset.scale));render();announce('Настройки сохранены');return;}
+  if(button.dataset.theme||button.dataset.scale){const key=button.dataset.theme?'theme':'scale',value=button.dataset.theme||button.dataset.scale;updatePreference(snapshot.student,key,key==='scale'?Number(value):value);render();app.querySelector('[data-'+key+'="'+CSS.escape(value)+'"]')?.focus({preventScroll:true});announce('Настройки сохранены');return;}
   if(button.dataset.copy){navigator.clipboard.writeText(button.dataset.copy).then(()=>announce('Скопировано')).catch(()=>announce('Не удалось скопировать. Выделите текст вручную.'));return;}
   if(button.hasAttribute('data-password')){const input=app.querySelector('#password'),show=input.type==='password';input.type=show?'text':'password';button.setAttribute('aria-pressed',String(show));button.setAttribute('aria-label',show?'Скрыть пароль':'Показать пароль');}
   if(button.dataset.dialog)document.getElementById(button.dataset.dialog)?.showModal();

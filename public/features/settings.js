@@ -7,6 +7,7 @@ export function applyPreferences(student) {
  const p=preferences(student);
  document.documentElement.dataset.theme=p.theme==='dark'||(p.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
  document.documentElement.dataset.motion=p.reduce?'reduce':'full';
+ document.documentElement.dataset.textScale=String(p.scale);
  document.documentElement.style.setProperty('--text-scale',String(p.scale/100));
  return p;
 }

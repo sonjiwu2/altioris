@@ -207,13 +207,13 @@ export function openStore({ databasePath, passwords, clock }) {
       }
       const message = action === 'message' ? input : labels[action]
       const query = String(input ?? '').toLocaleLowerCase('ru')
-      const namedTeacher = campusFor(owner, at).teachers.find((teacher) => query.includes(teacher.shortName.split(' ').at(-1).toLocaleLowerCase('ru')))
+      const namedTeacher = campusFor(owner, at).teachers.find((teacher) => query.includes(teacher.shortName.split(' ').at(-1).toLocaleLowerCase('ru').slice(0, -1)))
       if (action === 'message') {
         if (/статус|провер.*заяв|готов.*справ|заявк.*[0-9a-f]{3}/u.test(query)) action = 'status'
         else if (/справк|документ|выписк/u.test(query)) action = 'certificate'
         else if (namedTeacher) action = 'teacher'
         else if (/оценк|рейтинг|успеваем|gpa|средний балл/u.test(query)) action = 'grades'
-        else if (/расписан|заняти|экзамен|сесси|онлайн|подключ/u.test(query)) action = 'schedule'
+        else if (/расписан|заняти|экзамен|сесси|онлайн|подключ|пары|семинар|лекци/u.test(query)) action = 'schedule'
         else if (/оператор|специалист|сотрудник/u.test(query)) action = 'specialist'
         else if (/привет|здравств|добрый/u.test(query)) action = 'greeting'
       }
@@ -224,7 +224,8 @@ export function openStore({ databasePath, passwords, clock }) {
         href = '/requests?new=certificate'
       } else if (action === 'status') {
         const owned = requests(owner)
-        const request = owned.find((item) => query.includes(item.id.toLocaleLowerCase('ru'))) ?? owned[0]
+        const request = owned.find((item) => query.includes(item.id.toLocaleLowerCase('ru'))) ??
+          (/справк/u.test(query) ? owned.find((item) => item.type === 'certificate') : null) ?? owned[0]
         text = request ? `${request.title} · ${request.status}. Откройте карточку, чтобы увидеть историю${request.documentId ? ' и скачать PDF' : ''}.` : 'У вас пока нет заявок. Создайте первую в разделе «Заявки».'
         href = request ? `/requests?item=${request.id}` : '/requests'
       } else if (action === 'grades') {
@@ -240,12 +241,17 @@ export function openStore({ databasePath, passwords, clock }) {
         if (/онлайн|подключ/u.test(query)) {
           text = 'Выберите занятие в расписании: в его карточке указан формат. Онлайн-занятие отмечено значком ноутбука. В демонстрационном портале видеоконференции не подключены.'
           href = '/schedule?lesson=lesson-4'
-        } else {
+        } else if (/экзамен|сесси|зач[её]т|контрол/u.test(query)) {
           const slots = campusFor(owner, at).exams.filter((item) => item.start)
           const next = [...slots].sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0]
           const when = next ? new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(next.start)) : ''
           text = next ? `Ближайший контроль: ${next.title}, ${when}. ${next.room}. В разделе экзаменов есть остальные даты и экспорт в календарь.` : 'Назначенных экзаменов пока нет. Учебный офис опубликует их в расписании.'
           href = '/schedule/exams'
+        } else {
+          const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date(at))
+          const lessons = campusFor(owner, at).lessons.filter((item) => item.start.slice(0, 10) === day)
+          text = lessons.length ? 'Сегодня в расписании:\n' + lessons.map((item) => `${item.start.slice(11, 16)}–${item.end.slice(11, 16)} · ${item.title} · ${item.room}`).join('\n') : 'Сегодня занятий нет. Даты других занятий можно посмотреть в расписании.'
+          href = '/schedule'
         }
       } else if (action === 'greeting') {
         text = 'Здравствуйте! Помогу со справками, статусом заявки, расписанием, оценками и информацией о преподавателях. Напишите вопрос или выберите быстрое действие.'

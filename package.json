@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node --env-file-if-exists=runtime/.env server/index.mjs",
     "demo:setup": "node scripts/setup-demo.mjs",
-    "test": "node --test",
+    "test": "node --test tests/http.test.mjs tests/support.test.mjs",
     "dev": "node --watch scripts/start-local.mjs"
   }
 }
