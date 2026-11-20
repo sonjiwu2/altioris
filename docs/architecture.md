@@ -26,7 +26,7 @@ The server processes academic events and request jobs on a timer without browser
 
 ## Documents
 
-`server/request-pdf-pages.mjs` defines five A4 layouts. `server/pdf.mjs` embeds Golos Text and Philosopher with Unicode mapping. Transcripts use published results as of issuance, Moscow assessment times and one page per session. At issue time the server saves the finished byte stream in `document_files`. Existing PDFs remain accessible by their identifiers. The profile passport and diploma use the authenticated account's fictional fixtures. The passport uses the assigned portrait and an issue date on the 14th birthday. The diploma is issued in June of the admission year. Every PDF requires an ownership check and identifies itself as a sample.
+`server/request-pdf-pages.mjs` defines five A4 layouts. `server/pdf.mjs` embeds Golos Text and Philosopher with Unicode mapping. The transcript shows the latest session with published results at issuance and renders only the grades published by that time. Assessment times are in Moscow time. At issue time the server saves the finished byte stream in `document_files`. Existing PDFs remain accessible by their identifiers. The profile passport and diploma use the authenticated account's fictional fixtures. The passport uses the assigned portrait and an issue date on the 14th birthday. The diploma is issued in June of the admission year. Every PDF requires an ownership check and identifies itself as a sample.
 
 ## Profile images
 

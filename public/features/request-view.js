@@ -45,9 +45,7 @@ function requestDetails(item){
    'PDF появится здесь после оформления. О готовности сообщит учебный офис.')+'</p>';
  return '<header class="request-title">'+glyph(item.type)+'<div><h2>'+e(item.title)+'</h2><p>Заявка № '+
   e(requestNumber(item.id))+'</p></div>'+statusBadge(item)+'</header>'+
-  '<h3 class="request-history-title">История заявки</h3><ol class="request-history">'+history+'</ol>'+deliverable+
-  '<div class="request-help"><a class="text-link" href="/support?request='+encodeURIComponent(item.id)+'">'+
-   icon('nav-chat')+'Задать вопрос по заявке</a></div>';
+  '<h3 class="request-history-title">История заявки</h3><ol class="request-history">'+history+'</ol>'+deliverable;
 }
 
 export function requests({requests:items,requestTypes:types},params){

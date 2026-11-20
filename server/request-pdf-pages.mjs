@@ -18,7 +18,7 @@ const templates = {
     description:'Запрос на посещение медиалаборатории зарегистрирован. Дату и время посещения необходимо согласовать с координатором лаборатории.' },
 }
 
-function footer(canvas,accent,index,total,building){
+function footer(canvas,accent,building){
   const {text,outline,image}=canvas
   text('Руководитель учебного офиса',63,662,9.2,muted)
   text('Вероника Львовна Ланская',63,684,14,ink,'F2')
@@ -27,7 +27,6 @@ function footer(canvas,accent,index,total,building){
   if(building)image('Campus',147,697,301,101)
   outline([[63,802],[532,802]],accent,.55)
   text('ДЕМОНСТРАЦИОННЫЙ ДОКУМЕНТ',63,819,8.2,muted)
-  if(total>1)text(`${index} / ${total}`,503,819,8.2,muted)
 }
 
 function transcriptBody(canvas,period,accent){
@@ -63,7 +62,7 @@ function transcriptBody(canvas,period,accent){
   text('В GPA оценки взвешены по кредитам. Зачёты без числовой оценки исключены.',63,y+69,8.5,muted)
 }
 
-export function drawRequestPage(canvas,document,student,type,period,index,total){
+export function drawRequestPage(canvas,document,student,type,period){
   const view=templates[type]??templates.certificate
   const {text,rect,outline,image,paragraph,width}=canvas
   const {accent}=view
@@ -117,6 +116,6 @@ export function drawRequestPage(canvas,document,student,type,period,index,total)
       text(leave?'Следующий этап: рассмотрение учебным офисом':'Следующий этап: согласование с координатором',76,606,9.5,muted)
     }
   }
-  footer(canvas,accent,index,total,!period)
+  footer(canvas,accent,!period)
   return canvas.result()
 }

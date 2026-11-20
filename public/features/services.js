@@ -1,8 +1,8 @@
 import { escape as e, badge, calendarDate, detailedDate, empty, icon, safeLink, when } from '../ui.js?v=20261120-15';
 import { detailIcon } from './detail-icons.js?v=20261121-1';
 import { noticeSoundEnabled } from './live-notices.js';
-import { requestNumber } from './request-view.js';
-export { requests } from './request-view.js';
+import { requestNumber } from './request-view.js?v=20261121-2';
+export { requests } from './request-view.js?v=20261121-2';
 const noticeTypes={
  'Документы':['inbox-document-ready','Учебный офис'],
  'Расписание':['inbox-schedule','Учебный офис'], 'Изменение':['inbox-schedule','Учебный офис'],

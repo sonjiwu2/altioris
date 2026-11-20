@@ -3,7 +3,7 @@ import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-15';
 import { exams, onlineRoom, schedule } from './features/campus.js?v=20261120-16';
 import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-16';
 import { turnCampusPass } from './features/campus-pass.js?v=20261120-14';
-import { notifications, requests, support } from './features/services.js?v=20261121-1';
+import { notifications, requests, support } from './features/services.js?v=20261121-2';
 import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
 import { armNoticeSound, resetLiveNotice, showLiveNotice, toggleNoticeSound } from './features/live-notices.js';
 

@@ -110,18 +110,17 @@ function createCanvas(pageWidth,pageHeight) {
 
 export function studentPdf(document,student,account,grades=gradesFor(account,document.createdAt)) {
   const type=document.type??(/успеваемост/iu.test(document.title)?'transcript':'certificate')
-  let periods=[null]
+  let period=null
   if(type==='transcript'){
-    const published=grades.filter(grade=>grade.published)
-    periods=academicTerms.map(term=>({
-      label:term.sessionLabel,grades:published.filter(grade=>grade.termId===term.id),
-    })).filter(term=>term.grades.length)
-    if(!periods.length)periods=[{label:'Итоговые результаты',grades:[]}]
+    const issued=Date.parse(document.createdAt)
+    const published=grades.filter(grade=>grade.published&&Date.parse(grade.assessedAt)<=issued)
+    const term=academicTerms.findLast(term=>published.some(grade=>grade.termId===term.id))
+    period={label:term?.sessionLabel??'Итоговые результаты',grades:published.filter(grade=>grade.termId===term?.id)}
   }
-  return makePdf(document.title,periods.map((period,index)=>({
+  return makePdf(document.title,[{
     pageWidth:595,pageHeight:842,
-    draw:drawRequestPage(createCanvas(595,842),document,student,type,period,index+1,periods.length),
-  })),requestImages,['F1','F2'])
+    draw:drawRequestPage(createCanvas(595,842),document,student,type,period),
+  }],requestImages,['F1','F2'])
 }
 
 export function profileDocumentPdf(document,account) {

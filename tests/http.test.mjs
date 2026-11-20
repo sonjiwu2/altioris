@@ -5,13 +5,39 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { request as send } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { inflateSync } from 'node:zlib'
 import test from 'node:test'
 import { DatabaseSync } from 'node:sqlite'
 import { createApplication, readConfig } from '../server/index.mjs'
-import { accounts, demoClock, requestTypes } from '../server/fixtures.mjs'
+import { accounts, demoClock, gradesFor, requestTypes } from '../server/fixtures.mjs'
 import { openStore } from '../server/store.mjs'
+import { studentPdf } from '../server/pdf.mjs'
 
 const newPassword = () => randomBytes(24).toString('base64url')
+
+test('transcript contains only the newest session with results published by issuance', () => {
+  const account=accounts[0]
+  const grades=gradesFor(account,'2027-07-01T12:00:00+03:00')
+  const document={id:'test-transcript',title:'Выписка об успеваемости',type:'transcript'}
+  const contents=createdAt=>{
+    const pdf=studentPdf({...document,createdAt},account.profile,account,grades)
+    const source=pdf.toString('latin1')
+    assert.match(source,/\/Count 1 >>/)
+    const [,number]=source.match(/\/Contents (\d+) 0 R/)
+    const stream=new RegExp(`\\n${number} 0 obj\\n<< /Length (\\d+) /Filter /FlateDecode[^\\n]*\\nstream\\n`).exec(source)
+    const start=stream.index+stream[0].length
+    return inflateSync(pdf.subarray(start,start+Number(stream[1]))).toString()
+  }
+  const has=(text,value)=>text.includes(Buffer.from(value,'utf16le').swap16().toString('hex'))
+  const before=contents('2026-11-21T00:46:52+03:00')
+  assert.ok(has(before,'Летняя сессия 2026'))
+  assert.ok(!has(before,'Зимняя сессия 2025/26'))
+  assert.ok(!has(before,'Летняя сессия 2027'))
+  const firstResult=contents('2026-12-21T11:50:00+03:00')
+  assert.ok(has(firstResult,'Зимняя сессия 2026/27'))
+  assert.ok(has(firstResult,'Теория вычислений'))
+  assert.ok(!has(firstResult,'Распределённые системы'))
+})
 
 function credentials() {
   return { ALTIORIS_PASSWORD_A: newPassword(), ALTIORIS_PASSWORD_B: newPassword() }
@@ -254,7 +280,7 @@ test('private records, workspace actions and sessions are isolated and survive a
     assert.match(pdf.headers.get('content-disposition'), /^attachment;/)
     const pdfText=Buffer.from(await pdf.arrayBuffer()).toString('latin1')
     assert.match(pdfText, /^%PDF-1\.4/)
-    assert.match(pdfText, /\/Count 2 >>/)
+    assert.match(pdfText, /\/Count 1 >>/)
 
     assert.match((await app.request(path+'?view=1',{token:a.token})).headers.get('content-disposition'),/^inline;/)
     const originDenied = await app.request('/api/profile', {
