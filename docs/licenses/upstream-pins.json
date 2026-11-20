@@ -1,0 +1,607 @@
+{
+  "schema": 1,
+  "notice": "Stargazer and license metadata is a dated GitHub snapshot. Pinned, checksum-verified Markdown caches are optional reading material.",
+  "repositories": [
+    {
+      "repository": "jakubkrehel/skills",
+      "url": "https://github.com/jakubkrehel/skills",
+      "purpose": "Layout, typography, semantic colors, motion and UX writing",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        "skills/better-interface/SKILL.md",
+        "skills/better-typography/SKILL.md",
+        "skills/better-colors/SKILL.md",
+        "skills/better-layout/SKILL.md",
+        "skills/better-ui/SKILL.md",
+        "skills/better-writing/SKILL.md",
+        "skills/better-accessibility/SKILL.md",
+        "skills/interface-review/SKILL.md"
+      ],
+      "stars": 12245,
+      "license": "MIT",
+      "revision": "6c2120103600407a1a9986afd834e73144ef8998",
+      "licenseSource": {
+        "path": "LICENSE",
+        "sha256": "ed1dfe988fc40511b4845ccd9050a143a2002fee3bedc8064c47fa342b5d8d4f",
+        "bytes": 1069
+      },
+      "sources": [
+        {
+          "path": "skills/better-interface/SKILL.md",
+          "sha256": "915ed5dc1442d9b78782900ff8b62160133362a2fe23998917814bfb6422869e",
+          "bytes": 8779
+        },
+        {
+          "path": "skills/better-typography/SKILL.md",
+          "sha256": "8f00a576f6c8d2f8d72dfbffe765ce569982509d01533ea5881de6e1918d3a68",
+          "bytes": 12244
+        },
+        {
+          "path": "skills/better-colors/SKILL.md",
+          "sha256": "2fc5964fe9adae02e8ba4d80d40ad85d23da227f3eab3b55e06c7df0ac7e7652",
+          "bytes": 7698
+        },
+        {
+          "path": "skills/better-layout/SKILL.md",
+          "sha256": "1fd79a2e688288bb31427511e862154788f7cede16f09227fe78e3bfeab67a7a",
+          "bytes": 8474
+        },
+        {
+          "path": "skills/better-ui/SKILL.md",
+          "sha256": "2d5f9fa4f3bbf045da914349b6e5fde559c947e5323968350b65bb2cdc6b3e4f",
+          "bytes": 11122
+        },
+        {
+          "path": "skills/better-writing/SKILL.md",
+          "sha256": "109e4337da3621410c225b137d4683d8c246ca06071990a22882376ad60ec6e3",
+          "bytes": 9414
+        },
+        {
+          "path": "skills/better-accessibility/SKILL.md",
+          "sha256": "84fbeaf664029100430699c812785b7ad61fb27e9fc55151c8471cb82040b790",
+          "bytes": 11034
+        },
+        {
+          "path": "skills/interface-review/SKILL.md",
+          "sha256": "976098555c7fe5dc0d082d70fd37b579f7513eb84a653d1abec8e347c80e32c1",
+          "bytes": 10128
+        }
+      ]
+    },
+    {
+      "repository": "ibelick/ui-skills",
+      "url": "https://github.com/ibelick/ui-skills",
+      "purpose": "Baseline UI, interaction polish and accessibility",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        "skills/baseline-ui/SKILL.md",
+        "skills/fixing-accessibility/SKILL.md",
+        "skills/improve-ui/SKILL.md"
+      ],
+      "stars": 11125,
+      "license": "MIT",
+      "revision": "65cc0edb4f64fe8bfe7e9c59466074de25bece76",
+      "licenseSource": {
+        "path": "LICENSE",
+        "sha256": "c615621c4cc1676ccde194e7a01b6469ba477780251bd71e007fc473a49c2c2b",
+        "bytes": 1072
+      },
+      "sources": [
+        {
+          "path": "skills/baseline-ui/SKILL.md",
+          "sha256": "fea3322f36d58fdafafce2aef56e4556dd2ac7b20876b7dff7d8be7f25fa597f",
+          "bytes": 3419
+        },
+        {
+          "path": "skills/fixing-accessibility/SKILL.md",
+          "sha256": "549261e8a53b53a1a20c0ddbf736821e5fc0876ad82eee76e0efab8e9ee9dadf",
+          "bytes": 4718
+        },
+        {
+          "path": "skills/improve-ui/SKILL.md",
+          "sha256": "fa2ac808f6d9dab7bb3620880b014d2c18e227e5b006102856038096e573e69a",
+          "bytes": 7830
+        }
+      ]
+    },
+    {
+      "repository": "MengTo/Skills",
+      "url": "https://github.com/MengTo/Skills",
+      "purpose": "Art direction, controlled blur and subtle border gradients",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        "agent-skills/ui/design-first-ui-prompting/SKILL.md",
+        "agent-skills/web-design/css-border-gradient/SKILL.md",
+        "agent-skills/web-design/progressive-blur/SKILL.md"
+      ],
+      "stars": 7650,
+      "license": "MIT",
+      "revision": "3cc93458c4949c39a04e938ea7892a1d6d3d40bf",
+      "licenseSource": {
+        "path": "LICENSE",
+        "bytes": 1064,
+        "sha256": "b2a071ba22fefd803f4e9d1f5c777dd79c62d191695586a1a73fd4d0ebd051c6"
+      },
+      "sources": [
+        {
+          "path": "agent-skills/ui/design-first-ui-prompting/SKILL.md",
+          "bytes": 3090,
+          "sha256": "5e3d4db0eb0ea983f2bedb90f28f358901c292388a7889e2f66ac133ceff743c"
+        },
+        {
+          "path": "agent-skills/web-design/css-border-gradient/SKILL.md",
+          "bytes": 2931,
+          "sha256": "6c5e1924a7ec55044aca52801cd30efb06cb922fa47e4c4b85d16b39471c922a"
+        },
+        {
+          "path": "agent-skills/web-design/progressive-blur/SKILL.md",
+          "bytes": 6019,
+          "sha256": "202004db5ff37fb8add044cf00288d984c9a680c2fb07e4bb2dacc3df90ac2a1"
+        }
+      ]
+    },
+    {
+      "repository": "ConardLi/garden-skills",
+      "url": "https://github.com/ConardLi/garden-skills",
+      "purpose": "Product visual engineering and screenshot-to-system reasoning",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        "skills/web-design-engineer/SKILL.md"
+      ],
+      "stars": 15294,
+      "license": "MIT",
+      "revision": "9578a34edf3c359da23d8a632b72790834961d11",
+      "licenseSource": {
+        "path": "LICENSE",
+        "sha256": "1126322e2cc8d165adc4c792eeb195717de2bcc7b39be1ce77959d78e87ef685",
+        "bytes": 1056
+      },
+      "sources": [
+        {
+          "path": "skills/web-design-engineer/SKILL.md",
+          "sha256": "00633aa430281e9921c35bb181ab233879d2a21e999d605fc330258a54e26df1",
+          "bytes": 35406
+        }
+      ]
+    },
+    {
+      "repository": "Leonxlnx/taste-skill",
+      "url": "https://github.com/Leonxlnx/taste-skill",
+      "purpose": "Visual hierarchy and critique",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        "skills/taste-skill/SKILL.md"
+      ],
+      "stars": 116725,
+      "license": "MIT",
+      "revision": "f6b76575f949707b4e3c37cd86cb44b0b98643e8",
+      "sources": [
+        {
+          "path": "skills/taste-skill/SKILL.md",
+          "bytes": 30970,
+          "sha256": "0c7a5852a5217be79cab422c6d58329b776f0c25bd6da8a7a01707ce75be6206"
+        }
+      ],
+      "licenseSource": {
+        "path": "LICENSE",
+        "bytes": 1065,
+        "sha256": "4575a543ab88dad12ccea7d97e563d0bce5b448b06072e65d3264497dad326df"
+      }
+    },
+    {
+      "repository": "Leonxlnx/imagegen-skills",
+      "url": "https://github.com/Leonxlnx/imagegen-skills",
+      "purpose": "Synthetic poster, portrait, login photography and interface reference prompts",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        "skills/brandkit/SKILL.md",
+        "skills/imagegen-frontend-web/SKILL.md"
+      ],
+      "stars": 85,
+      "license": "MIT",
+      "revision": "beb16b0d0f4dae9a6f5cb04ea41e97b93a54ab8e",
+      "licenseSource": {
+        "path": "LICENSE",
+        "sha256": "4575a543ab88dad12ccea7d97e563d0bce5b448b06072e65d3264497dad326df",
+        "bytes": 1065
+      },
+      "sources": [
+        {
+          "path": "skills/brandkit/SKILL.md",
+          "sha256": "9584a127e535c90b686c8dcb5a707ede586dac6791fbf92cfd118c5fea96f9a0",
+          "bytes": 19057
+        },
+        {
+          "path": "skills/imagegen-frontend-web/SKILL.md",
+          "sha256": "6b5c2256522fdba1e3313eafa3d743b960a7b13ec029d3e6586e04b23327c1f8",
+          "bytes": 36854
+        }
+      ]
+    },
+    {
+      "repository": "pbakaus/impeccable",
+      "url": "https://github.com/pbakaus/impeccable",
+      "purpose": "Interface critique, polish, hierarchy and product density",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        ".agents/skills/impeccable/SKILL.md"
+      ],
+      "stars": 111263,
+      "license": "Apache-2.0",
+      "revision": "d41d9860b0094dcb68030657da63461212835aaa"
+    },
+    {
+      "repository": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+      "purpose": "Semantic colors, UI tokens, typography and component review",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        ".claude/skills/ui-ux-pro-max/SKILL.md"
+      ],
+      "stars": 150327,
+      "license": "MIT",
+      "revision": "e59ff376a41f7ca47b7541ad5c116495cbade3ee",
+      "licenseSource": {
+        "path": "LICENSE",
+        "sha256": "738f69dfa83db5c347c678fb9d90e560877059f0de93a327c39001bff92dc014",
+        "bytes": 1075
+      },
+      "sources": [
+        {
+          "path": ".claude/skills/ui-ux-pro-max/SKILL.md",
+          "sha256": "af9cf89efd1eac29495fb44f25b3fae8b96bf9ddbaaa2a47c6e835d9aa568a6f",
+          "bytes": 18640
+        }
+      ]
+    },
+    {
+      "repository": "Nutlope/hallmark",
+      "url": "https://github.com/Nutlope/hallmark",
+      "purpose": "Independent interface quality review",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        "skills/hallmark/SKILL.md"
+      ],
+      "stars": 55983,
+      "license": "MIT",
+      "revision": "04977e15f3dfd6ee4b74c887dac3eb52665d6c92",
+      "licenseSource": {
+        "path": "LICENSE",
+        "sha256": "06088a8b94598626f27612dea42300154bf7be967c85d9d3eee4490cb056af7d",
+        "bytes": 1078
+      },
+      "sources": [
+        {
+          "path": "skills/hallmark/SKILL.md",
+          "sha256": "25a1ff92d925b2389e8409f42fb8ad7e033fceca8b5d1f07ed4ca4c28da53dc3",
+          "bytes": 18239
+        }
+      ]
+    },
+    {
+      "repository": "vercel-labs/agent-skills",
+      "url": "https://github.com/vercel-labs/agent-skills",
+      "purpose": "Web interface accessibility and performance review",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "skills/web-design-guidelines/SKILL.md"
+      ],
+      "stars": 34193,
+      "license": "UNVERIFIED",
+      "revision": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62"
+    },
+    {
+      "repository": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills",
+      "purpose": "Frontend art direction; inspect skill-specific terms before reuse",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "skills/frontend-design/SKILL.md"
+      ],
+      "stars": 195864,
+      "license": "UNVERIFIED",
+      "revision": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba"
+    },
+    {
+      "repository": "shadcn-ui/ui",
+      "url": "https://github.com/shadcn-ui/ui",
+      "purpose": "Form composition and accessible, predictable components",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        "skills/shadcn/SKILL.md"
+      ],
+      "stars": 128322,
+      "license": "MIT",
+      "revision": "e62c9435fff729a175f38983dee73b2cb4f6a069",
+      "licenseSource": {
+        "path": "LICENSE.md",
+        "sha256": "1564074e13439397221ffd522e2e504d56561994a23d371aa5e3ad43e4f5423f",
+        "bytes": 1063
+      },
+      "sources": [
+        {
+          "path": "skills/shadcn/SKILL.md",
+          "sha256": "93951e5e83f616a3e046491c00d770bd54c0a64164706cd1191822a233d27592",
+          "bytes": 21606
+        }
+      ]
+    },
+    {
+      "repository": "addyosmani/agent-skills",
+      "url": "https://github.com/addyosmani/agent-skills",
+      "purpose": "Frontend UI states, backend engineering and engineering documentation",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        "skills/frontend-ui-engineering/SKILL.md",
+        "skills/technical-writing/SKILL.md",
+        "skills/code-review-and-quality/SKILL.md"
+      ],
+      "stars": 118245,
+      "license": "MIT",
+      "revision": "39b723ceebf81474d0557c1fecd01eddab585563",
+      "licenseSource": {
+        "path": "LICENSE",
+        "sha256": "6f202f8bd568cd730dbb2b0d1f8e243bc74c2fa1f64dbce9b2c7ea08bd5c9fd7",
+        "bytes": 1068
+      },
+      "sources": [
+        {
+          "path": "skills/frontend-ui-engineering/SKILL.md",
+          "sha256": "5c322ec445ed5a2094617c8c01b4b5b138aaf73fccf5c89ec95081fe4e50923a",
+          "bytes": 12572
+        },
+        {
+          "path": "skills/code-review-and-quality/SKILL.md",
+          "sha256": "5dc8f98d9d23e74676091a945b2649bb52456e34f293238ee2511281104a94c0",
+          "bytes": 21312
+        }
+      ]
+    },
+    {
+      "repository": "garrytan/gstack",
+      "url": "https://github.com/garrytan/gstack",
+      "purpose": "Design review, QA and release review role patterns",
+      "disposition": "local-text-cache",
+      "candidatePaths": [
+        "design-review/SKILL.md",
+        "qa/SKILL.md"
+      ],
+      "stars": 141783,
+      "license": "MIT",
+      "revision": "5dcd76b4eae6bb06f73460d3ab29cef8e33e8537",
+      "licenseSource": {
+        "path": "LICENSE",
+        "sha256": "e56fbb5b3d95756f3fa1cfefa24732ec79f18ece1ad08a4e79e00df57e8b198c",
+        "bytes": 1066
+      },
+      "sources": [
+        {
+          "path": "design-review/SKILL.md",
+          "sha256": "11aa40a2266d07f270e4f260209cdb347c4be8a6e39fd5bc1245efe1d2ea9372",
+          "bytes": 85181
+        },
+        {
+          "path": "qa/SKILL.md",
+          "sha256": "5da8b86a0b9de7d9a24a4309447992e6c987b2fa63062ac2de4f0dd548805653",
+          "bytes": 29290
+        }
+      ]
+    },
+    {
+      "repository": "google-labs-code/stitch-skills",
+      "url": "https://github.com/google-labs-code/stitch-skills",
+      "purpose": "Portable DESIGN.md concepts",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "README.md"
+      ],
+      "stars": 9660,
+      "license": "Apache-2.0",
+      "revision": "0337446dadde6f8c94210444e2aa9d546126480f"
+    },
+    {
+      "repository": "VoltAgent/awesome-design-md",
+      "url": "https://github.com/VoltAgent/awesome-design-md",
+      "purpose": "Reference-to-design-system examples",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "README.md"
+      ],
+      "stars": 127803,
+      "license": "MIT",
+      "revision": "fcc70284932276d085f01ef9f83edde90b1258cb"
+    },
+    {
+      "repository": "openai/skills",
+      "url": "https://github.com/openai/skills",
+      "purpose": "Codex skill layouts and official reusable tooling",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "README.md"
+      ],
+      "stars": 28771,
+      "license": "UNVERIFIED",
+      "revision": "49f948faa9258a0c61caceaf225e179651397431"
+    },
+    {
+      "repository": "motiondivision/motion",
+      "url": "https://github.com/motiondivision/motion",
+      "purpose": "Motion principles and reference for accessible reduced motion",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "README.md"
+      ],
+      "stars": 35256,
+      "license": "MIT",
+      "revision": "f95ab9418d9524b906c8681994b95d15cb03d5fc"
+    },
+    {
+      "repository": "radix-ui/primitives",
+      "url": "https://github.com/radix-ui/primitives",
+      "purpose": "Keyboard and focus behavior for popovers, dialogs and toggles",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "README.md"
+      ],
+      "stars": 19506,
+      "license": "MIT",
+      "revision": "eb3a2b7091293e27df8f9ba906632d8daa3d81a3"
+    },
+    {
+      "repository": "better-auth/better-auth",
+      "url": "https://github.com/better-auth/better-auth",
+      "purpose": "Documentation benchmark for sessions and cookies; optional ecosystem",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "README.md"
+      ],
+      "stars": 30760,
+      "license": "MIT",
+      "revision": "8382ce613f04bf590d3cb6c1363dfd0e41110944"
+    },
+    {
+      "repository": "sqlite/sqlite",
+      "url": "https://github.com/sqlite/sqlite",
+      "purpose": "SQLite implementation provenance; runtime is Node's bundled SQLite",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "README.md"
+      ],
+      "stars": 11022,
+      "license": "NOASSERTION",
+      "revision": "0c70ef54f99ddf2fc082acb61d1f570013acf08b"
+    },
+    {
+      "repository": "matiassingers/awesome-readme",
+      "url": "https://github.com/matiassingers/awesome-readme",
+      "purpose": "Strong README examples and information architecture",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "README.md"
+      ],
+      "stars": 21739,
+      "license": "UNVERIFIED",
+      "revision": "f0742eb55c9f038c3444a84ab9a3b4fe785ab425"
+    },
+    {
+      "repository": "github/docs",
+      "url": "https://github.com/github/docs",
+      "purpose": "Primary repository documentation for branch and PR workflows",
+      "disposition": "reference-only",
+      "candidatePaths": [
+        "README.md"
+      ],
+      "stars": 21467,
+      "license": "CC-BY-4.0",
+      "revision": "84bdf4c88dcbd2402b0a2b3ab537c5a104e23a6a"
+    },
+    {
+      "repository": "storybookjs/storybook",
+      "url": "https://github.com/storybookjs/storybook",
+      "purpose": "Document component variants, states and review-ready interaction examples",
+      "disposition": "reference-only",
+      "stars": 91585,
+      "license": "MIT",
+      "revision": "5aea8b6ab1c2488a3adb89181b0244134bf469aa"
+    },
+    {
+      "repository": "adobe/react-spectrum",
+      "url": "https://github.com/adobe/react-spectrum",
+      "purpose": "Accessible component behavior, focus management, keyboard and screen-reader semantics",
+      "disposition": "reference-only",
+      "stars": 16043,
+      "license": "Apache-2.0",
+      "revision": "360e35170568dfc99a2baaa78e6b7bdd36458d91"
+    },
+    {
+      "repository": "radix-ui/colors",
+      "url": "https://github.com/radix-ui/colors",
+      "purpose": "Semantic neutral/accent ramps, readable states and calm surfaces",
+      "disposition": "reference-only",
+      "stars": 1738,
+      "license": "MIT",
+      "revision": "dbdb85470547c7d34b9001f48fddb08ded335979"
+    },
+    {
+      "repository": "rsms/inter",
+      "url": "https://github.com/rsms/inter",
+      "purpose": "Interface typography, tabular numerals and font provenance",
+      "disposition": "reference-only",
+      "stars": 20073,
+      "license": "OFL-1.1",
+      "revision": "353b61b9f4430d5f420d56605a6e7993e0941470"
+    },
+    {
+      "repository": "lucide-icons/lucide",
+      "url": "https://github.com/lucide-icons/lucide",
+      "purpose": "Cohesive icon geometry and discoverable icon semantics",
+      "disposition": "reference-only",
+      "stars": 25795,
+      "license": "NOASSERTION",
+      "revision": "333574bdecb43e7cb4a4bb1cd21d1367cfbbee2c"
+    },
+    {
+      "repository": "w3c/aria-practices",
+      "url": "https://github.com/w3c/aria-practices",
+      "purpose": "Reference keyboard/screen-reader behavior for common application widgets",
+      "disposition": "reference-only",
+      "stars": 1364,
+      "license": "NOASSERTION",
+      "revision": "f14b2490a6728cda85fd7feafbd148b3c3eaf038"
+    },
+    {
+      "repository": "microsoft/playwright",
+      "url": "https://github.com/microsoft/playwright",
+      "purpose": "Reproducible browser scenarios and visual comparison checkpoints",
+      "disposition": "reference-only",
+      "stars": 100333,
+      "license": "Apache-2.0",
+      "revision": "b4d016aadc5cbd2b898a284307975fe73e05483d"
+    },
+    {
+      "repository": "withastro/starlight",
+      "url": "https://github.com/withastro/starlight",
+      "purpose": "Documentation navigation, progressive disclosure and information architecture",
+      "disposition": "reference-only",
+      "stars": 9598,
+      "license": "MIT",
+      "revision": "ea812fe60b73413c73f91229be2bfd1e179c5ccd"
+    },
+    {
+      "repository": "kettanaito/naming-cheatsheet",
+      "url": "https://github.com/kettanaito/naming-cheatsheet",
+      "purpose": "Feature and file naming discipline; use stable domain vocabulary",
+      "disposition": "reference-only",
+      "stars": 14200,
+      "license": "MIT",
+      "revision": "7b90cd7b2d3ccb104a4443d5e7e152b8fd400533"
+    },
+    {
+      "repository": "othneildrew/Best-README-Template",
+      "url": "https://github.com/othneildrew/Best-README-Template",
+      "purpose": "README sequence, quickstart and concise contribution pointers",
+      "disposition": "reference-only",
+      "stars": 16469,
+      "license": "Unlicense",
+      "revision": "fc444eb7b04b2e4863f6080b1507a219e95103fa"
+    },
+    {
+      "repository": "stevemao/github-issue-templates",
+      "url": "https://github.com/stevemao/github-issue-templates",
+      "purpose": "Issue and PR information architecture, examples only",
+      "disposition": "reference-only",
+      "stars": 4481,
+      "license": "NOASSERTION",
+      "revision": "82f42891e1298c2c3cdf34de9fc8da50831cc6a5"
+    },
+    {
+      "repository": "ossf/scorecard",
+      "url": "https://github.com/ossf/scorecard",
+      "purpose": "Reviewed supply-chain hygiene and exact evidence for dependency changes",
+      "disposition": "reference-only",
+      "stars": 5843,
+      "license": "Apache-2.0",
+      "revision": "6eb56f6a7e62d8f5d55800f54cd92ea305107d1d"
+    }
+  ]
+}

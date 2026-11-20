@@ -1,0 +1,71 @@
+{
+  "source": "Altioris_Approved_References.zip",
+  "screens": [
+    {
+      "file": "01-login.png",
+      "sha256": "30363929700adf77686116f2cc5407d127974d93c5c302a9cb196779e0ea83a8",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "file": "02-schedule.png",
+      "sha256": "1d7fae8d6a9deacc8d35472890ee2e377023f73c9931b75a34b6077b229eb458",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "file": "03-exams.png",
+      "sha256": "3eb8b8d44f21f290c8acf5330089662408d4fbc0217a6965f873becc6b3eea0c",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "file": "04-grades.png",
+      "sha256": "68f50191914dfe26aee8c809b62f53301d85121f12cd3de3fd2a260c02c50207",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "file": "05-ranking.png",
+      "sha256": "ad5d38445b315574f4797930621ad7bfa48df6f15ec61c94e2cf1f890f99f080",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "file": "06-teachers.png",
+      "sha256": "aeaafed4c226da60a61e13e7d0681f898488196fe03d279f45883ab80be12231",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "file": "07-requests.png",
+      "sha256": "5a1f8fef4a87ec2821c959bff51ad9f0056458a79141af68f4fb03e87defac82",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "file": "08-support-chat.png",
+      "sha256": "ad8fa59793a5b23c903598f47f54495690d95919dc435d00826b7ad86f1e719a",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "file": "09-notifications.png",
+      "sha256": "028353d128797c8e818e14b8aceaba0aae8a157c101b6c2521ceb57f1d8d9b2b",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "file": "10-settings.png",
+      "sha256": "2caf1fdb201832c3f58b9178d6298d55d5704da1de0a8e87434de7093d355a83",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "file": "11-student-profile.png",
+      "sha256": "092c7d3cf2a1408ba8ea3952e7044b0e212f53942612fd399429136c7b818ce5",
+      "width": 1536,
+      "height": 1024
+    }
+  ]
+}

@@ -4,12 +4,15 @@
   "private": true,
   "type": "module",
   "description": "Russian-language digital dean’s office prototype",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/sonjiwu2/altioris.git" },
   "engines": {
     "node": ">=24"
   },
   "scripts": {
     "start": "node --env-file-if-exists=runtime/.env server/index.mjs",
     "demo:setup": "node scripts/setup-demo.mjs",
+    "demo:init": "node scripts/setup-demo.mjs --init",
     "test": "node --test tests/http.test.mjs tests/support.test.mjs",
     "dev": "node --watch scripts/start-local.mjs"
   }

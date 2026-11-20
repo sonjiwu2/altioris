@@ -2,15 +2,15 @@
 /.agents/
 /.codex/
 /.aws/
-/AGENTS.md
 /START_HERE*.md
 /MASTER_PROMPT*.md
 /README_HANDOFF_LOCAL.md
 /.altioris-skill-cache/
-/docs/
 /scripts/*
 !/scripts/setup-demo.mjs
 !/scripts/start-local.mjs
+!/scripts/import-references.py
+!/scripts/install-skills.mjs
 /evidence/
 /screenshots/
 /references/
@@ -19,6 +19,7 @@
 # Secrets, local database and browser state
 .env
 .env.*
+!.env.example
 *.sqlite
 *.sqlite-*
 *.sqlite3
