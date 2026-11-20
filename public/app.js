@@ -1,5 +1,5 @@
 import { brand, escape as e, icon, portrait } from './ui.js';
-import { exams, news, schedule } from './features/campus.js';
+import { exams, news, schedule } from './features/campus.js?v=20261120-2';
 import { grades, profile, ranking, teachers } from './features/academic.js';
 import { notifications, requests, support } from './features/services.js';
 import { settings, applyPreferences, updatePreference, preferences } from './features/settings.js';
@@ -30,7 +30,7 @@ function render(focus=false) {
  const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+'<span>'+label+'</span>'+(href==='/notifications'&&unread?'<span class="nav-unread" aria-label="Есть новые уведомления"></span>':'')+'</a>').join('');
  const page=pages.get(pathname);
  const content=pathname.startsWith('/news/')?news(pathname):page?page({...snapshot,notifications:visibleNotices},params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
- app.innerHTML='<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">'+brand+'</a><button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">'+icon('menu')+'</button></header><aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">'+brand+'</a><nav class="main-nav" aria-label="Основное меню">'+nav+'</nav><a class="sidebar-profile" href="/profile"'+(pathname==='/profile'?' aria-current="page"':'')+'>'+portrait(snapshot.student)+'<span>'+e(snapshot.student.shortName)+'<small>'+e(snapshot.student.group)+'</small></span>'+icon('down')+'</a></aside><nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>'+nav+'<a href="/profile">'+icon('person')+'Мой профиль</a></nav><div class="workspace"><main id="main" class="page" tabindex="-1">'+content+'</main><footer class="page-footer">Конкурсный прототип</footer></div>';
+ app.innerHTML='<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">'+brand+'</a><button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">'+icon('menu')+'</button></header><aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">'+brand+'</a><nav class="main-nav" aria-label="Основное меню">'+nav+'</nav><a class="sidebar-profile" href="/profile"'+(pathname==='/profile'?' aria-current="page"':'')+'>'+portrait(snapshot.student)+'<span>'+e(snapshot.student.shortName)+'<small>'+e(snapshot.student.group)+'</small></span>'+icon('down')+'</a></aside><nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>'+nav+'<a href="/profile">'+icon('person')+'Мой профиль</a></nav><div class="workspace"><main id="main" class="page'+(pathname==='/'||pathname.startsWith('/schedule')?' manuscript':'')+'" tabindex="-1">'+content+'</main><footer class="page-footer">Конкурсный прототип</footer></div>';
  document.title=(app.querySelector('h1')?.textContent||'Кабинет')+' · Altioris University';
  const dialog=app.querySelector('[data-auto-open]');if(dialog)dialog.showModal();else if(focus)document.querySelector('#main').focus({preventScroll:true});
  const chat=app.querySelector('.chat-history');if(chat&&snapshot.support.length)chat.scrollTop=chat.scrollHeight;
@@ -98,6 +98,7 @@ app.addEventListener('click',event=>{
 app.addEventListener('change',event=>{const control=event.target.closest('[data-preference]');if(control&&snapshot){updatePreference(snapshot.student,control.dataset.preference,control.checked);announce('Настройки сохранены');}});
 app.addEventListener('keydown',event=>{if(event.key==='Escape'){const toggle=app.querySelector('[data-menu][aria-expanded="true"]');if(toggle){toggle.click();toggle.focus();}}});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(snapshot&&preferences(snapshot.student).theme==='system')applyPreferences(snapshot.student);});
+matchMedia('(max-width:680px)').addEventListener('change',()=>{if(snapshot&&(location.pathname==='/'||location.pathname==='/schedule'))render();});
 window.addEventListener('popstate',()=>render());
 window.addEventListener('pageshow',event=>{if(event.persisted)void load();});
 void load();

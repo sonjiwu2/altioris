@@ -1,0 +1,85 @@
+@font-face{font-family:Philosopher;src:url("/assets/fonts/Philosopher-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:Philosopher;src:url("/assets/fonts/Philosopher-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+
+/* The rem scale also controls the account's 100/115/130% preference. */
+:root{--heading-font:Philosopher,Georgia,serif;font-family:"Golos Text",sans-serif;line-height:1.5;-webkit-text-stroke:0}
+body{font-size:.69rem}
+h1,h2,h3{font-family:var(--heading-font);font-style:normal;font-weight:700;line-height:1.12;-webkit-text-stroke:0}
+h1{font-size:2.15rem;letter-spacing:-.015em;margin-bottom:.65rem;overflow-wrap:anywhere;hyphens:auto}
+h2{font-size:1.35rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1.45}
+.main-nav a,.mobile-nav a{font-family:"Golos Text",sans-serif;font-size:.65rem;font-weight:500;line-height:1.4;white-space:normal;gap:14px;min-height:56px;padding:10px 12px}
+.main-nav a>.icon{width:32px;height:32px}
+.main-nav{gap:8px;margin-top:22px}
+.sidebar-profile>span:not(.portrait){font-family:var(--heading-font);font-size:.85rem;font-weight:700;line-height:1.15}
+.sidebar-profile small{font-family:"Golos Text",sans-serif;font-size:.5rem;font-weight:400}
+.page-footer{font-size:.5rem}
+.page:not(.manuscript){line-height:1.5}
+.page:not(.manuscript) :is(p,dd,dt,input,select,textarea,.info-line,.setting-row,.teacher-section p){font-size:.69rem;line-height:1.5}
+.page:not(.manuscript) :is(.button,.tab,.text-link,.pills a,.term,.subject-chip,.teacher-department,.topic-link){font-family:"Golos Text",sans-serif;font-size:.65rem;line-height:1.4;font-weight:500}
+.page:not(.manuscript) :is(.badge,small,.timeline time,.support-disclosure,.settings-note){font-family:"Golos Text",sans-serif;font-size:.54rem;line-height:1.4}
+.page:not(.manuscript) :is(.teacher-list strong,.teacher-identity h2,.profile-identity h2,.settings-identity h3){font-family:var(--heading-font);font-weight:700;line-height:1.15}
+.page:not(.manuscript) :is(.grade-list h2,.grade-inspector h2,.teacher-identity h2,.profile-identity h2,.settings-panel h2,.topics h2,.profile-documents h2,.notification-detail h2){font-size:1.35rem}
+.page:not(.manuscript) :is(.grade-row>strong,.service-row strong,.notification-row strong,.file-row strong,.teacher-list strong){font-family:var(--heading-font);font-weight:700;font-size:1rem;line-height:1.15}
+.page:not(.manuscript) :is(.grade-result,.ranking-table td,.ranking-table th,.rank-strip dt,.timeline strong){font-size:.69rem;line-height:1.4}
+.page:not(.manuscript) .result-summary>strong{font-family:var(--heading-font);font-size:3.5rem}
+.page:not(.manuscript) .result-summary>em{font-size:.69rem;font-style:normal}
+.page:not(.manuscript) :is(.bubble,.chat-request-card){font-size:.69rem;line-height:1.55}
+.page:not(.manuscript) :is(.theme-option,.theme-label,.segmented button){font-size:.62rem;line-height:1.4}
+.page:not(.manuscript) .student-card-header h3{font-size:1.15rem}
+.page:not(.manuscript) .student-card-body>h3{font-size:1.35rem}
+.page:not(.manuscript) .sample-stamp{font-size:.7rem}
+.sign-in h1{font-size:1.7rem;white-space:normal}
+.login-form label,.input-control input,.help-link{font-size:.69rem}
+.login-submit{font-family:var(--heading-font);font-size:1.2rem;font-weight:700}
+.form-error{font-size:.58rem}
+
+/* Handwriting is intentionally limited to the two timetable screens and logo. */
+.manuscript{font-family:"Marck Script",cursive;font-size:1rem;line-height:1.13;-webkit-text-stroke:.2px currentColor}
+.manuscript h1{font-family:"Great Vibes","Marck Script",cursive;font-size:3.32rem;font-weight:400;line-height:1.12;letter-spacing:.003em}
+.manuscript :is(h2,h3){font-family:"Marck Script",cursive;font-weight:400}
+.manuscript strong{font-weight:400}
+.exam-event{grid-template-columns:100px minmax(0,1fr)}
+@media(min-width:981px) and (max-width:1350px){.exam-event{grid-template-columns:80px minmax(0,1fr)}}
+@media(max-width:680px){
+ h1{font-size:1.85rem}
+ .main-nav a,.mobile-nav a{font-size:.78rem}
+ .manuscript h1{font-size:2.45rem}
+ .exam-event{grid-template-columns:66px minmax(0,1fr)}
+ .page:not(.manuscript)>.section-heading{flex-wrap:wrap}
+ .page:not(.manuscript) .teacher-identity h2{font-size:1.1rem}
+ .page:not(.manuscript) .profile-identity h2{font-size:1.2rem}
+ .sign-in h1{font-size:1.55rem}
+}
+
+/* Comfortable spacing at browser zoom 100%, without enlarging functional icons. */
+.page{padding:24px}
+.page:not(.manuscript)>h1{margin-bottom:24px}
+.page:not(.manuscript) :is(.split,.settings-layout,.settings-main,.settings-side,.profile-grid){gap:24px}
+.page:not(.manuscript) :is(.grade-list,.grade-inspector,.settings-panel,.teacher-details,.request-inspector,.notification-detail,.topics){padding:26px}
+.page:not(.manuscript) .grade-row{min-height:104px;column-gap:16px;padding-block:20px}
+.page:not(.manuscript) .grade-row>.icon{width:48px;height:48px}
+.page:not(.manuscript) :is(.button,.tab){gap:12px;padding-inline:20px}
+.page:not(.manuscript) .tabs{gap:14px;margin-bottom:24px}
+.page:not(.manuscript) .info-line{gap:18px;padding-block:20px}
+.page:not(.manuscript) .setting-row{gap:20px;padding-block:20px;min-height:78px}
+.page:not(.manuscript) .settings-main>.settings-panel:nth-child(2) .setting-row{min-height:78px;padding-block:20px}
+.page:not(.manuscript) .teacher-list .person-link{gap:18px;padding-block:20px}
+.page:not(.manuscript) .teacher-identity>div{min-width:0;overflow-wrap:anywhere}
+.page:not(.manuscript) .service-row{gap:20px;padding-block:24px}
+.page:not(.manuscript) .notification-row{gap:24px;padding-block:26px}
+@media(max-width:980px){
+ .page{padding:22px}
+ .page:not(.manuscript) :is(.academic-layout,.work-layout,.notifications-layout){grid-template-columns:1fr}
+}
+@media(max-width:680px){
+ .page{padding:20px 14px}
+ .page:not(.manuscript) :is(.grade-list,.grade-inspector,.settings-panel,.teacher-details,.request-inspector,.notification-detail,.topics){padding:20px 16px}
+ .page:not(.manuscript) .grade-row{grid-template-columns:36px minmax(0,1fr) 32px minmax(68px,.6fr);column-gap:9px;padding:18px 0;min-height:100px}
+ .page:not(.manuscript) .grade-row>.icon{width:30px;height:30px}
+ .page:not(.manuscript) .grade-row>strong{font-size:.86rem;overflow-wrap:anywhere}
+ .page:not(.manuscript) .grade-result{font-size:.6rem}
+ .page:not(.manuscript) .grade-list .section-heading{flex-wrap:wrap;gap:14px}
+ .page:not(.manuscript) .setting-row{gap:14px}
+ .page:not(.manuscript) .teacher-list .person-link{gap:12px}
+ .page:not(.manuscript) .notification-row{gap:16px}
+}
