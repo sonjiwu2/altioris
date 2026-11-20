@@ -21,14 +21,14 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 | 07-requests.png | /requests | Status tabs and requests; chronological history; private PDF action |
 | 08-support-chat.png | /support | Full-width conversation with inline quick actions and a headset avatar |
 | 09-notifications.png | /notifications | Read-state filters; illustrated list and linked detail |
-| 10-settings.png | /settings | Light theme, text scale, and current session in a single column |
+| 10-settings.png | /settings | Three theme choices with previews, text scale and current session in a single column |
 | 11-student-profile.png | /profile | Portrait identity banner; academic details; navy/gold student card; documents |
 
 ## Interaction contract
 
 Use 160 ms control feedback and 260 ms page entrance with cubic-bezier(.22,.7,.26,1). Use opacity and transform only for entrances. Honor both the OS reduced-motion preference and the account's browser setting. Keep native dialogs, form labels, URL state, history navigation, and visible focus. Buttons remain at least 44 CSS px high on touch screens.
 
-Text scale is per account and browser. Authentication remains an HttpOnly server session. The notification center shows all categories. The support assistant uses deterministic intents and owned records. It does not pretend that a live operator or video conference is connected.
+Theme and text scale are per account and browser. Authentication remains an HttpOnly server session. The notification center shows all categories. The support assistant uses deterministic intents and owned records. It does not pretend that a live operator or video conference is connected.
 
 
 ## Typography and timetable refinement — 2026-11-20
@@ -48,4 +48,8 @@ Profile photo editing uses a file picker, square preview and save/reset controls
 
 ## Latest settings, layout and motion refinement
 
-Keep the light theme and upright Philosopher. Settings show a light preview, 100/115/130% text and the current session with sign-out. Keep the original colorful icons across the site, with the current session and support conversation using their newer icons. Remove the auxiliary links below the timetable and use the prior compact weekly row minimums (164px on wide desktop and 150px on narrower layouts at 100%). Related tabs animate their content. Selecting an item animates its details only, with no motion when the system requests reduced motion. Account text scale and keyboard focus remain intact.
+Keep upright Philosopher. Settings show light, dark and system theme previews with icons, 100/115/130% text and the current session with sign-out. Keep the original colorful icons across the site, with the current session and support conversation using their newer icons. Remove the auxiliary links below the timetable and use the prior compact weekly row minimums (164px on wide desktop and 150px on narrower layouts at 100%). Related tabs animate their content. Selecting an item animates its details only, with no motion when the system requests reduced motion. Account text scale and keyboard focus remain intact.
+
+## Theme and filter transitions
+
+Theme controls use 160 ms feedback and a 330 ms crossfade when the browser supports view transitions. Text size and theme choices preserve focus and are applied independently. On reduced-motion systems the new state appears immediately. Filter changes animate the results area. Choosing an item animates its detail panel only if the displayed item actually changes. Entering a new week animates the calendar and its detail panel.

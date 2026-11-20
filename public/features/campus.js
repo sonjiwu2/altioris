@@ -1,4 +1,4 @@
-import { escape as e, badge, date, empty, icon, key, line, portrait, range, tab, when } from '../ui.js?v=20261120-5';
+import { escape as e, badge, date, empty, icon, key, line, portrait, range, tab, when } from '../ui.js?v=20261120-6';
 function header(exams){return '<h1>Расписание</h1><nav class="tabs" aria-label="Виды расписания">'+tab('/schedule','Занятия',!exams,'calendar')+tab('/schedule/exams','Экзамены',exams,'doc')+'</nav>';}
 function shiftDay(day,change){const d=new Date(day+'T12:00:00+03:00');d.setUTCDate(d.getUTCDate()+change);return key(d);}
 function startOfWeek(day){const weekday=new Date(day+'T12:00:00+03:00').getUTCDay();return shiftDay(day,-((weekday+6)%7));}

@@ -1,5 +1,5 @@
 import { accentIcon } from './accent-icons.js';
-import { escape as e, badge, date, detailedDate, empty, icon, safeLink, when } from '../ui.js?v=20261120-5';
+import { escape as e, badge, date, detailedDate, empty, icon, safeLink, when } from '../ui.js?v=20261120-6';
 const requestTypes={certificate:'Справка об обучении','academic-leave':'Академический отпуск',dormitory:'Справка для общежития','media-lab':'Запись в медиалабораторию'};
 const completed=status=>/готов|заверш|отклон/iu.test(status);
 const statusBadge=status=>badge(status,completed(status)&&!/отклон/iu.test(status)?'sage':'peach');

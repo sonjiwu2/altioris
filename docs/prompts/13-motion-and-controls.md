@@ -18,4 +18,8 @@ Deliver working code within the assigned scope, the exact checks performed, and 
 
 ## Latest settings, layout and motion refinement
 
-Keep the light theme and upright Philosopher. Settings show a light preview, 100/115/130% text and the current session with sign-out. Keep the original colorful icons across the site, with the current session and support conversation using their newer icons. Remove the auxiliary links below the timetable and use the prior compact weekly row minimums (164px on wide desktop and 150px on narrower layouts at 100%). Related tabs animate their content. Selecting an item animates its details only, with no motion when the system requests reduced motion. Account text scale and keyboard focus remain intact.
+Keep upright Philosopher. Settings show light, dark and system theme previews with icons, 100/115/130% text and the current session with sign-out. Keep the original colorful icons across the site, with the current session and support conversation using their newer icons. Remove the auxiliary links below the timetable and use the prior compact weekly row minimums (164px on wide desktop and 150px on narrower layouts at 100%). Related tabs animate their content. Selecting an item animates its details only, with no motion when the system requests reduced motion. Account text scale and keyboard focus remain intact.
+
+## Theme and filter transitions
+
+Theme controls use 160 ms feedback and a 330 ms crossfade when the browser supports view transitions. Text size and theme choices preserve focus and are applied independently. On reduced-motion systems the new state appears immediately. Filter changes animate the results area. Choosing an item animates its detail panel only if the displayed item actually changes. Entering a new week animates the calendar and its detail panel.

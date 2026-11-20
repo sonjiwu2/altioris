@@ -13,10 +13,10 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 - Login accepts the 13 fixed independent demo accounts. Wrong credentials produce a visible error. Logout revokes the session.
 - Schedule adapts to week/day by viewport without a mode switch, supports period navigation, selection, lecture/seminar, room/online format and teacher links. Exams support selection and ICS export.
 - Grade calculations exclude pass/fail courses. GPA weights numeric marks by credits; ranking uses the enabled cohort and a deterministic tie rule.
-- Teachers have distinct synthetic portraits, biographies, subjects, departments, office, email and consultations. Search and department filters work.
+- Teachers have distinct synthetic portraits, biographies, subjects, departments, office, email and consultations. Search covers names and all subjects a teacher teaches. Department selection applies immediately and can be combined with search. Each department has its own icon.
 - Requests persist, have actual recorded history and owned PDFs. The same records appear in chat cards and profile documents.
 - Notifications have durable read state, read-state filters and linked details.
-- Settings show the light theme, a 100/115/130% text control, current session and sign-out. Text scale survives reload and stays separate for each account. Animations honor the operating system preference.
+- Settings support light, dark and system themes, a 100/115/130% text control, current session and sign-out. Theme and text scale survive reload and stay separate for each account. Animations honor the operating system preference.
 - Profile shows the signed-in student's details and an explicitly labeled sample student card.
 - Support responds to status, certificate, grade/ranking, teacher, schedule/online and greeting intents. Human support availability is stated accurately.
 - All 11 reference routes remain useful at 360 CSS px, with accessible forms, focus, navigation and controls.
@@ -41,4 +41,4 @@ Profile photo editing uses a file picker, square preview and save/reset controls
 
 ## Latest settings, layout and motion refinement
 
-Keep the light theme and upright Philosopher. Settings show a light preview, 100/115/130% text and the current session with sign-out. Keep the original colorful icons across the site, with the current session and support conversation using their newer icons. Remove the auxiliary links below the timetable and use the prior compact weekly row minimums (164px on wide desktop and 150px on narrower layouts at 100%). Related tabs animate their content. Selecting an item animates its details only, with no motion when the system requests reduced motion. Account text scale and keyboard focus remain intact.
+Keep upright Philosopher. Settings show light, dark and system theme previews with icons, 100/115/130% text and the current session with sign-out. Keep the original colorful icons across the site, with the current session and support conversation using their newer icons. Remove the auxiliary links below the timetable and use the prior compact weekly row minimums (164px on wide desktop and 150px on narrower layouts at 100%). Related tabs animate their content. Selecting an item animates its details only, with no motion when the system requests reduced motion. Account text scale and keyboard focus remain intact.

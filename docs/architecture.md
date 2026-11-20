@@ -14,7 +14,7 @@ Node.js 24+ serves buildless HTML, CSS, browser ES modules, local fonts and artw
 | POST /api/support | Deterministic intent processing and owned conversation |
 | GET /api/calendar/exams | Confirmed exams as ICS |
 
-The browser uses URL query parameters for list selection, date, filters and display modes. public/features/settings.js stores text scale and honors existing legacy reduced-motion preferences in localStorage under the student's stable number. Authentication stays in HttpOnly SameSite cookies.
+The browser uses URL query parameters for list selection, date, filters and display modes. public/features/settings.js stores theme and text scale and honors existing legacy reduced-motion preferences in localStorage under the student's stable number. Authentication stays in HttpOnly SameSite cookies.
 
 Ranking sorts by unrounded credit-weighted GPA, then the displayed student name. Mean and GPA omit nonnumeric results. Dates and the demo clock are in Europe/Moscow. The local launcher binds to 127.0.0.1, uses runtime/altioris.sqlite and can choose a free port.
 

@@ -1,4 +1,6 @@
 const paths = {
+ sun:'<circle cx="16" cy="16" r="6" fill="#ffdb80" stroke="#996119"/><path d="M16 2v4m0 20v4M2 16h4m20 0h4M6 6l3 3m14 14 3 3M6 26l3-3M23 9l3-3" stroke="#b58226"/>',
+ moon:'<path d="M25 23A12 12 0 0 1 14 5a12 12 0 1 0 11 18Z" fill="#c4b6ed"/><path d="M24 3v8m-4-4h8" stroke="#896ac1"/>',
  calendar:'<rect x="4" y="5" width="24" height="24" rx="3" fill="#fff6e4"/><path d="M4 13h24V8a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3Z" fill="#77b8f5"/><path d="M10 2v7m12-7v7"/><path d="M10 18h1m5 0h1m5 0h1m-13 6h1m5 0h1m5 0h1" stroke="#db9a20" stroke-width="3"/>',
  grades:'<rect x="3" y="19" width="7" height="11" rx="1" fill="#91d19d"/><rect x="12" y="12" width="7" height="18" rx="1" fill="#62b975"/><rect x="21" y="4" width="7" height="26" rx="1" fill="#b6e8b2"/>',
  people:'<circle cx="11" cy="10" r="6" fill="#bea0f0"/><circle cx="24" cy="10" r="5" fill="#a27ce2"/><path d="M1 29v-3a10 10 0 0 1 20 0v3Z" fill="#ba93ef"/><path d="M21 20a9 9 0 0 1 11 9H22" fill="#9e7cd7"/>',
