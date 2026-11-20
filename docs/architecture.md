@@ -7,9 +7,9 @@ Node.js 24+ serves buildless HTML, CSS, browser ES modules, local fonts and artw
 | POST /api/login | Salted scrypt verification, opaque cookie session |
 | POST /api/logout | Session revocation |
 | GET /api/dashboard | Student, campus, grades, published session standings, next ranking publication and owned records |
-| POST /api/requests | Owned request/history/document generation |
-| GET /api/documents/:id | Ownership-checked PDF. Opens profile documents inline and downloads request documents |
-| GET /api/notifications | Owned campus and academic notices |
+| POST /api/requests | Start an owned request. An optional submission UUID makes retries idempotent |
+| GET /api/documents/:id | Ownership-checked PDF. Use `view=1` to open a request PDF inline |
+| GET /api/notifications | Owned campus, academic and document-ready notices |
 | GET /api/notifications/stream | Authenticated live inbox revision |
 | PATCH /api/notifications | Owned read state |
 | PATCH /api/profile | Owned avatar selection |
@@ -22,11 +22,11 @@ Ranking sorts by unrounded credit-weighted GPA, then the displayed student name.
 
 Visual tokens and screen composition are specified in DESIGN.md. Runtime image assets never contain a complete screen or interactive text.
 
-The server processes queued academic events on a timer without browser traffic. Schema 5 removes request alerts from the inbox while preserving request records and PDFs. The queue applies validated changes and their notices in the same SQLite transaction. [Delivery and local controls](academic-events.md).
+The server processes academic events and request jobs on a timer without browser traffic. Schema 5 removed earlier request alerts. Schema 6 adds the durable request queue and PDF snapshots. The completion transaction stores the PDF, updates history and publishes one document-ready notice. The authenticated inbox stream also advances its revision for request history updates. [Delivery and local controls](academic-events.md).
 
 ## Documents
 
-server/pdf.mjs generates A4 PDFs with an embedded static Golos Text font and Unicode mapping. Transcripts include published outcomes as of the issue date, Moscow assessment times from the timetable, and a separate page for each session. The profile passport and diploma are rendered from the authenticated account's fictional fixtures. The passport uses the assigned synthetic portrait and an issue date on the 14th birthday. The diploma is issued in June of the admission year. All PDFs identify themselves as samples and require an ownership check. Font binaries and metrics are prebuilt. The app needs no PDF dependency at runtime.
+`server/request-pdf-pages.mjs` defines five A4 layouts. `server/pdf.mjs` embeds Golos Text and Philosopher with Unicode mapping. Transcripts use published results as of issuance, Moscow assessment times and one page per session. At issue time the server saves the finished byte stream in `document_files`. Existing PDFs remain accessible by their identifiers. The profile passport and diploma use the authenticated account's fictional fixtures. The passport uses the assigned portrait and an issue date on the 14th birthday. The diploma is issued in June of the admission year. Every PDF requires an ownership check and identifies itself as a sample.
 
 ## Profile images
 

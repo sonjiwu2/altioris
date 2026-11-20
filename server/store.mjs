@@ -8,6 +8,8 @@ import { academicDateTime, academicNotices, academicTimeRange, moscowDay } from 
 import { profileDocumentsFor } from './profile-documents.mjs'
 import { campusWithChanges, gradesWithChanges, rankingWithChanges } from './academic-events.mjs'
 import { openAcademicQueue } from './academic-queue.mjs'
+import { openRequestQueue } from './request-queue.mjs'
+import { studentPdf } from './pdf.mjs'
 
 const derive = promisify(scrypt)
 export const sessionLifetime = 60 * 60 * 12
@@ -15,13 +17,31 @@ const digest = (token) => createHash('sha256').update(token).digest('hex')
 
 function migrate(db) {
   const { user_version: version } = db.prepare('PRAGMA user_version').get()
-  if (version > 5) throw new Error('Unsupported database schema')
-  if (version === 5) return
+  if (version > 6) throw new Error('Unsupported database schema')
+  if (version === 6) return
+  if (version === 5) {
+    db.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE IF NOT EXISTS request_jobs (
+        owner TEXT NOT NULL, request_id TEXT NOT NULL,
+        started_at INTEGER NOT NULL, next_at INTEGER NOT NULL,
+        stage INTEGER NOT NULL CHECK (stage BETWEEN 0 AND 2), failures INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY(owner,request_id), FOREIGN KEY(owner,request_id) REFERENCES requests(owner,id)
+      );
+      CREATE INDEX IF NOT EXISTS request_jobs_next ON request_jobs(next_at);
+      CREATE TABLE IF NOT EXISTS document_files (
+        owner TEXT NOT NULL, document_id TEXT NOT NULL, pdf BLOB NOT NULL,
+        PRIMARY KEY(owner,document_id), FOREIGN KEY(owner,document_id) REFERENCES documents(owner,id)
+      );
+      PRAGMA user_version = 6;
+      COMMIT;`)
+    return
+  }
   if (version === 4) {
     db.exec(`BEGIN IMMEDIATE;
-      DELETE FROM notifications WHERE type='Заявка' OR href='/requests' OR href LIKE '/requests?%';
+      DELETE FROM notifications WHERE (type='Заявка' OR href='/requests' OR href LIKE '/requests?%') AND id NOT LIKE 'request-ready-%';
       PRAGMA user_version = 5;
       COMMIT;`)
+    migrate(db)
     return
   }
   if (version === 3) {
@@ -145,6 +165,7 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
     const updatePassword = db.prepare('UPDATE accounts SET salt = ?, password_hash = ? WHERE id = ?')
     const removeSessions = db.prepare('DELETE FROM sessions WHERE owner = ?')
     const insertDocument = db.prepare('INSERT INTO documents (id, owner, title, created_at) VALUES (?, ?, ?, ?)')
+    const insertDocumentFile = db.prepare('INSERT INTO document_files (owner,document_id,pdf) VALUES (?,?,?)')
     const insertRequest = db.prepare('INSERT INTO requests (id, owner, type, title, status, created_at, document_id) VALUES (?, ?, ?, ?, ?, ?, ?)')
     const insertHistory = db.prepare('INSERT INTO request_history (request_id, owner, created_at, label) VALUES (?, ?, ?, ?)')
     const insertAcademicNotice = db.prepare(`INSERT INTO notifications (id, owner, title, type, body, created_at, href, is_read)
@@ -193,9 +214,18 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
     const rankingView=(owner,at,changes,grades)=>rankingWithChanges(accounts.find(account=>account.id===owner),at,cohort,changes,grades)
     const noticeVersion=db.prepare('SELECT count(*) AS total, coalesce(sum(is_read),0) AS read, coalesce(max(rowid),0) AS newest FROM notifications WHERE owner=?')
     const existingNotice=db.prepare('SELECT 1 FROM notifications WHERE owner=? AND id=?')
+    const historyVersion=db.prepare('SELECT coalesce(max(event_no),0) AS version FROM request_history WHERE owner=?')
+    const requestQueue=openRequestQueue(db,{clock,transaction,history:insertHistory,notify:insertAcademicNotice,issueDocument(job,at){
+      const account=accounts.find(account=>account.id===job.owner)
+      const document={id:randomUUID(),type:job.type,title:job.title,createdAt:at,requestId:job.id,requestedAt:job.createdAt}
+      const pdf=studentPdf(document,account.profile,account,gradeView(job.owner,at))
+      insertDocument.run(document.id,job.owner,document.title,at)
+      insertDocumentFile.run(job.owner,document.id,pdf)
+      return document.id
+    }})
     function inboxRevision(owner){
       const {total,read,newest}=noticeVersion.get(owner)
-      return total+':'+read+':'+newest
+      return total+':'+read+':'+newest+':'+historyVersion.get(owner).version
     }
 
     const dummySalt = randomBytes(16)
@@ -234,23 +264,23 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
       }))
     }
 
-    function createRequest(owner, type) {
-      const id = randomUUID()
-      const createdAt = clock()
+    function createRequest(owner, type, id = randomUUID()) {
+      const createdAt = new Date(clock()).toISOString()
       const title = requestTypes.get(type)
-      const documentId = ['certificate','transcript'].includes(type) ? randomUUID() : null
-      const status = documentId ? 'Готова' : 'На рассмотрении'
       return transaction(() => {
-        if (documentId) insertDocument.run(documentId, owner, title, createdAt)
-        insertRequest.run(id, owner, type, title, status, createdAt, documentId)
-        insertHistory.run(id, owner, createdAt, 'Заявка принята')
-        if (documentId) insertHistory.run(id, owner, createdAt, 'Учебный образец PDF готов')
-        return { id, type, title, status, createdAt, documentId }
+        const prior = db.prepare('SELECT id,type,title,status,created_at AS createdAt,document_id AS documentId FROM requests WHERE owner=? AND id=?').get(owner,id)
+        if (prior) return prior.type===type ? prior : null
+        const status = 'Отправлена'
+        insertRequest.run(id, owner, type, title, status, createdAt, null)
+        insertHistory.run(id, owner, createdAt, 'Заявка отправлена')
+        requestQueue.schedule(owner,id,createdAt)
+        return { id, type, title, status, createdAt, documentId:null }
       })
     }
 
     function addSupport(owner, action, input) {
       academic.tick()
+      requestQueue.tick()
       const at = clock()
       const labels = {
         certificate: 'Заказать справку',
@@ -275,7 +305,7 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
       let href = null
       if (action === 'certificate') {
         const transcript = /выписк|зач[её]тк/u.test(query)
-        text = 'Откройте раздел «Заявки» и выберите «'+requestTypes.get(transcript?'transcript':'certificate')+'». Учебный PDF появится сразу после подачи.'
+        text = 'Откройте раздел «Заявки» и выберите «'+requestTypes.get(transcript?'transcript':'certificate')+'». Подготовка учебного PDF займёт около двух-трёх минут. По готовности кабинет пришлёт уведомление.'
         href = '/requests?new='+(transcript?'transcript':'certificate')
       } else if (action === 'status') {
         const owned = requests(owner)
@@ -362,6 +392,7 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
           for(const account of cohort)publishScheduledNotices(account.id,campusView(account.id,at,changes),gradeView(account.id,at,changes))
         }
       },
+      advanceRequests:requestQueue.tick,
       noticeVersion:inboxRevision,
       notifications,
       async authenticate(login, password) {
@@ -379,6 +410,7 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
       revokeSession: (token) => deleteSession.run(digest(token)),
       dashboard(owner) {
         academic.tick()
+        requestQueue.tick()
         const account=accounts.find(account=>account.id===owner)
         const at=clock(),changes=academic.changes()
         const campus=campusView(owner,at,changes),grades=gradeView(owner,at,changes)
@@ -399,7 +431,9 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
         }
       },
       document(owner, id) {
-        return db.prepare('SELECT id, title, created_at AS createdAt FROM documents WHERE owner = ? AND id = ?').get(owner, id)
+        return db.prepare(`SELECT d.id,d.title,d.created_at AS createdAt,f.pdf,r.type,r.id AS requestId,r.created_at AS requestedAt
+          FROM documents d LEFT JOIN document_files f ON f.owner=d.owner AND f.document_id=d.id
+          LEFT JOIN requests r ON r.owner=d.owner AND r.document_id=d.id WHERE d.owner=? AND d.id=?`).get(owner,id)
       },
       createRequest,
       markNotification(owner, id) {

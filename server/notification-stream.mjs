@@ -11,6 +11,7 @@ export function createNotificationStream(store,clock){
  function tick(){
   const minute=Math.floor(Date.parse(clock())/60_000);
   store.advanceAcademicEvents(minute!==lastMinute);
+  store.advanceRequests();
   lastMinute=minute;
   const now=Date.now();
   for(const client of clients){
@@ -25,7 +26,7 @@ export function createNotificationStream(store,clock){
  return {
   start(){
    timer=setInterval(()=>{
-    try{tick();}catch(error){console.error('Academic queue:',error.message);}
+    try{tick();}catch(error){console.error('Background queue:',error.message);}
    },1000);
    timer.unref();
   },

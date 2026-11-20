@@ -12,7 +12,7 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 
 Match requests, support and notifications. Render actual request history, ownership-checked PDF links, useful deterministic chat intents, warm/lavender bubbles and inline request cards. Never imply a live operator is connected.
 
-Publish campus and academic notifications server-side even with no connected browser. Show the sender, message paragraphs, receipt time in Moscow and the relevant link. Keep request status in request history.
+Publish campus, academic and document-ready notifications server-side even with no connected browser. Show the sender, message paragraphs, receipt time in Moscow and the relevant link. Request jobs persist, issue a distinct PDF by type and record each stage. Only completed issuance triggers a request notification.
 
 ## Completion
 

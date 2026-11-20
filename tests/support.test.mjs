@@ -47,7 +47,7 @@ test('the guided assistant resolves owned records and meaningful student intents
     store.createRequest('a', 'academic-leave')
     const result = reply('a', 'Проверь статус заявки ' + first.id)
     assert.equal(result.href, '/requests?item=' + first.id)
-    assert.ok(result.text.includes('Готова'))
+    assert.ok(result.text.includes('Отправлена'))
   })
   await t.test('a foreign request identifier never resolves the foreign record', () => {
     const foreign = store.createRequest('a', 'certificate')
@@ -61,7 +61,7 @@ test('the guided assistant resolves owned records and meaningful student intents
     store.createRequest('a', 'academic-leave')
     const result = reply('a', 'Хочу проверить статус справки')
     assert.ok(result.text.includes('Справка об обучении'))
-    assert.ok(result.text.includes('Готова'))
+    assert.ok(result.text.includes('Отправлена'))
   })
   await t.test('teacher questions return consultation details from the catalog', () => {
     const result = reply('a', 'Когда консультации у Вороновой?')

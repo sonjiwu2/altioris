@@ -1,4 +1,10 @@
 const artwork = {
+ 'request-enrollment':['#604495','#e4d8f3','<path d="M12 8h23l9 9v31H12z"/><path fill="none" d="M35 8v9h9m-24 8h16m-16 6h8"/><circle fill="#ddab50" cx="34" cy="39" r="5"/>'],
+ 'request-transcript':['#405f67','#c9e0de','<path d="M10 11h36v34H10z"/><path fill="none" d="M10 20h36m-23 0v25m-13-17h36m-36 8h36"/><path fill="none" stroke="#287864" stroke-width="3" d="m30 33 3 3 7-8"/>'],
+ 'request-leave':['#814b56','#f3c9c3','<path d="M8 15h40v31H8z"/><path fill="none" d="M18 10v10m19-10v10M8 24h40"/><path fill="#fcf0d9" d="M22 29h4v12h-4zm9 0h4v12h-4z"/>'],
+ 'request-housing':['#596c45','#c5d9aa','<path d="M11 28 28 9l17 19v18H11Z"/><path fill="#e3ae79" d="m7 30 21-20 21 20-4 4-17-16-17 16Z"/><path fill="#f9edcf" d="M24 32h8v14h-8z"/>'],
+ 'request-media':['#354d73','#c3cce8','<path d="M9 24h37v20H9zM9 24l-2-8 36-6 2 8z"/><path fill="none" d="m15 15 5 7m6-9 5 7m6-9 5 7"/><path fill="#f6d79c" d="m24 29 10 5-10 5z"/>'],
+ 'inbox-document-ready':['#386453','#c1dcc5','<path d="M11 10h24l9 9v27H11z"/><path fill="none" d="M35 12v8h8m-24 5h15"/><path fill="none" stroke-width="3" d="m21 36 5 5 11-12"/>'],
  'passport-book':['#173d42','#6d9e8a','<path d="M15 8h28a4 4 0 0 1 4 4v34H15a5 5 0 0 1-5-5V13a5 5 0 0 1 5-5Z"/><path fill="#edd7aa" d="M15 40h32v8H15a4 4 0 1 1 0-8Z"/><path fill="none" stroke="#ecc379" d="M17 9v31M22 35h16"/><path fill="#ecc379" stroke="none" d="m30 14 2.5 6.5L39 23l-6.5 2.5L30 32l-2.5-6.5L21 23l6.5-2.5Z"/>'],
  'diploma-scroll':['#713f43','#f7e3b8','<path d="M9 11h33l6 6v24H9z"/><path fill="none" stroke="#ad754c" d="M15 17h19M15 23h25M15 29h19M15 35h13"/><path fill="#9e5648" d="m35 38-3 12 6-3 6 3-3-12Z"/><circle fill="#d8a355" cx="38" cy="38" r="7"/><circle fill="none" stroke="#fff0c6" cx="38" cy="38" r="3.5"/>'],
  'faculty-tenure':['#754536','#e6a954','<path fill="#ffe3a4" d="M27 7 42 15v12c0 10-6 16-15 20-9-4-15-10-15-20V15Z"/><path fill="#b55e51" d="m21 34-2 13 8-5 8 5-2-13Z"/><circle cx="27" cy="23" r="10"/><path fill="#fff0ba" stroke="none" d="m27 15 2 5 6 .4-4.4 3.8 1.3 5.8-4.9-3.2-4.9 3.2 1.3-5.8-4.4-3.8 6-.4Z"/>'],

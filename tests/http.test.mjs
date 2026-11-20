@@ -8,7 +8,8 @@ import { join } from 'node:path'
 import test from 'node:test'
 import { DatabaseSync } from 'node:sqlite'
 import { createApplication, readConfig } from '../server/index.mjs'
-import { accounts } from '../server/fixtures.mjs'
+import { accounts, demoClock, requestTypes } from '../server/fixtures.mjs'
+import { openStore } from '../server/store.mjs'
 
 const newPassword = () => randomBytes(24).toString('base64url')
 
@@ -116,10 +117,64 @@ test('all demo students can open only their own two profile PDFs', async () => {
   assert.equal(ids.size,26)
 })
 
+test('every request type completes once for all 13 accounts and resumes across restart', async () => {
+  const directory=await mkdtemp(join(tmpdir(),'altioris-requests-'))
+  const sent=Date.parse('2026-11-21T00:01:00+03:00')
+  let now=sent
+  const options={databasePath:join(directory,'queue.sqlite'),clock:()=>new Date(now).toISOString(),
+    passwords:Object.fromEntries(accounts.map(account=>[account.id,newPassword()]))}
+  let store
+  try {
+    store=openStore(options)
+    for(const account of accounts)for(const [type] of requestTypes)store.createRequest(account.id,type)
+    const advance=at=>{
+      now=sent+at
+      for(let batch=0;batch<4;batch++)store.advanceRequests()
+    }
+    advance(6_000)
+    assert.ok(store.dashboard('m').requests.every(item=>item.status==='Принята'))
+    store.close()
+    store=undefined
+    store=openStore(options)
+    advance(24_000)
+    advance(124_999)
+    assert.ok(store.dashboard('m').requests.every(item=>item.status==='В обработке'&&!item.documentId))
+    assert.equal(store.notifications('m').length,0)
+    advance(164_000)
+    const ids=new Set()
+    for(const account of accounts){
+      const {requests,notifications}=store.dashboard(account.id)
+      assert.equal(requests.length,5)
+      assert.equal(notifications.length,5)
+      for(const request of requests){
+        assert.equal(request.status,'Готова')
+        assert.equal(request.history.length,4)
+        const document=store.document(account.id,request.documentId)
+        assert.equal(document.type,request.type)
+        assert.equal(document.createdAt,request.history[0].at)
+        assert.equal(Buffer.from(document.pdf).subarray(0,8).toString(),'%PDF-1.4')
+        ids.add(document.id)
+        const notice=notifications.find(item=>item.href==='/requests?item='+request.id)
+        assert.equal(notice.at,document.createdAt)
+        assert.equal(store.document(account.id==='a'?'b':'a',document.id),undefined)
+      }
+    }
+    assert.equal(ids.size,65)
+    advance(300_000)
+    assert.equal(store.notifications('m').length,5)
+  } finally {
+    store?.close()
+    await rm(directory,{recursive:true,force:true})
+  }
+})
+
 test('private records, workspace actions and sessions are isolated and survive an actual server restart', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'altioris-test-'))
   const env = { ...credentials(), ALTIORIS_DB: join(directory, 'integration.sqlite'), ALTIORIS_CLOCK:'demo' }
-  let app = await launch(readConfig(env))
+  const submittedAt=Date.parse(demoClock)
+  let now=submittedAt
+  const config={...readConfig(env),clock:()=>new Date(now).toISOString()}
+  let app = await launch(config)
   try {
     const unauthorized = await app.request('/api/dashboard')
     assert.equal(unauthorized.status, 401)
@@ -157,13 +212,41 @@ test('private records, workspace actions and sessions are isolated and survive a
     assert.equal(snapshotA.documents.length, 0)
     assert.equal(snapshotA.notifications.length, 0)
 
-    const transcript = await app.request('/api/requests', {
-      method: 'POST', token: a.token, body: { type: 'transcript' },
-    })
+    const transcriptBody={type:'transcript',submissionId:'00000000-0000-4000-8000-000000000001'}
+    const sendRequest=body=>app.request('/api/requests',{method:'POST',token:a.token,body})
+    const transcript=await sendRequest(transcriptBody)
     assert.equal(transcript.status, 201)
     const { request: transcriptRequest } = await transcript.json()
-    assert.equal(transcriptRequest.status, 'Готова')
-    const path = '/api/documents/'+transcriptRequest.documentId
+    assert.equal(transcriptRequest.status,'Отправлена')
+    assert.equal(transcriptRequest.documentId,null)
+    assert.equal((await (await sendRequest(transcriptBody)).json()).request.id,transcriptRequest.id)
+    assert.equal((await sendRequest({...transcriptBody,type:'certificate'})).status,409)
+    const letter=await sendRequest({type:'certificate'})
+    assert.equal(letter.status,201)
+    const {request:pendingLetter}=await letter.json()
+    assert.ok(!(await dashboard(app,a.token)).notifications.some(item=>item.href.startsWith('/requests')))
+    const phase=async(ms,status)=>{
+      now=submittedAt+ms
+      const {requests}=await dashboard(app,a.token)
+      assert.equal(requests.find(item=>item.id===transcriptRequest.id).status,status)
+    }
+    await phase(6_000,'Принята')
+    await phase(24_000,'В обработке')
+    await phase(124_999,'В обработке')
+    const readyAt=submittedAt+164_000
+    now=readyAt
+    const db=new DatabaseSync(env.ALTIORIS_DB,{readOnly:true})
+    try {
+      const lookup=db.prepare('SELECT count(*) AS total FROM notifications WHERE owner=? AND type=?')
+      for(let attempt=0;attempt<20&&lookup.get('a','Документы').total<2;attempt++)await new Promise(resolve=>setTimeout(resolve,100))
+      assert.equal(lookup.get('a','Документы').total,2)
+    } finally { db.close() }
+    const issued=await dashboard(app,a.token)
+    const request=issued.requests.find(item=>item.id===pendingLetter.id)
+    assert.equal(request.status,'Готова')
+    assert.ok(request.documentId)
+    assert.equal(issued.notifications.filter(item=>item.href==='/requests?item='+request.id).length,1)
+    const path='/api/documents/'+issued.requests.find(item=>item.id===transcriptRequest.id).documentId
     assert.equal((await app.request(path,{ token: b.token })).status,404)
     const pdf = await app.request(path,{ token: a.token })
     assert.equal(pdf.status, 200)
@@ -173,14 +256,7 @@ test('private records, workspace actions and sessions are isolated and survive a
     assert.match(pdfText, /^%PDF-1\.4/)
     assert.match(pdfText, /\/Count 2 >>/)
 
-    const letter = await app.request('/api/requests', {
-      method: 'POST', token: a.token, body: { type: 'certificate' },
-    })
-    assert.equal(letter.status, 201)
-    const { request } = await letter.json()
-    assert.equal(request.status, 'Готова')
-    assert.ok(request.documentId)
-    assert.ok(!(await dashboard(app,a.token)).notifications.some(item=>item.href==='/requests?item='+request.id))
+    assert.match((await app.request(path+'?view=1',{token:a.token})).headers.get('content-disposition'),/^inline;/)
     const originDenied = await app.request('/api/profile', {
       method: 'PATCH', token: a.token, body: { avatar: 'initials' }, origin: 'https://another.example',
     })
@@ -228,10 +304,11 @@ test('private records, workspace actions and sessions are isolated and survive a
       PRAGMA user_version=2;
     `)
     legacy.close()
-    app = await launch(readConfig(env))
+    app = await launch(config)
     const saved = await dashboard(app, a.token)
     const owned = saved.requests.find(({ id }) => id === request.id)
-    assert.equal(owned.history.length, 2)
+    assert.equal(owned.history.length,4)
+    assert.deepEqual(owned.history.map(item=>Date.parse(item.at)),[readyAt,submittedAt+24_000,submittedAt+6_000,submittedAt])
     assert.equal(saved.requests.length, 2)
     assert.equal(saved.requests.some(({id})=>id==='024'),false)
     assert.equal(saved.notifications.some(({id})=>id==='a-ready'),false)
@@ -247,6 +324,7 @@ test('private records, workspace actions and sessions are isolated and survive a
     assert.equal(other.notifications.length,0)
     assert.equal((await app.request(`/api/documents/${request.documentId}`, { token: b.token })).status, 404)
     assert.equal((await app.request(`/api/documents/${request.documentId}`, { token: a.token })).status, 200)
+    assert.equal(Buffer.from(await (await app.request(path,{token:a.token})).arrayBuffer()).toString('latin1'),pdfText)
 
     const logout = await app.request('/api/logout', { method: 'POST', token: a.token })
     assert.equal(logout.status, 200)

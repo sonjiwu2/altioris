@@ -28,6 +28,8 @@ The campus pass uses the supplied front and back references. The navy face shows
 
 Use distinct illustrated glyphs for the passport, diploma and the four faculty facts. Teacher profiles use compact first-person copy under «О себе». The notification detail shows the topic, source, formatted message, Moscow receipt time and relevant link.
 
+Request types use illustrated radio options. The request inspector lists recorded stages chronologically with their Moscow timestamps and shows PDF actions after issuance. Request PDFs use the supplied certificate's ivory paper, burgundy shield, fine border, campus illustration and sample signature. Each type has its own content and accent, with an academic table in transcripts.
+
 ## Interaction contract
 
 Use 160 ms control feedback and 260 ms page entrance with cubic-bezier(.22,.7,.26,1). Use opacity and transform only for entrances. Honor both the OS reduced-motion preference and the account's browser setting. Keep native dialogs, form labels, URL state, history navigation, and visible focus. Buttons remain at least 44 CSS px high on touch screens.

@@ -14,6 +14,8 @@
 | server/fonts/GolosText-Regular.ttf | Static 400 instance of Golos Text, OFL 1.1 with notice retained | Embedded Cyrillic document typography |
 | public/ui.js | Original monochrome paths | Compact interactive controls |
 | public/features/detail-icons.js | Original illustrated SVG paths | Document rows, faculty facts and notification topics |
+| server/document-art/ | User-supplied Altioris certificate ornament and sample signature, cropped and optimized as JPEG | Branded request PDFs |
+| server/fonts/Philosopher-Regular.ttf | Philosopher, OFL 1.1 with notice retained | PDF headings and identity names |
 | public/assets/stickers/subject-*.webp | 24 separate ImageGen designs | One subject-specific paper sticker per discipline in the gradebook |
 | public/assets/stickers/*.webp (other files) | 36 separate ImageGen designs | Navigation, ranking, settings, support and illustrated details |
 

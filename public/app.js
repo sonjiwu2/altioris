@@ -3,7 +3,7 @@ import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-15';
 import { exams, onlineRoom, schedule } from './features/campus.js?v=20261120-16';
 import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-16';
 import { turnCampusPass } from './features/campus-pass.js?v=20261120-14';
-import { notifications, requests, support } from './features/services.js?v=20261120-17';
+import { notifications, requests, support } from './features/services.js?v=20261121-1';
 import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
 import { armNoticeSound, resetLiveNotice, showLiveNotice, toggleNoticeSound } from './features/live-notices.js';
 
@@ -189,13 +189,14 @@ async function refreshNotices(force=false){
   const fresh=updated.notifications.filter(item=>!item.read&&!known.has(item.id));
   snapshot=updated;
   const path=viewPath(location.pathname);
-  const liveView=path==='/notifications'||(path.startsWith('/schedule')&&JSON.stringify(updated.campus.lessons)!==JSON.stringify(prior.campus.lessons))||
+  const liveView=path==='/notifications'||(['/requests','/support'].includes(path)&&JSON.stringify(updated.requests)!==JSON.stringify(prior.requests))||
+   (path.startsWith('/schedule')&&JSON.stringify(updated.campus.lessons)!==JSON.stringify(prior.campus.lessons))||
    (path.startsWith('/grades')&&JSON.stringify(updated.grades)!==JSON.stringify(prior.grades))||
    (path==='/grades/ranking'&&JSON.stringify(updated.ranking)!==JSON.stringify(prior.ranking));
   if(liveView){
    const focused=document.activeElement;
    const href=focused?.closest('a[href]')?.href;
-   if(focused?.matches('input,select')||document.querySelector('dialog[open]')){
+   if(focused?.matches('input,select,textarea')||document.querySelector('dialog[open]')){
     deferredInboxView=location.href;
     updateInboxIndicators();
    }
@@ -290,6 +291,13 @@ app.addEventListener('submit',event=>{
  if(!kind){const query=new URLSearchParams(fields);for(const [name,value] of query)if(!value)query.delete(name);go(new URL(form.action).pathname+(query.size?'?'+query:''));return;}
  if(kind==='photo'){if(form.photoBlob)void save('photo',form.photoBlob,event.submitter,form.querySelector('.form-error'));return;}
  const body=Object.fromEntries(fields);if(kind==='message')body.action='message';
+ if(kind==='request'){
+  if(form.dataset.submissionType!==body.type){
+   form.dataset.submissionType=body.type;
+   form.dataset.submissionId=crypto.randomUUID();
+  }
+  body.submissionId=form.dataset.submissionId;
+ }
  void save(kind,body,event.submitter,form.querySelector('.form-error'));
 });
 app.addEventListener('click',event=>{
@@ -348,6 +356,14 @@ function restorePhotoPreview(form){
  form.querySelector('.photo-preview .portrait').outerHTML=portrait(snapshot.student);
 }
 app.addEventListener('close',event=>{
+ if(event.target.id==='request-dialog'){
+  const url=new URL(location.href);
+  if(url.searchParams.has('new')){
+   const pending=deferredInboxView===url.href;
+   url.searchParams.delete('new');history.replaceState(null,'',url);
+   if(pending)deferredInboxView=url.href;
+  }
+ }
  const form=event.target.querySelector?.('.photo-form');
  if(!form||!snapshot||!form.isConnected)return;
  disposePhotoPreview();
@@ -380,7 +396,7 @@ for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=
 for(const event of ['focusout','close'])document.addEventListener(event,()=>{
  if(deferredInboxView!==location.href)return;
  setTimeout(()=>{
-  if(deferredInboxView===location.href&&!document.activeElement?.matches('input,select')&&!document.querySelector('dialog[open]'))render();
+  if(deferredInboxView===location.href&&!document.activeElement?.matches('input,select,textarea')&&!document.querySelector('dialog[open]'))render();
  },0);
 },true);
 toast.addEventListener('click',event=>{

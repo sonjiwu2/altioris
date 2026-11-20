@@ -307,9 +307,12 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
       }
       if (method === 'POST' && pathname === '/api/requests') {
         const data = await readJson(req)
-        validateKeys(data, ['type'])
+        validateKeys(data, ['type','submissionId'])
         if (!requestTypes.has(data.type)) throw badRequest('Выберите вид заявки.')
-        json(res, 201, { request: store.createRequest(owner, data.type) })
+        if (data.submissionId!==undefined && (typeof data.submissionId!=='string'||!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/u.test(data.submissionId))) throw badRequest()
+        const request=store.createRequest(owner,data.type,data.submissionId)
+        if(!request)throw new HttpError(409,'Этот номер уже принадлежит другой заявке.')
+        json(res, 201, { request })
         return
       }
       if (method === 'PATCH' && pathname === '/api/notifications') {
@@ -374,7 +377,8 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
         }
         const document = identifier.test(id) && store.document(owner, id)
         if (!document) throw new HttpError(404, 'Документ не найден.')
-        attachment(res, demoPdf(document, store.profile(owner), account, store.grades(owner,document.createdAt)), 'application/pdf', `altioris-${id}.pdf`)
+        const pdf=document.pdf?Buffer.from(document.pdf):demoPdf(document,store.profile(owner),account,store.grades(owner,document.createdAt))
+        attachment(res,pdf,'application/pdf',`altioris-${id}.pdf`,searchParams.get('view')==='1'?'inline':'attachment')
         return
       }
       if (method === 'GET' && pathname === '/api/calendar/exams') {
