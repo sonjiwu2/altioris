@@ -8,6 +8,7 @@ import { join } from 'node:path'
 import test from 'node:test'
 import { DatabaseSync } from 'node:sqlite'
 import { createApplication, readConfig } from '../server/index.mjs'
+import { accounts } from '../server/fixtures.mjs'
 
 const newPassword = () => randomBytes(24).toString('base64url')
 
@@ -78,6 +79,43 @@ async function dashboard(app, token) {
   return response.json()
 }
 
+test('all demo students can open only their own two profile PDFs', async () => {
+  const env = Object.fromEntries(accounts.map(account=>[account.passwordEnv,newPassword()]))
+  const ids = new Set()
+  const foreignPath = '/api/documents/passport-alt-02481'
+  // Each memory server uses the normal per-address login rate limit.
+  for (const batch of [accounts.slice(0,7),accounts.slice(7)]) {
+    const app = await launch(readConfig({...env,ALTIORIS_DB:':memory:',ALTIORIS_CLOCK:'demo'}))
+    try {
+      assert.equal((await app.request(foreignPath)).status,401)
+      for (const account of batch) {
+        const signedIn = await app.request('/api/login',{method:'POST',body:{login:account.login,password:env[account.passwordEnv]}})
+        assert.equal(signedIn.status,200)
+        const token = signedIn.headers.get('set-cookie').split(';')[0]
+        const { profileDocuments, documents } = await dashboard(app,token)
+        assert.deepEqual(documents,[])
+        const [passport,diploma] = profileDocuments
+        assert.deepEqual(profileDocuments.map(doc=>doc.kind),['passport','diploma'])
+        assert.equal(passport.issuedOn,(Number(passport.birthDate.slice(0,4))+14)+passport.birthDate.slice(4))
+        assert.equal(diploma.issuedOn,`${account.profile.admissionYear}-06-25`)
+        for (const doc of profileDocuments) {
+          ids.add(doc.id)
+          const pdf = await app.request('/api/documents/'+doc.id,{token})
+          assert.equal(pdf.status,200)
+          assert.equal(pdf.headers.get('content-type'),'application/pdf')
+          assert.equal(pdf.headers.get('cache-control'),'no-store')
+          assert.match(pdf.headers.get('content-disposition'),/^inline;/)
+          assert.match(Buffer.from(await pdf.arrayBuffer()).subarray(0,8).toString(),/^%PDF-1.4/)
+        }
+        if (account.id!=='a') assert.equal((await app.request(foreignPath,{token})).status,404)
+      }
+    } finally {
+      await app.close()
+    }
+  }
+  assert.equal(ids.size,26)
+})
+
 test('private records, workspace actions and sessions are isolated and survive an actual server restart', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'altioris-test-'))
   const env = { ...credentials(), ALTIORIS_DB: join(directory, 'integration.sqlite'), ALTIORIS_CLOCK:'demo' }
@@ -100,6 +138,13 @@ test('private records, workspace actions and sessions are isolated and survive a
     assert.equal(a.student.email.endsWith('@altioris.example'), true)
     const snapshotA = await dashboard(app, a.token)
     const snapshotB = await dashboard(app, b.token)
+    assert.deepEqual(snapshotA.student.campusPass, {
+      photoUrl: '/assets/student-vetrova.webp', qrUrl: '/assets/pass-qr/ALT-02481.png',
+      expiresOn: '2028-06-30', active: true,
+    })
+    assert.equal(snapshotB.student.campusPass.photoUrl, '/assets/student-zolotov.webp')
+    assert.equal(snapshotB.student.campusPass.qrUrl, '/assets/pass-qr/ALT-02496.png')
+    assert.equal((await app.request(snapshotA.student.campusPass.qrUrl)).headers.get('content-type'), 'image/png')
     assert.notDeepEqual(snapshotA.grades, snapshotB.grades)
     assert.notDeepEqual(snapshotA.campus.lessons, snapshotB.campus.lessons)
     assert.equal(snapshotA.ranking.rank, 2)

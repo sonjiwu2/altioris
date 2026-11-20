@@ -2,13 +2,15 @@ import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { deflateSync } from 'node:zlib'
 import { gradesFor } from './fixtures.mjs'
-import { academicTerms } from './academic-year.mjs'
+import { academicTerms, academicTimeRange } from './academic-year.mjs'
+import { drawProfileDocument } from './profile-document-pages.mjs'
 
 const font = readFileSync(new URL('./fonts/GolosText-Regular.ttf', import.meta.url))
 const metrics = JSON.parse(readFileSync(new URL('./fonts/GolosText-Regular.metrics.json', import.meta.url), 'utf8'))
 const glyphMap = Buffer.alloc(65536 * 2)
 for (const [code, [glyph]] of Object.entries(metrics.chars)) glyphMap.writeUInt16BE(glyph, Number(code) * 2)
 const navy = '#092b50', gold = '#b78b35', ink = '#203248', muted = '#617080', cream = '#faf5e8'
+const shortDate = new Intl.DateTimeFormat('ru-RU', { timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric' })
 const color = hex => hex.slice(1).match(/../g).map(value => (parseInt(value, 16) / 255).toFixed(4)).join(' ')
 const encoded = text => Buffer.from(String(text), 'utf16le').swap16().toString('hex')
 const width = (text, size) => [...String(text)].reduce((sum, char) => sum + (metrics.chars[char.codePointAt(0)]?.[1] ?? 600), 0) * size / 1000
@@ -55,14 +57,17 @@ function renderPage(document, student, period, index, total) {
     const top = 280, rowHeight = 32
     rect(42, top, 511, 28, navy)
     text('Дисциплина', 53, top + 19, 9.5, '#ffffff')
-    text('Кредиты', 355, top + 19, 9.5, '#ffffff')
+    text('Контроль (МСК)', 292, top + 19, 9.5, '#ffffff')
+    text('Кредиты', 376, top + 19, 9.5, '#ffffff')
     text('Оценка', 423, top + 19, 9.5, '#ffffff')
     text('Результат', 474, top + 19, 9.5, '#ffffff')
     for (const [index, grade] of grades.entries()) {
       const y = top + 28 + index * rowHeight
       if (index % 2 === 0) rect(42, y, 511, rowHeight, cream)
-      paragraph(grade.title, 53, y + 15, 290, 9.2, ink, 11)
-      text(String(grade.credits), 370, y + 20, 10)
+      paragraph(grade.title, 53, y + 15, 230, 9.2, ink, 11)
+      text(shortDate.format(new Date(grade.assessmentStart)),292,y+13,8.3)
+      text(academicTimeRange(grade.assessmentStart,grade.assessedAt),292,y+25,8,muted)
+      text(String(grade.credits), 392, y + 20, 10)
       text(grade.mark == null ? '—' : String(grade.mark), 438, y + 20, 10)
       text(grade.result, 474, y + 20, 8)
       rule(y + rowHeight)
@@ -90,7 +95,7 @@ function renderPage(document, student, period, index, total) {
       ['Факультет', student.faculty], ['Образовательная программа', student.program],
       ['Курс / группа', student.year + ' курс · ' + student.group], ['Форма обучения', student.form],
       ['Год поступления', student.admissionYear], ['Кампус', student.campus],
-      ['Номер студенческого билета', student.number], ['Учебная почта', student.email],
+      ['UID студенческого пропуска', student.number], ['Учебная почта', student.email],
     ]) {
       text(label, 42, y, 9.2, muted)
       const bottom = paragraph(String(value), 238, y, 315, 10.2, ink, 15)
@@ -108,15 +113,7 @@ function renderPage(document, student, period, index, total) {
   return commands.join('\n')
 }
 
-export function studentPdf(document, student, account) {
-  let periods = [null]
-  if (/успеваемост/iu.test(document.title)) {
-    const published = gradesFor(account, document.createdAt).filter(grade=>grade.published)
-    periods = academicTerms.map(term=>({
-      label:term.label,grades:published.filter(grade=>grade.termId===term.id),
-    })).filter(term=>term.grades.length)
-    if (!periods.length) periods = [{label:'Итоговые результаты',grades:[]}]
-  }
+function makePdf(title, pageSpecs) {
   const objects = []
   const add = object => (objects.push(Buffer.isBuffer(object) ? object : Buffer.from(object, 'ascii')), objects.length)
   const fontFile = add(compressedStream(font, '/Length1 ' + font.length))
@@ -129,13 +126,22 @@ export function studentPdf(document, student, account) {
   const fontObject = add('<< /Type /Font /Subtype /Type0 /BaseFont /GolosText-Regular /Encoding /Identity-H /DescendantFonts [' + descendant + ' 0 R] /ToUnicode ' + cmap + ' 0 R >>')
   const opacity = add('<< /Type /ExtGState /ca .09 /CA .09 >>')
   const pages = add('')
-  const kids = periods.map((period,index)=>{
-    const contents = add(compressedStream(renderPage(document,student,period,index+1,periods.length)))
-    return add('<< /Type /Page /Parent ' + pages + ' 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ' + fontObject + ' 0 R >> /ExtGState << /Watermark ' + opacity + ' 0 R >> >> /Contents ' + contents + ' 0 R >>')
+  const kids = pageSpecs.map(({pageWidth,pageHeight,draw,jpeg})=>{
+    const contents = add(compressedStream(draw))
+    let images = ''
+    if (jpeg) {
+      const {data,width,height} = jpeg
+      const image = add(Buffer.concat([
+        Buffer.from(`<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${data.length} >>\nstream\n`),
+        data, Buffer.from('\nendstream'),
+      ]))
+      images = `/XObject << /Portrait ${image} 0 R >>`
+    }
+    return add(`<< /Type /Page /Parent ${pages} 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${fontObject} 0 R >> /ExtGState << /Watermark ${opacity} 0 R >> ${images} >> /Contents ${contents} 0 R >>`)
   })
   objects[pages - 1] = Buffer.from('<< /Type /Pages /Kids [' + kids.map(id=>id+' 0 R').join(' ') + '] /Count '+kids.length+' >>')
   const catalog = add('<< /Type /Catalog /Pages ' + pages + ' 0 R >>')
-  const info = add('<< /Producer (Altioris University) /Title <FEFF' + encoded(document.title) + '> >>')
+  const info = add('<< /Producer (Altioris University) /Title <FEFF' + encoded(title) + '> >>')
   const chunks = [Buffer.from('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n', 'latin1')], offsets = [0]
   let length = chunks[0].length
   for (const [index, object] of objects.entries()) {
@@ -146,5 +152,45 @@ export function studentPdf(document, student, account) {
   const xref = 'xref\n0 ' + (objects.length + 1) + '\n0000000000 65535 f \n' + offsets.slice(1).map(offset => String(offset).padStart(10, '0') + ' 00000 n \n').join('')
   chunks.push(Buffer.from(xref + 'trailer\n<< /Size ' + (objects.length + 1) + ' /Root ' + catalog + ' 0 R /Info ' + info + ' 0 R >>\nstartxref\n' + length + '\n%%EOF\n'))
   return Buffer.concat(chunks)
+}
+
+export function studentPdf(document, student, account) {
+  let periods = [null]
+  if (/успеваемост/iu.test(document.title)) {
+    const published = gradesFor(account, document.createdAt).filter(grade=>grade.published)
+    periods = academicTerms.map(term=>({
+      label:term.sessionLabel,grades:published.filter(grade=>grade.termId===term.id),
+    })).filter(term=>term.grades.length)
+    if (!periods.length) periods = [{label:'Итоговые результаты',grades:[]}]
+  }
+  return makePdf(document.title, periods.map((period,index)=>({
+    pageWidth:595, pageHeight:842, draw:renderPage(document,student,period,index+1,periods.length),
+  })))
+}
+
+export function profileDocumentPdf(document, account) {
+  const pageWidth=842, pageHeight=595
+  const commands=[]
+  const text=(value,x,y,size,fill)=>commands.push(`BT /F1 ${size} Tf ${color(fill)} rg 1 0 0 1 ${x} ${pageHeight-y} Tm <${encoded(value)}> Tj ET`)
+  const canvas={
+    pageWidth,pageHeight,text,width,
+    center:(value,x,y,size,fill)=>text(value,x-width(value,size)/2,y,size,fill),
+    rect:(x,y,w,h,fill)=>commands.push(`${color(fill)} rg ${x} ${pageHeight-y-h} ${w} ${h} re f`),
+    outline:(points,stroke,thickness=1,fill)=>{
+      const path=points.map(([x,y],i)=>`${x} ${pageHeight-y} ${i===0?'m':'l'}`).join(' ')
+      commands.push(`q ${color(stroke)} RG ${thickness} w ${fill?color(fill)+' rg ':''}${path} ${fill?'h B':'S'} Q`)
+    },
+    curves:(start,segments,fill)=>{
+      const point=([x,y])=>`${x.toFixed(2)} ${(pageHeight-y).toFixed(2)}`
+      const path=segments.map(segment=>segment.map(point).join(' ')+' c').join(' ')
+      commands.push(`${color(fill)} rg ${point(start)} m ${path} h f`)
+    },
+    portrait:(x,y,w,h)=>commands.push(`q ${w} 0 0 ${h} ${x} ${pageHeight-y-h} cm /Portrait Do Q`),
+  }
+  drawProfileDocument(canvas, document, account.profile.name)
+  const jpeg=document.kind==='passport' ? {
+    data:readFileSync(new URL(`./portraits/${account.login}.jpg`,import.meta.url)), width:240,height:320,
+  } : undefined
+  return makePdf(document.title,[{pageWidth,pageHeight,draw:commands.join('\n'),jpeg}])
 }
 

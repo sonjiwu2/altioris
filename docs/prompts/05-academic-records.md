@@ -10,7 +10,7 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 
 ## Role
 
-Match grades, ranking, teachers and profile references. Calculate weighted GPA from enabled accounts. Keep per-person portraits, full names, retake facts and true profile/documents aligned with the snapshot.
+Match grades, ranking, teachers and profile references. Calculate weighted GPA from enabled accounts. Use the signed-in account's assigned portrait and UID on the campus pass. Match the supplied pass faces and the prototype flip, with a keyboard control and reduced motion. Add the owner's fictional passport and diploma to the profile. Cross-check session labels, calendar years, and Moscow assessment intervals against exams, rankings and transcripts.
 
 ## Completion
 

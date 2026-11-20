@@ -8,7 +8,7 @@ Node.js 24+ serves buildless HTML, CSS, browser ES modules, local fonts and artw
 | POST /api/logout | Session revocation |
 | GET /api/dashboard | Student, campus, grades, published session standings, next ranking publication and owned records |
 | POST /api/requests | Owned request/history/document generation |
-| GET /api/documents/:id | Ownership-checked sample PDF |
+| GET /api/documents/:id | Ownership-checked PDF. Opens profile documents inline and downloads request documents |
 | GET /api/notifications | Owned events and current academic reminders |
 | PATCH /api/notifications | Owned read state |
 | PATCH /api/profile | Owned avatar selection |
@@ -23,7 +23,7 @@ Visual tokens and screen composition are specified in DESIGN.md. Runtime image a
 
 ## Documents
 
-server/pdf.mjs generates an A4 certificate or academic transcript with an embedded static Golos Text font, Unicode mapping, navy/gold layout, student details, grade rows and actual mean/GPA. Transcripts include published outcomes as of the issue date and start each term on a separate page. PDFs keep their sample watermark and require an ownership check. Font binaries and metrics are prebuilt; the app needs no PDF dependency at runtime.
+server/pdf.mjs generates A4 PDFs with an embedded static Golos Text font and Unicode mapping. Transcripts include published outcomes as of the issue date, Moscow assessment times from the timetable, and a separate page for each session. The profile passport and diploma are rendered from the authenticated account's fictional fixtures. The passport uses the assigned synthetic portrait and an issue date on the 14th birthday. The diploma is issued in June of the admission year. All PDFs identify themselves as samples and require an ownership check. Font binaries and metrics are prebuilt. The app needs no PDF dependency at runtime.
 
 ## Profile images
 

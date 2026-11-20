@@ -75,7 +75,7 @@ function summarize(grades) {
 
 const sessionSeasons = academicTerms.map(term=>({
   id:term.id,
-  label:(term.id.endsWith('-autumn')?'Зимняя сессия ':'Летняя сессия ')+term.end.slice(0,4),
+  label:term.sessionLabel,
   publishedAt:new Date(Date.parse(term.end+'T00:00:00+03:00')+86_400_000).toISOString(),
 }))
 

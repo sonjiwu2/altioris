@@ -24,16 +24,21 @@ export const brand='<span class="brand"><img src="/assets/crest.webp" alt="" wid
 const zone={timeZone:'Europe/Moscow'};
 export const when=value=>value?new Intl.DateTimeFormat('ru-RU',{...zone,hour:'2-digit',minute:'2-digit'}).format(new Date(value)):'';
 export const date=value=>value?new Intl.DateTimeFormat('ru-RU',{...zone,day:'numeric',month:'long'}).format(new Date(value)):'';
+export const calendarDate = new Intl.DateTimeFormat('ru-RU',{...zone,day:'numeric',month:'long',year:'numeric'});
 export const dayName=value=>new Intl.DateTimeFormat('ru-RU',{...zone,weekday:'long',day:'numeric',month:'long'}).format(new Date(value));
 export const key=value=>new Intl.DateTimeFormat('en-CA',{...zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value));
 export const decimal=value=>value==null?'—':new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2,minimumFractionDigits:2}).format(value);
 export const range=(start,end)=>when(start)+'–'+when(end);
-export const detailedDate=value=>value?date(value)+' · '+when(value):'—';
+export const assessmentDateTime=(start,end)=>calendarDate.format(new Date(start))+' · '+range(start,end);
+export const detailedDate=value=>value?calendarDate.format(new Date(value))+' · '+when(value):'—';
 export const empty=message=>'<div class="empty">'+icon('books')+'<p>'+escape(message)+'</p></div>';
 export const safeLink=href=>typeof href==='string'&&/^\/(?!\/)[a-z0-9/]+(?:\?[a-z0-9=&%_-]+)?$/i.test(href)?escape(href):'';
 export const line=(glyph,text)=>'<div class="info-line">'+icon(glyph)+'<span>'+text+'</span></div>';
 export const badge=(text,tone='')=>'<span class="badge '+tone+'">'+escape(text)+'</span>';
 export const tab=(path,title,selected,glyph='')=>'<a class="tab" href="'+path+'"'+(selected?' aria-current="page"':'')+'>'+(glyph?icon(glyph):'')+title+'</a>';
+export const academicPeriods=({years,terms})=>years.flatMap(year=>[
+ year,...terms.filter(term=>year.termIds.includes(term.id)).map(term=>({...term,label:term.sessionLabel})),
+]);
 export function termPicker(path, terms, selected){
  return '<form class="term-picker" action="'+path+'" data-quick-filter>'+
   '<label><span class="sr-only">Учебный период</span><select name="term">'+

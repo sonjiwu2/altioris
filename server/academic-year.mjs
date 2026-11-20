@@ -53,7 +53,10 @@ const rotations = [
   [[[0,0],[1,1],[2,2,3],[3,3,2]], [[1,5,0],[2,0,5]], [[1,2],[2,4,1],[3,1,4]], [[1,4]], [[1,5],[2,3]]],
   [[[1,1],[2,0]], [[0,2],[1,5],[2,3,4],[3,4,3]], [], [[1,4],[2,2,5],[3,5,2]], [[1,3]]],
 ];
-const dateLabel = new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow',day:'numeric',month:'long'});
+const dateLabel = new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow',day:'numeric',month:'long',year:'numeric'});
+const timeLabel = new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow',hour:'2-digit',minute:'2-digit'});
+export const academicTimeRange=(start,end)=>timeLabel.format(new Date(start))+'–'+timeLabel.format(new Date(end));
+export const academicDateTime=(start,end)=>dateLabel.format(new Date(start))+' · '+academicTimeRange(start,end);
 const dayMs = 86_400_000;
 
 function days(from,to){
@@ -106,6 +109,7 @@ function buildCalendar(group){
 }
 
 const calendars = [buildCalendar(0),buildCalendar(1)];
+const examsById=calendars.map(({exams})=>new Map(exams.map(exam=>[exam.id,exam])));
 const teachingHours = calendars.map(({lessons})=>{
   const hours=new Map();
   for(const {courseId} of lessons){
@@ -113,7 +117,13 @@ const teachingHours = calendars.map(({lessons})=>{
   }
   return hours;
 });
-export const academicTerms = terms.map(({courses,...term})=>term);
+export const academicTerms = terms.map(({courses,...term})=>{
+  const startYear=term.sessionStart.slice(0,4), endYear=term.end.slice(0,4);
+  const sessionLabel=term.id.endsWith('-autumn')
+    ? `Зимняя сессия ${startYear}/${endYear.slice(-2)}`
+    : `Летняя сессия ${endYear}`;
+  return {...term,sessionLabel};
+});
 const academicYears = academicTerms.filter(term=>term.id.endsWith('-autumn')).map(term=>{
   const startYear=Number(term.start.slice(0,4)),nextYear=startYear+1;
   return {id:startYear+'-'+String(nextYear).slice(-2),label:startYear+'/'+String(nextYear).slice(-2)+' · весь год',
@@ -124,24 +134,25 @@ export const courseForTeacher = id => terms.flatMap(term=>term.courses).find(cou
 export function timetableFor(account,clock){
   const today=moscowDay(clock);
   const current=academicTerms.findLast(term=>term.start<=today)??academicTerms[0];
+  const examTerm=academicTerms.find(term=>term.end>=today)??academicTerms.at(-1);
   return {
     clock, displayDay:today<academicTerms[0].start?academicTerms[0].start:today>academicTerms.at(-1).end?academicTerms.at(-1).end:today,
-    currentTerm:current.id, terms:academicTerms, years:academicYears,
+    currentTerm:current.id, examTerm:examTerm.id, terms:academicTerms, years:academicYears,
     ...calendars[account.groupIndex],
   };
 }
 
 export function academicGrades(account,clock){
-  const exams=calendars[account.groupIndex].exams;
+  const exams=examsById[account.groupIndex];
   return terms.flatMap((term,termIndex)=>term.courses.map((course,courseIndex)=>{
-    const exam=exams[termIndex*term.courses.length+courseIndex];
+    const exam=exams.get(course.id);
     const published=Date.parse(exam.end)<=Date.parse(clock);
     const source=account.marks[(courseIndex+termIndex)%account.marks.length]??7;
     const mark=published&&course.assessment!=='Зачёт'?Math.min(10,Math.max(4,source+(courseIndex%3)-1)):null;
     const result=!published?'Ожидается':mark===null?'Зачтено':mark>=8?'Отлично':mark>=6?'Хорошо':'Удовлетворительно';
     return {...course,termId:term.id,mark,result,examId:exam.id,published,
       hours:course.credits*36,classHours:teachingHours[account.groupIndex].get(course.id)??0,
-      assessedAt:exam.end};
+      assessmentStart:exam.start, assessedAt:exam.end};
   }));
 }
 
@@ -152,7 +163,7 @@ export function academicNotices(campus,grades){
     const recent=now-Date.parse(exam.end);
     if(upcoming>0&&upcoming<=7*day) return [{
       id:'reminder-'+exam.id,title:exam.type+' · '+exam.title,type:'Дедлайн',
-      body:dateLabel.format(new Date(exam.start))+' · '+exam.start.slice(11,16)+' · '+exam.room,
+      body:academicDateTime(exam.start,exam.end)+' · '+exam.room,
       at:new Date(Date.parse(exam.start)-7*day).toISOString(),href:'/schedule/exams?item='+exam.id,
     }];
     if(recent>=0&&recent<14*day){

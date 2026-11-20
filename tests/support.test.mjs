@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { accounts, campusFor, demoClock, teachers } from '../server/fixtures.mjs'
 import { searchTeachers } from '../public/features/teacher-search.js'
-import { academicGrades } from '../server/academic-year.mjs'
+import { academicDateTime, academicGrades } from '../server/academic-year.mjs'
+import { calendar } from '../server/exports.mjs'
 import { openStore } from '../server/store.mjs'
 
 test('faculty search matches name parts and combines them with the separate department filter',()=>{
@@ -100,7 +101,9 @@ test('the guided assistant resolves owned records and meaningful student intents
 test('the annual plan covers both sessions with no group, teacher or room conflicts',()=>{
   const campuses = ['a','b'].map(owner=>campusFor(owner,demoClock))
   const [a,b] = campuses
-  assert.equal(a.terms.length,4)
+  assert.deepEqual(a.terms.map(term=>term.sessionLabel), [
+    'Зимняя сессия 2025/26', 'Летняя сессия 2026', 'Зимняя сессия 2026/27', 'Летняя сессия 2027',
+  ])
   const assignments = new Map()
   for(const [group,campus] of campuses.entries()){
     assert.equal(new Set(campus.lessons.map(lesson=>lesson.id)).size,campus.lessons.length)
@@ -158,6 +161,30 @@ test('the annual plan covers both sessions with no group, teacher or room confli
   }
 })
 
+test('gradebook, session selection and calendar export use identical assessment times', () => {
+  for (const account of accounts) {
+    const campus = campusFor(account.id,demoClock)
+    const grades = academicGrades(account,demoClock)
+    const ics = calendar(campus.exams,campus.clock)
+    for (const exam of campus.exams) {
+      const grade = grades.find(grade=>grade.examId===exam.id)
+      assert.equal(grade.termId,exam.termId)
+      assert.equal(grade.assessmentStart,exam.start)
+      assert.equal(grade.assessedAt,exam.end)
+      const event = ics.split('BEGIN:VEVENT').find(record=>record.includes(`UID:${exam.id}@altioris.example`))
+      const stamp = time=>new Date(time).toISOString().replaceAll(/[-:]|\.\d{3}/g,'')
+      assert.ok(event.includes(`DTSTART:${stamp(exam.start)}\r\nDTEND:${stamp(exam.end)}`))
+      const closing = Date.parse(exam.end)
+      for (const [time,published] of [[closing-1,false],[closing,true]]) {
+        const assessed = academicGrades(account,new Date(time).toISOString()).find(grade=>grade.examId===exam.id)
+        assert.equal(assessed.published,published)
+      }
+    }
+  }
+  assert.equal(campusFor('a','2027-01-22T20:59:59Z').examTerm,'2026-autumn')
+  assert.equal(campusFor('a','2027-01-22T21:00:00Z').examTerm,'2027-spring')
+})
+
 test('academic notices appear at the right time and never reset the read state',()=>{
   let now='2026-12-13T12:00:00+03:00'
   const store=openStore({databasePath:':memory:',passwords:{a:'isolated-test-password-a',b:'isolated-test-password-b'},clock:()=>now})
@@ -166,6 +193,8 @@ test('academic notices appear at the right time and never reset the read state',
     now='2026-12-14T11:00:00+03:00'
     const [reminder]=store.notifications('a')
     assert.equal(reminder.href,'/schedule/exams?item=2026-autumn-theory')
+    const exam=store.campus('a').exams.find(item=>item.id==='2026-autumn-theory')
+    assert.ok(reminder.body.includes(academicDateTime(exam.start,exam.end)))
     assert.equal(reminder.read,false)
     assert.deepEqual(store.notifications('b'),[])
     store.markNotification('a',reminder.id)
@@ -188,6 +217,7 @@ test('seasonal rankings publish once after each session and compare places',()=>
     assert.equal(ranking().nextSeason.id,'2025-autumn')
     now='2026-01-20T00:00:00+03:00'
     const winter=ranking().seasons[0]
+    assert.equal(winter.label,store.campus('a').terms[0].sessionLabel)
     assert.equal(winter.rank,4)
     assert.equal(winter.change,null)
     assert.equal(winter.gpa,(8*7+8*6+8*5+7*5)/(7+6+5+5))

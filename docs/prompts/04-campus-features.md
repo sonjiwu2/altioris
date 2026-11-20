@@ -14,6 +14,8 @@ Match 02-schedule and 03-exams. Align independent day columns by time slot; use 
 
 ## Completion
 
+Label exam periods as winter and summer sessions. Use the calendar year of each assessment in the exam list, including the January dates in winter sessions.
+
 Deliver working code within the assigned scope, the exact checks performed, and any remaining visual or functional differences. Follow DESIGN.md and preserve account ownership and ignored runtime state.
 
 ## Annual calendar and academic records

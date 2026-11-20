@@ -6,6 +6,8 @@ import { pipeline } from 'node:stream/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { accounts, demoClock, requestTypes } from './fixtures.mjs'
 import { calendar, demoPdf } from './exports.mjs'
+import { profileDocumentPdf } from './pdf.mjs'
+import { profileDocumentsFor } from './profile-documents.mjs'
 import { openStore, sessionLifetime } from './store.mjs'
 import { configuredPasswords } from './demo-accounts.mjs'
 
@@ -161,10 +163,10 @@ function setHeaders(res) {
   ].join('; '))
 }
 
-function attachment(res, value, type, filename) {
+function attachment(res, value, type, filename, disposition = 'attachment') {
   res.writeHead(200, {
     'Content-Type': type,
-    'Content-Disposition': `attachment; filename="${filename}"`,
+    'Content-Disposition': `${disposition}; filename="${filename}"`,
     'Content-Length': Buffer.byteLength(value),
   })
   res.end(value)
@@ -357,15 +359,20 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
       }
       if (method === 'GET' && pathname.startsWith('/api/documents/')) {
         const id = pathname.slice('/api/documents/'.length)
+        const account = accounts.find(({ id: accountId }) => accountId === owner)
+        const profileDocument = profileDocumentsFor(account).find(item => item.id === id)
+        if (profileDocument) {
+          attachment(res, profileDocumentPdf(profileDocument, account), 'application/pdf', `altioris-${id}.pdf`, 'inline')
+          return
+        }
         const document = identifier.test(id) && store.document(owner, id)
         if (!document) throw new HttpError(404, 'Документ не найден.')
-        const account = accounts.find(({ id: accountId }) => accountId === owner)
         attachment(res, demoPdf(document, store.profile(owner), account), 'application/pdf', `altioris-${id}.pdf`)
         return
       }
       if (method === 'GET' && pathname === '/api/calendar/exams') {
         const campus = store.campus(owner)
-        const term = searchParams.get('term') ?? campus.currentTerm
+        const term = searchParams.get('term') ?? campus.examTerm
         const period = [...campus.terms,...campus.years].find(item=>item.id===term)
         if (!period) throw badRequest('Выберите учебный период.')
         const termIds = period.termIds ?? [period.id]

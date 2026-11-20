@@ -4,7 +4,8 @@ import { dirname } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { promisify } from 'node:util'
 import { accounts, campusFor, gradesFor, rankingFor, requestTypes, teachers } from './fixtures.mjs'
-import { academicNotices, moscowDay } from './academic-year.mjs'
+import { academicDateTime, academicNotices, academicTimeRange, moscowDay } from './academic-year.mjs'
+import { profileDocumentsFor } from './profile-documents.mjs'
 
 const derive = promisify(scrypt)
 export const sessionLifetime = 60 * 60 * 12
@@ -172,7 +173,14 @@ export function openStore({ databasePath, passwords, clock }) {
     function profile(owner) {
       const account = accounts.find(({ id }) => id === owner)
       const image = db.prepare('SELECT revision FROM profile_images WHERE owner = ?').get(owner)
+      const expiresOn = `${account.profile.admissionYear + 4}-06-30`
       return { ...account.profile, avatar: image ? 'custom' : 'initials',
+        campusPass: {
+          photoUrl: `/assets/student-${account.login}.webp`,
+          qrUrl: `/assets/pass-qr/${account.profile.number}.png`,
+          expiresOn,
+          active: moscowDay(clock()) <= expiresOn,
+        },
         ...(image ? { avatarUrl: '/api/profile/avatar?v=' + image.revision } : {}) }
     }
 
@@ -264,13 +272,12 @@ export function openStore({ databasePath, passwords, clock }) {
           href = next ? '/schedule?lesson='+next.id : '/schedule'
         } else if (/экзамен|сесси|зач[её]т|контрол/u.test(query)) {
           const next = campusFor(owner, at).exams.find(item=>Date.parse(item.start)>=Date.parse(at))
-          const when = next ? new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(next.start)) : ''
-          text = next ? `Ближайший контроль: ${next.title}, ${when}. ${next.room}. В разделе экзаменов есть остальные даты и экспорт в календарь.` : 'Назначенных экзаменов пока нет. Учебный офис опубликует их в расписании.'
+          text = next ? `Ближайший контроль: ${next.title}, ${academicDateTime(next.start,next.end)}. ${next.room}. Остальные даты есть в разделе экзаменов.` : 'Назначенных экзаменов пока нет. Учебный офис опубликует их в расписании.'
           href = next ? '/schedule/exams?item='+next.id : '/schedule/exams'
         } else {
           const day = moscowDay(at)
-          const lessons = campusFor(owner, at).lessons.filter((item) => item.start.slice(0, 10) === day)
-          text = lessons.length ? 'Сегодня в расписании:\n' + lessons.map((item) => `${item.start.slice(11, 16)}–${item.end.slice(11, 16)} · ${item.title} · ${item.room}`).join('\n') : 'Сегодня занятий нет. Даты других занятий можно посмотреть в расписании.'
+          const lessons = campusFor(owner, at).lessons.filter((item) => moscowDay(item.start) === day)
+          text = lessons.length ? 'Сегодня в расписании:\n' + lessons.map((item) => `${academicTimeRange(item.start,item.end)} · ${item.title} · ${item.room}`).join('\n') : 'Сегодня занятий нет. Даты других занятий можно посмотреть в расписании.'
           href = '/schedule'
         }
       } else if (action === 'greeting') {
@@ -330,7 +337,8 @@ export function openStore({ databasePath, passwords, clock }) {
         return {
           student: profile(owner), campus, grades, requestTypes:[...requestTypes],
           ranking: rankingFor(account, grades, accounts.filter(({ id }) => passwords[id] !== undefined), campus.clock),
-          requests: requests(owner), documents, notifications:notifications(owner,campus,grades), support,
+          requests: requests(owner), documents, profileDocuments:profileDocumentsFor(account),
+          notifications:notifications(owner,campus,grades), support,
         }
       },
       document(owner, id) {

@@ -1,10 +1,9 @@
-import { escape as e, badge, date, empty, icon, key, line, portrait, range, tab, termPicker } from '../ui.js?v=20261120-12';
+import { escape as e, academicPeriods, assessmentDateTime, badge, calendarDate, date, empty, icon, key, line, portrait, range, tab, termPicker } from '../ui.js?v=20261120-15';
 
 const moscow = {timeZone:'Europe/Moscow'};
 const fullDay = value => value+'T12:00:00+03:00';
 const monthLabel = new Intl.DateTimeFormat('ru-RU',{...moscow,month:'long'});
 const weekdayLabel = new Intl.DateTimeFormat('ru-RU',{...moscow,weekday:'short'});
-const dateWithYear = new Intl.DateTimeFormat('ru-RU',{...moscow,day:'numeric',month:'long',year:'numeric'});
 const header = exams => '<h1>Расписание</h1><nav class="tabs" aria-label="Виды расписания">'+
  tab('/schedule','Занятия',!exams,'calendar')+tab('/schedule/exams','Экзамены',exams,'doc')+'</nav>';
 
@@ -15,8 +14,9 @@ function startOfWeek(day){
  return shiftDay(day,-((new Date(fullDay(day)).getUTCDay()+6)%7));
 }
 function weekLabel(start,end){
- if(start.slice(0,7)!==end.slice(0,7))return date(fullDay(start))+' — '+dateWithYear.format(new Date(fullDay(end)));
- return Number(start.slice(-2))+'–'+dateWithYear.format(new Date(fullDay(end)));
+ if(start.slice(0,4)!==end.slice(0,4))return calendarDate.format(new Date(fullDay(start)))+' — '+calendarDate.format(new Date(fullDay(end)));
+ if(start.slice(0,7)!==end.slice(0,7))return date(fullDay(start))+' — '+calendarDate.format(new Date(fullDay(end)));
+ return Number(start.slice(-2))+'–'+calendarDate.format(new Date(fullDay(end)));
 }
 function periodArrow(day, direction, mode, disabled){
  const label=(direction==='left'?'Предыдущ':'Следующ')+(mode==='day'?'ий день':'ая неделя');
@@ -41,7 +41,7 @@ function lessonDetails(selected,teachers){
  if(!selected)return empty('Выберите дату с занятиями.');
  const online=selected.format==='online';
  return badge('Выбранное занятие','sage')+'<h2>'+e(selected.title)+'</h2>'+
-  line('clock','Время<strong>'+dateWithYear.format(new Date(selected.start))+' · '+range(selected.start,selected.end)+'</strong>')+
+  line('clock','Время<strong>'+assessmentDateTime(selected.start,selected.end)+'</strong>')+
   teacherLine(teachers.find(teacher=>teacher.id===selected.teacherId))+
   line('people','Вид занятия<strong>'+e(selected.type)+'</strong>')+
   line(online?'computer':'pin','Формат<strong>'+(online?'Онлайн':'Очно · '+e(selected.room))+'</strong>')+
@@ -61,7 +61,7 @@ export function schedule({campus},params){
  const visible=campus.lessons.filter(lesson=>days.includes(key(lesson.start)));
  const slots=[...new Set(visible.map(lesson=>lesson.slot))].sort((a,b)=>a-b);
  const selected=active??visible.find(lesson=>key(lesson.start)===day)??visible[0];
- const title=mode==='day'?dateWithYear.format(new Date(fullDay(day))):weekLabel(week,last);
+ const title=mode==='day'?calendarDate.format(new Date(fullDay(day))):weekLabel(week,last);
  const previous=shiftDay(day,-distance),next=shiftDay(day,distance);
  const toolbar='<div class="calendar-tools"><div class="inline-group">'+
   periodArrow(previous<earliest?earliest:previous,'left',mode,mode==='day'?day===earliest:week<=earliest)+
@@ -83,24 +83,25 @@ export function schedule({campus},params){
 
 export function exams({campus,grades},params){
  const requested=campus.exams.find(exam=>exam.id===params.get('item'));
- const periods=[...campus.years,...campus.terms];
- const period=periods.find(item=>item.id===params.get('term'))??periods.find(item=>item.id===(requested?.termId??campus.currentTerm));
+ const periods=academicPeriods(campus);
+ const period=periods.find(item=>item.id===params.get('term'))??periods.find(item=>item.id===(requested?.termId??campus.examTerm));
  const termIds=period.termIds??[period.id];
  const scheduled=campus.exams.filter(exam=>termIds.includes(exam.termId));
  const results=new Map(grades.filter(grade=>grade.published).map(grade=>[grade.examId,grade]));
  const selected=scheduled.find(exam=>exam.id===requested?.id)??scheduled[0];
  const result=results.get(selected?.id);
  const cards=scheduled.map(exam=>{
-  const timestamp=new Date(exam.start);
+  const parts=calendarDate.formatToParts(new Date(exam.start));
+  const part=type=>parts.find(item=>item.type===type).value;
   const score=results.get(exam.id);
   return '<a class="exam-event '+(selected?.id===exam.id?'active':'')+'" href="/schedule/exams?term='+e(period.id)+'&amp;item='+e(exam.id)+'"'+
-   (selected?.id===exam.id?' aria-current="true"':'')+'><div class="exam-date"><strong>'+Number(key(exam.start).slice(-2))+
-   '</strong><small>'+monthLabel.format(timestamp)+'</small></div><div><h3>'+e(exam.title)+'</h3><p>'+range(exam.start,exam.end)+' · '+
+   (selected?.id===exam.id?' aria-current="true"':'')+'><time class="exam-date" datetime="'+e(key(exam.start))+'"><strong>'+part('day')+
+   '</strong><small>'+part('month')+'</small><small class="exam-year">'+part('year')+'</small></time><div><h3>'+e(exam.title)+'</h3><p>'+range(exam.start,exam.end)+' · '+
    e(exam.room)+'</p><div class="inline-group exam-status">'+badge(exam.type,exam.type==='Экзамен'?'peach':'sage')+
    (score?badge(score.mark===null?score.result:score.mark+' из 10','sage'):'')+'</div></div></a>';
  }).join('');
  const details=selected?badge('Выбранный контроль','sage')+'<h2>'+e(selected.title)+'</h2>'+
-  line('calendar','Время<strong>'+dateWithYear.format(new Date(selected.start))+' · '+range(selected.start,selected.end)+'</strong>')+
+  line('calendar','Время<strong>'+assessmentDateTime(selected.start,selected.end)+'</strong>')+
   line('pin','Аудитория<strong>'+e(selected.room)+'</strong>')+
   teacherLine(campus.teachers.find(teacher=>teacher.id===selected.teacherId))+
   line('doc','Тип контроля<strong>'+e(selected.type)+'</strong>')+

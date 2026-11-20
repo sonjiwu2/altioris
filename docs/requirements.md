@@ -17,7 +17,7 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 - Requests persist, have actual recorded history and owned PDFs. The same records appear in chat cards and profile documents.
 - Notifications are produced by actual request status, examination windows and result publication. Their read state persists and links open the relevant item.
 - Settings support light, dark and system themes, a 100/115/130% text control, current session and sign-out. Theme and text scale survive reload and stay separate for each account. Animations honor the operating system preference.
-- Profile shows the signed-in student's details, initials or an uploaded avatar, and an explicitly labeled sample student card. The rail profile link stays separate from the main navigation.
+- Profile shows the signed-in student's details, initials or an uploaded avatar, a two-sided sample campus pass and two owner-only PDFs for the fictional passport and school diploma. The rail profile link stays separate from the main navigation.
 - Support responds to status, certificate, grade/ranking, teacher, schedule/online and greeting intents. Human support availability is stated accurately.
 - All 11 reference routes remain useful at 360 CSS px, with accessible forms, focus, navigation and controls.
 

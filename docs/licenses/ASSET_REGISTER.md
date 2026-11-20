@@ -2,9 +2,11 @@
 
 | Asset | Origin | Usage |
 | --- | --- | --- |
-| campus-evening.webp | Original ImageGen architectural photograph | Sign-in background only |
+| campus-evening.webp | Original ImageGen architectural photograph | Sign-in background and tinted campus pass artwork |
 | crest.webp | Original ImageGen transparent fictional shield | University identity |
-| student-*.webp | 13 individual ImageGen fictional student portraits | Retained as sources for future use |
+| student-*.webp | 13 individual ImageGen fictional student portraits | Assigned campus pass portraits |
+| server/portraits/*.jpg | Portrait crops encoded from the same 13 student assets | Embedded in the owner's fictional passport PDF |
+| pass-qr/*.png | QR Code matrices generated locally from fictional account UIDs | Campus pass reverse |
 | teacher-*.webp | 24 individually generated ImageGen fictional staff portraits | Teacher list, detail and teaching links |
 | GreatVibes-Regular.woff2 | Google Fonts / Great Vibes, OFL 1.1 | Connected Cyrillic calligraphy and wordmark |
 | MarckScript-Regular.woff2 | Google Fonts / Marck Script, OFL 1.1 | Core handwritten Cyrillic labels and data |

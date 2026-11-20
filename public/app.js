@@ -1,8 +1,9 @@
 import { preparePhoto, disposePhotoPreview } from './features/photo.js';
-import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-12';
-import { exams, schedule } from './features/campus.js?v=20261120-12';
-import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-12';
-import { notifications, requests, support } from './features/services.js?v=20261120-12';
+import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-15';
+import { exams, schedule } from './features/campus.js?v=20261120-15';
+import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-15';
+import { turnCampusPass } from './features/campus-pass.js?v=20261120-14';
+import { notifications, requests, support } from './features/services.js?v=20261120-15';
 import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
 
 const app=document.querySelector('#app'), announcement=document.querySelector('#status');
@@ -224,6 +225,10 @@ app.addEventListener('submit',event=>{
 });
 app.addEventListener('click',event=>{
  const button=event.target.closest('button');
+ if(button?.hasAttribute('data-pass-turn')||(!button&&event.target.closest('[data-pass-stage]'))){
+  turnCampusPass(event.target.closest('.campus-pass-panel'));
+  return;
+ }
  if(button){
   if(button.dataset.themeChoice){
    if(button.getAttribute('aria-pressed')==='true')return;
