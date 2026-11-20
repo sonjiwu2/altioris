@@ -10,7 +10,7 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 
 ## Role
 
-Match 02-schedule and 03-exams. Align independent day columns by time slot; use green lectures and peach seminars. Implement real selection, period controls, room/online detail, teacher links and confirmed exam calendar export.
+Match 02-schedule and 03-exams. Align independent day columns by time slot; use green lectures and peach seminars. Implement real selection, period controls, room/online detail, teacher links and confirmed assessment results.
 
 ## Completion
 

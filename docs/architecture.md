@@ -6,14 +6,14 @@ Node.js 24+ serves buildless HTML, CSS, browser ES modules, local fonts and artw
 | --- | --- |
 | POST /api/login | Salted scrypt verification, opaque cookie session |
 | POST /api/logout | Session revocation |
-| GET /api/dashboard | Student, campus, grades, actual cohort ranking, owned records |
+| GET /api/dashboard | Student, campus, grades, published session standings, next ranking publication and owned records |
 | POST /api/requests | Owned request/history/document generation |
 | GET /api/documents/:id | Ownership-checked sample PDF |
 | GET /api/notifications | Owned events and current academic reminders |
 | PATCH /api/notifications | Owned read state |
 | PATCH /api/profile | Owned avatar selection |
 | POST /api/support | Deterministic intent processing and owned conversation |
-| GET /api/calendar/exams?term=… | Selected term’s confirmed assessments as ICS |
+| GET /api/calendar/exams?term=… | Authenticated ICS export for existing clients |
 
 The browser uses URL query parameters for list selection, date, filters and display modes. public/features/settings.js stores theme and text scale and honors existing legacy reduced-motion preferences in localStorage under the student's stable number. Authentication stays in HttpOnly SameSite cookies.
 

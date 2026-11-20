@@ -1,5 +1,5 @@
 import { faculty } from './faculty.mjs'
-import { academicGrades, courseForTeacher, timetableFor } from './academic-year.mjs'
+import { academicGrades, academicTerms, courseForTeacher, timetableFor } from './academic-year.mjs'
 
 export const demoClock = '2026-11-23T10:05:00+03:00'
 
@@ -73,15 +73,35 @@ function summarize(grades) {
   }
 }
 
+const sessionSeasons = academicTerms.map(term=>({
+  id:term.id,
+  label:(term.id.endsWith('-autumn')?'Зимняя сессия ':'Летняя сессия ')+term.end.slice(0,4),
+  publishedAt:new Date(Date.parse(term.end+'T00:00:00+03:00')+86_400_000).toISOString(),
+}))
+
 export function rankingFor(account, grades, cohort = accounts, clock = demoClock) {
-  const { mean, gpa } = summarize(grades)
-  const peers = cohort.map((student) => {
-    return { id: student.id, name: student.profile.shortName, initials: student.profile.initials,
-      gpa: student.id === account.id ? gpa : summarize(gradesFor(student, clock)).gpa }
-  }).filter((student) => student.gpa !== null)
-    .sort((a, b) => b.gpa - a.gpa || a.name.localeCompare(b.name, 'ru'))
-    .map((student, index) => ({ rank: index + 1, id: student.id, initials: student.initials, name: student.name, gpa: student.gpa, self: student.id === account.id }))
-  return { mean, gpa, rank: peers.find((student) => student.self)?.rank ?? null, total: peers.length, peers }
+  const now=Date.parse(clock)
+  const nextSeason=sessionSeasons.find(season=>Date.parse(season.publishedAt)>now)??null
+  const records=cohort.map(student=>({student, grades:student.id===account.id?grades:gradesFor(student,clock)}))
+  const seasons=[]
+  let previousPlaces=new Map()
+  for(const season of sessionSeasons){
+    if(Date.parse(season.publishedAt)>now) break
+    const standings=records.map(({student,grades})=>({student,...summarize(grades.filter(grade=>grade.termId===season.id))}))
+      .filter(record=>record.gpa!==null)
+      .sort((a,b)=>b.gpa-a.gpa || a.student.profile.shortName.localeCompare(b.student.profile.shortName,'ru') || a.student.id.localeCompare(b.student.id))
+    const peers=standings.map(({student,gpa},index)=>{
+      const rank=index+1,previous=previousPlaces.get(student.id)
+      return {rank,change:previous===undefined?null:previous-rank,id:student.id,initials:student.profile.initials,
+        name:student.profile.shortName,gpa,self:student.id===account.id}
+    })
+    const own=peers.find(peer=>peer.self)
+    const mean=own?standings[own.rank-1].mean:null
+    seasons.push({...season,mean,gpa:own?.gpa??null,rank:own?.rank??null,change:own?.change??null,total:peers.length,peers})
+    previousPlaces=new Map(peers.map(peer=>[peer.id,peer.rank]))
+  }
+  const latest=seasons.at(-1)??{mean:null,gpa:null,rank:null,change:null,total:0,peers:[]}
+  return {...latest,seasons,nextSeason}
 }
 
 export const requestTypes = new Map([

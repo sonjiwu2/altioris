@@ -1,12 +1,12 @@
 import { preparePhoto, disposePhotoPreview } from './features/photo.js';
-import { brand, escape as e, icon, portalIllustration, portrait } from './ui.js?v=20261120-9';
-import { exams, schedule } from './features/campus.js?v=20261120-9';
-import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-9';
-import { notifications, requests, support } from './features/services.js?v=20261120-9';
-import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-9';
+import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-10';
+import { exams, schedule } from './features/campus.js?v=20261120-10';
+import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-10';
+import { notifications, requests, support } from './features/services.js?v=20261120-10';
+import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-10';
 
 const app=document.querySelector('#app'), announcement=document.querySelector('#status');
-const navigation=[['/schedule','Расписание','calendar'],['/grades','Успеваемость','grades'],['/teachers','Преподаватели','people'],['/requests','Заявки','doc'],['/support','Чат поддержки','chat'],['/notifications','Уведомления','bell'],['/settings','Настройки','settings']];
+const navigation=[['/schedule','Расписание','nav-schedule'],['/grades','Успеваемость','nav-grades'],['/teachers','Преподаватели','nav-faculty'],['/requests','Заявки','nav-requests'],['/support','Чат поддержки','nav-chat'],['/notifications','Уведомления','nav-alerts'],['/settings','Настройки','nav-settings']];
 const pages=new Map([['/',schedule],['/schedule',schedule],['/schedule/exams',exams],['/grades',grades],['/grades/ranking',ranking],['/teachers',teachers],['/requests',requests],['/support',support],['/notifications',notifications],['/profile',profile],['/settings',settings]]);
 let snapshot,busy=false;
 let lastView;
@@ -16,13 +16,13 @@ const detailPanels=new Map([
 ]);
 const tabContent=new Map([
  ['/schedule','.schedule-layout'],['/schedule/exams','.exam-layout'],
- ['/grades','.academic-layout'],['/grades/ranking','.rank-heading,.rank-strip,.ranking-panel,.rank-meta'],
+ ['/grades','.academic-layout'],['/grades/ranking','.rank-heading,.rank-history,.rank-strip,.ranking-panel,.rank-meta'],
 ]);
 const tabGroup=path=>path.startsWith('/schedule')?'schedule':path.startsWith('/grades')?'grades':null;
 const viewPath=path=>path==='/'?'/schedule':path;
 const resultsPanels=new Map([
  ['/teachers','.directory'],['/requests','.work-layout'],['/notifications','.notifications-layout'],
- ['/grades/ranking','.ranking-panel'],['/schedule','.calendar'],
+ ['/grades/ranking','.rank-strip,.ranking-panel'],['/schedule','.calendar'],
  ['/grades','.academic-layout'],['/schedule/exams','.exam-layout'],
 ]);
 
@@ -57,7 +57,7 @@ function signIn() {
  document.documentElement.dataset.theme='light';
  document.documentElement.style.removeProperty('--text-scale');
  document.title='Вход в кабинет · Altioris University';
- app.innerHTML='<main id="main" class="sign-in" tabindex="-1"><section class="sign-in-card">'+brand+'<div class="ornament" aria-hidden="true"><span>✦</span></div><h1>Вход в кабинет</h1><form data-mutation="login" class="login-form"><label for="username">Логин</label><div class="input-control">'+icon('person')+'<input id="username" name="login" placeholder="Введите логин" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80" required></div><label for="password">Пароль</label><div class="input-control password-control">'+icon('lock')+'<input id="password" type="password" name="password" placeholder="Введите пароль" autocomplete="current-password" maxlength="128" required><button class="icon-button" type="button" data-password aria-label="Показать пароль" aria-pressed="false">'+icon('eye')+'</button></div><p class="form-error" role="alert" hidden></p><button class="button login-submit">Войти</button></form><button class="text-link help-link" type="button" data-dialog="login-help">Не получается войти?</button></section><footer>Конкурсный прототип</footer></main><dialog id="login-help" aria-labelledby="login-help-title"><div class="section-heading"><h2 id="login-help-title">Не получается войти?</h2><button type="button" class="icon-button" data-close aria-label="Закрыть">'+icon('close')+'</button></div><p>Введите логин и постоянный пароль демонстрационного аккаунта. Если у вас нет доступа, обратитесь к организатору демонстрации.</p></dialog>';
+ app.innerHTML='<main id="main" class="sign-in" tabindex="-1"><section class="sign-in-card">'+brand+'<div class="ornament" aria-hidden="true"><span>✦</span></div><h1>Вход в кабинет</h1><form data-mutation="login" class="login-form"><label for="username">Логин</label><div class="input-control">'+icon('nav-profile')+'<input id="username" name="login" placeholder="Введите логин" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80" required></div><label for="password">Пароль</label><div class="input-control password-control">'+icon('lock')+'<input id="password" type="password" name="password" placeholder="Введите пароль" autocomplete="current-password" maxlength="128" required><button class="icon-button" type="button" data-password aria-label="Показать пароль" aria-pressed="false">'+icon('eye')+'</button></div><p class="form-error" role="alert" hidden></p><button class="button login-submit">Войти</button></form><button class="text-link help-link" type="button" data-dialog="login-help">Не получается войти?</button></section><footer>Конкурсный прототип</footer></main><dialog id="login-help" aria-labelledby="login-help-title"><div class="section-heading"><h2 id="login-help-title">Не получается войти?</h2><button type="button" class="icon-button" data-close aria-label="Закрыть">'+icon('close')+'</button></div><p>Введите логин и постоянный пароль демонстрационного аккаунта. Если у вас нет доступа, обратитесь к организатору демонстрации.</p></dialog>';
 }
 function render(focus=false,navigating=false) {
  disposePhotoPreview();
@@ -68,10 +68,10 @@ function render(focus=false,navigating=false) {
  const scrollLeft=scroller?.scrollLeft??0,scrollTop=scroller?.scrollTop??0;
  const unread=snapshot.notifications.filter(item=>!item.read).length;
  const active=href=>(href==='/schedule'&&pathname==='/')||pathname===href||pathname.startsWith(href+'/');
- const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+(href==='/support'?portalIllustration('support-nav'):icon(glyph))+'<span>'+label+'</span>'+(href==='/notifications'&&unread?'<span class="nav-unread" aria-label="Есть новые уведомления"></span>':'')+'</a>').join('');
+ const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+'<span>'+label+'</span>'+(href==='/notifications'&&unread?'<span class="nav-unread" aria-label="Есть новые уведомления"></span>':'')+'</a>').join('');
  const page=pages.get(pathname);
  const content=page?page(snapshot,params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
- app.innerHTML='<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">'+brand+'</a><button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">'+icon('menu')+'</button></header><aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">'+brand+'</a><nav class="main-nav" aria-label="Основное меню">'+nav+'</nav><a class="sidebar-profile" href="/profile"'+(pathname==='/profile'?' aria-current="page"':'')+'>'+portrait(snapshot.student)+'<span>'+e(snapshot.student.shortName)+'<small>'+e(snapshot.student.group)+'</small></span>'+icon('down')+'</a></aside><nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>'+nav+'<a href="/profile">'+icon('person')+'Мой профиль</a></nav><div class="workspace"><main id="main" class="page" tabindex="-1">'+content+'</main><footer class="page-footer">Конкурсный прототип</footer></div>';
+ app.innerHTML='<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">'+brand+'</a><button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">'+icon('menu')+'</button></header><aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">'+brand+'</a><nav class="main-nav" aria-label="Основное меню">'+nav+'</nav><a class="sidebar-profile" href="/profile"'+(pathname==='/profile'?' aria-current="page"':'')+'>'+portrait(snapshot.student)+'<span>'+e(snapshot.student.shortName)+'<small>'+e(snapshot.student.group)+'</small></span>'+icon('down')+'</a></aside><nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>'+nav+'<a href="/profile">'+icon('nav-profile')+'Мой профиль</a></nav><div class="workspace"><main id="main" class="page" tabindex="-1">'+content+'</main><footer class="page-footer">Конкурсный прототип</footer></div>';
  document.title=(app.querySelector('h1')?.textContent||'Кабинет')+' · Altioris University';
  const path=viewPath(pathname);
  const activeItem=app.querySelector('main a[aria-current="true"]');
@@ -81,7 +81,7 @@ function render(focus=false,navigating=false) {
   selection:selected?.get('lesson')??selected?.get('item'),
   scope:path==='/schedule'
    ? app.querySelector('.week-title')?.textContent
-   : ['q','office','filter','view','term'].map(key=>key==='term'?(app.querySelector('.term-picker select')?.value??''):(params.get(key)||'')).join('\n'),
+   : ['q','office','filter','view','term','season'].map(key=>key==='term'?(app.querySelector('.term-picker select')?.value??''):(params.get(key)||'')).join('\n'),
  };
  if(lastView?.path===path&&lastView.scope===currentView.scope&&(scrollLeft||scrollTop)){
   const nextScroller=app.querySelector('.calendar-scroll,.teacher-list');
@@ -106,6 +106,19 @@ function go(href,restoreFocus){
  else if(selectedDetail){selectedDetail.tabIndex=-1;selectedDetail.focus({preventScroll:true});selectedDetail.scrollIntoView({block:'start'});}
  else if(same){const selected=[...app.querySelectorAll('main a[href]')].find(link=>link.href===next.href);(selected||app.querySelector('main'))?.focus({preventScroll:true});}
  if(!same&&path==='/notifications')void refreshNotices();
+ if(path==='/grades/ranking')void refreshPublishedRanking();
+}
+async function refreshPublishedRanking(){
+ const prior=snapshot,next=prior?.ranking.nextSeason;
+ if(busy||location.pathname!=='/grades/ranking'||!next||Date.now()<Date.parse(next.publishedAt))return;
+ try{
+  const {ranking}=await api('/api/dashboard');
+  if(snapshot!==prior||busy||location.pathname!=='/grades/ranking'||ranking.id===prior.ranking.id)return;
+  const focusedLink=document.activeElement?.closest('.rank-season,.rank-meta a')?.href;
+  snapshot={...prior,ranking};
+  render();
+  if(focusedLink)[...app.querySelectorAll('main a')].find(link=>link.href===focusedLink)?.focus({preventScroll:true});
+ }catch{/* Keep the last published standings if the refresh fails. */}
 }
 async function refreshNotices(){
  const prior=snapshot;
@@ -246,8 +259,10 @@ app.addEventListener('input',event=>{if(event.target.id==='chat-message'){event.
 app.addEventListener('keydown',event=>{if(event.target.id==='chat-message'&&event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();event.target.form.requestSubmit();return;}if(event.key==='Escape'){const toggle=app.querySelector('[data-menu][aria-expanded="true"]');if(toggle){toggle.click();toggle.focus();}}});
 matchMedia('(max-width:680px)').addEventListener('change',()=>{if(snapshot&&(location.pathname==='/'||location.pathname==='/schedule'))render();});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(snapshot)syncSystemTheme(snapshot.student);});
-window.addEventListener('popstate',()=>render(false,true));
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshNotices();});
+window.addEventListener('popstate',()=>{render(false,true);void refreshPublishedRanking();});
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden){void refreshNotices();void refreshPublishedRanking();}
+});
 window.addEventListener('pageshow',event=>{if(event.persisted)void load();});
 void load();
 

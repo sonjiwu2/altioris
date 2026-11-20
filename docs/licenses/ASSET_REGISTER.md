@@ -10,9 +10,9 @@
 | MarckScript-Regular.woff2 | Google Fonts / Marck Script, OFL 1.1 | Core handwritten Cyrillic labels and data |
 | GolosText.woff2 | Google Fonts / Golos Text, OFL 1.1 | Technical error copy and neutral fallback |
 | server/fonts/GolosText-Regular.ttf | Static 400 instance of Golos Text, OFL 1.1 with notice retained | Embedded Cyrillic document typography |
-| SVG vocabulary in public/ui.js | Original authored paths | Colorful site controls and illustrations |
-| public/assets/subject-illustrations.svg | 24 original author-drawn vector compositions | One illustration per discipline in the gradebook |
-| public/assets/portal-illustrations.svg | Original author-drawn vector compositions | Appearance settings, current session, support navigation and illustrated assistant |
+| public/ui.js | Original monochrome paths | Compact interactive controls |
+| public/assets/stickers/subject-*.webp | 24 separate ImageGen designs | One subject-specific paper sticker per discipline in the gradebook |
+| public/assets/stickers/*.webp (other files) | 36 separate ImageGen designs | Navigation, ranking, settings, support and illustrated details |
 
 Keep the OFL notices next to font files. People and institution are fictional. Individual assets are never full-screen interface screenshots. The same portrait may repeat for the same identity; different accounts have different portraits.
 
@@ -22,4 +22,4 @@ Selected upright pairing: Philosopher-Regular.woff2 (40800 bytes) and Philosophe
 
 Philosopher Regular/Bold covers all interface text, including the wordmark and timetable. User-uploaded profile images stay in the ignored private SQLite database. The 20 new ImageGen faculty portraits were packaged as 240 × 240 WebP files. The original four portraits stay assigned to their existing identities.
 
-Selected chat controls use Lucide geometry. The revision, icon mapping and license are in public/assets/icons. The assistant illustration was designed for Altioris after reviewing branded chat entry points in [Intercom](https://www.intercom.com/help/en/articles/6612589-set-up-and-customize-the-messenger) and [Zendesk](https://support.zendesk.com/hc/en-us/articles/4500747797914-Configuring-the-name-and-appearance-of-the-Web-Widget).
+The sticker briefs used the supplied «Altioris — бумажные стикеры» mood board for gouache texture, cut-paper edges and the collegiate palette. ImageGen produced eight themed sheets. The individual silhouettes were prepared as 144 × 144 transparent WebP files. Each discipline uses its own composition based on concepts from the teaching plan.

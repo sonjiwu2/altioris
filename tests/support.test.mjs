@@ -162,3 +162,34 @@ test('academic notices appear at the right time and never reset the read state',
   }finally{store.close()}
 })
 
+test('seasonal rankings publish once after each session and compare places',()=>{
+  let now='2026-01-19T23:59:59+03:00'
+  const store=openStore({databasePath:':memory:',passwords:Object.fromEntries(accounts.map(({id})=>[id,'season-test-pass-'+id])),clock:()=>now})
+  try{
+    const ranking=()=>store.dashboard('a').ranking
+    assert.equal(ranking().rank,null)
+    assert.equal(ranking().nextSeason.id,'2025-autumn')
+    now='2026-01-20T00:00:00+03:00'
+    const winter=ranking().seasons[0]
+    assert.equal(winter.rank,4)
+    assert.equal(winter.change,null)
+    assert.equal(winter.gpa,(8*7+8*6+8*5+7*5)/(7+6+5+5))
+    now='2026-06-26T23:59:59+03:00'
+    assert.deepEqual(ranking().seasons,[winter])
+    now='2026-06-27T00:00:00+03:00'
+    const summer=ranking().seasons.at(-1)
+    assert.equal(summer.id,'2026-spring')
+    assert.equal(summer.rank,10)
+    assert.equal(summer.change,winter.rank-summer.rank)
+    assert.equal(summer.peers.reduce((sum,peer)=>sum+peer.change,0),0)
+    now='2027-01-22T23:59:59+03:00'
+    assert.deepEqual(ranking().seasons,[winter,summer])
+    now='2027-01-23T00:00:00+03:00'
+    assert.equal(ranking().id,'2026-autumn')
+    assert.equal(ranking().seasons.length,3)
+    now='2027-06-26T00:00:00+03:00'
+    assert.equal(ranking().id,'2027-spring')
+    assert.equal(ranking().nextSeason,null)
+  }finally{store.close()}
+})
+

@@ -249,7 +249,8 @@ export function openStore({ databasePath, passwords, clock }) {
         const account = accounts.find((item) => item.id === owner)
         const stats = rankingFor(account, gradesFor(account, at), accounts.filter(({ id }) => passwords[id] !== undefined), at)
         const format = (value) => value == null ? '—' : value.toFixed(2).replace('.', ',')
-        text = `Ваш средний балл — ${format(stats.mean)}, GPA — ${format(stats.gpa)}. Место в рейтинге: ${stats.rank ?? '—'} из ${stats.total}. Подробные результаты доступны в разделе «Успеваемость».`
+        text = stats.rank===null ? 'Рейтинг появится после завершения первой сессии.' :
+          `${stats.label}. Ваш средний балл — ${format(stats.mean)}, GPA — ${format(stats.gpa)}. Место в рейтинге: ${stats.rank} из ${stats.total}. Подробные результаты доступны в разделе «Успеваемость».`
         href = '/grades/ranking'
       } else if (action === 'gradebook') {
         text = 'В зачётке можно выбрать учебный год или семестр, посмотреть опубликованные результаты и зачётные единицы. Выписку в PDF можно заказать в разделе «Заявки».'

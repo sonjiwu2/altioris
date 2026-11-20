@@ -4,7 +4,7 @@ Altioris University is a Russian-language fictional digital dean's office. Its v
 
 Use a collegiate cream/navy/gold system: paper #fcf6ef, ink #07234c, navy #052451, fine warm borders #e8d8c7, gold #b58226, pale green, peach and lavender status surfaces. Great Vibes supplies expressive headings, names, navigation and the wordmark; Marck Script supplies readable handwritten Cyrillic interface text; Golos Text supplies technical errors and neutral fallback text. All font files are served locally with their OFL notices. Keep text size generous enough for script legibility.
 
-The desktop shell has a 240 px left rail, vertical shield and Altioris University wordmark, seven icon/text links, and student identity anchored below. Navigation: Расписание, Успеваемость, Преподаватели, Заявки, Чат поддержки, Уведомления, Настройки. The gear for settings is an explicit product requirement. The root route opens the schedule. Profile lives at /profile. Use distinct colorful authored SVG icons with consistent contour weight. Preserve the same portrait for the same identity; never assign one face to different people.
+The desktop shell has a 240 px left rail, vertical shield and Altioris University wordmark, seven icon/text links, and student identity anchored below. Navigation: Расписание, Успеваемость, Преподаватели, Заявки, Чат поддержки, Уведомления, Настройки. The gear for settings is an explicit product requirement. The root route opens the schedule. Profile lives at /profile. Use the paper-sticker illustration system for navigation, settings, course and ranking imagery. Use clean monochrome symbols on compact action controls. Preserve the same portrait for the same identity; never assign one face to different people.
 
 At 980 px and below, use a compact mobile header and collapsible navigation. At 680 px and below, reflow details below lists and default the timetable to a day. Verify 360 x 800, 768 x 1024, 1280 x 1024 and 1536 x 1024. Preserve keyboard access, focus, loading, errors, persistent settings, reduced motion and actual account isolation. UI values come from the authenticated snapshot; screenshot example values are not fixtures.
 
@@ -48,7 +48,7 @@ Profile photo editing uses a file picker, square preview and save/reset controls
 
 ## Latest settings, layout and motion refinement
 
-Keep upright Philosopher. Settings show light, dark and system theme previews with icons, 100/115/130% text and the current session with sign-out. Keep the original colorful icons across the site, with the current session and support conversation using their newer icons. Remove the auxiliary links below the timetable and use the prior compact weekly row minimums (164px on wide desktop and 150px on narrower layouts at 100%). Related tabs animate their content. Selecting an item animates its details only, with no motion when the system requests reduced motion. Account text scale and keyboard focus remain intact.
+Keep upright Philosopher. Settings show light, dark and system theme previews with icons, 100/115/130% text and the current session with sign-out. Use the paper-sticker imagery throughout the portal and the illustrated assistant in the conversation. Remove the auxiliary links below the timetable and use the prior compact weekly row minimums (164px on wide desktop and 150px on narrower layouts at 100%). Related tabs animate their content. Selecting an item animates its details only, with no motion when the system requests reduced motion. Account text scale and keyboard focus remain intact.
 
 ## Theme and filter transitions
 
@@ -58,4 +58,4 @@ Theme controls use 160 ms feedback and a 330 ms crossfade when the browser suppo
 
 Each teacher profile pairs a distinct portrait and monogram with one discipline, a department and consultation details. Use the course link to open the corresponding gradebook record. Keep the directory scrollable with the selected teacher in view.
 
-Course illustrations belong to the gradebook. Their 24 compositions use the shapes and colors of academic illustrations. Portal illustrations cover appearance settings, session controls, support navigation and the assistant portrait. Carry the same illustrated assistant identity from the chat header into the conversation.
+Course illustrations belong to the gradebook. Each of the 24 disciplines has its own gouache-style paper sticker, tied to a concrete concept taught in the course. Paper stickers also cover the navigation, settings, ranking metrics and assistant. Core actions use monochrome UI symbols. Carry the same illustrated assistant identity from the chat header into the conversation.

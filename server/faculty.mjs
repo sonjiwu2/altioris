@@ -1,11 +1,11 @@
 const departments = {
-  software: ['программной инженерии', 'indigo'],
-  computing: ['информатики', 'blue'],
-  information: ['информационных систем', 'violet'],
-  mathematics: ['прикладной математики', 'ochre'],
-  networking: ['компьютерных сетей и безопасности', 'teal'],
-  projects: ['проектной деятельности', 'rose'],
-  infrastructure: ['вычислительной инфраструктуры', 'olive'],
+  software: ['Программная инженерия','программной инженерии','indigo'],
+  computing: ['Информатика','информатики','blue'],
+  information: ['Информационные системы','информационных систем','violet'],
+  mathematics: ['Прикладная математика','прикладной математики','ochre'],
+  networking: ['Компьютерные сети и безопасность','компьютерных сетей и безопасности','teal'],
+  projects: ['Проектная деятельность','проектной деятельности','rose'],
+  infrastructure: ['Вычислительная инфраструктура','вычислительной инфраструктуры','olive'],
 };
 
 const roster = [
@@ -40,9 +40,9 @@ const yearWords = {one:'год',few:'года',many:'лет'};
 
 export const faculty = roster.map(([id,name,departmentId,building,room,office,weekday,role,experience,bio])=>{
   const [given,,family] = name.split(' ');
-  const [department,sealTone] = departments[departmentId];
+  const [departmentLabel,department,sealTone] = departments[departmentId];
   return {
-    id,name,shortName:given+' '+family,initials:given[0]+family[0],department,sealTone,role,bio,
+    id,name,shortName:given+' '+family,initials:given[0]+family[0],department,departmentLabel,sealTone,role,bio,
     portrait:'teacher-'+(id==='sokolov'?'safonov':id),campus:'Нижний Новгород',email:id+'@altioris.example',
     room:'Корпус '+building+' · ауд. '+room,office:building+' · каб. '+office,
     consultation:weekday+', 16:20',experience:experience+' '+yearWords[years.select(experience)],

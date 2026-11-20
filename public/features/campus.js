@@ -1,4 +1,4 @@
-import { escape as e, badge, date, empty, icon, key, line, portrait, range, tab, termPicker } from '../ui.js?v=20261120-9';
+import { escape as e, badge, date, empty, icon, key, line, portrait, range, tab, termPicker } from '../ui.js?v=20261120-10';
 
 const moscow = {timeZone:'Europe/Moscow'};
 const fullDay = value => value+'T12:00:00+03:00';
@@ -109,6 +109,5 @@ export function exams({campus,grades},params){
   empty('Выберите экзамен или зачёт.');
  return header(true)+'<div class="split exam-layout"><section class="panel exam-panel"><div class="section-heading"><h2>Экзамены и зачёты</h2>'+
   termPicker('/schedule/exams',periods,period.id)+'</div><div class="exam-timeline">'+cards+'</div>'+
-  (cards?'<a class="text-link calendar-export" href="/api/calendar/exams?term='+e(period.id)+'" download>'+icon('calendar')+(period.termIds?'Скачать календарь экзаменов за год':'Добавить сессию в календарь')+'</a>':'')+
   '</section><aside class="panel inspector schedule-inspector">'+details+'</aside></div>';
 }
