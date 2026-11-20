@@ -1,9 +1,9 @@
 import { preparePhoto, disposePhotoPreview } from './features/photo.js';
-import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-8';
-import { exams, schedule } from './features/campus.js?v=20261120-8';
-import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-8';
-import { notifications, requests, support } from './features/services.js?v=20261120-8';
-import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-8';
+import { brand, escape as e, icon, portalIllustration, portrait } from './ui.js?v=20261120-9';
+import { exams, schedule } from './features/campus.js?v=20261120-9';
+import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-9';
+import { notifications, requests, support } from './features/services.js?v=20261120-9';
+import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-9';
 
 const app=document.querySelector('#app'), announcement=document.querySelector('#status');
 const navigation=[['/schedule','Расписание','calendar'],['/grades','Успеваемость','grades'],['/teachers','Преподаватели','people'],['/requests','Заявки','doc'],['/support','Чат поддержки','chat'],['/notifications','Уведомления','bell'],['/settings','Настройки','settings']];
@@ -65,10 +65,10 @@ function render(focus=false,navigating=false) {
  applyPreferences(snapshot.student);
  const {pathname,search}=location,params=new URLSearchParams(search);
  const scroller=app.querySelector('.calendar-scroll,.teacher-list');
- const scrollLeft=scroller?.scrollLeft??0;
+ const scrollLeft=scroller?.scrollLeft??0,scrollTop=scroller?.scrollTop??0;
  const unread=snapshot.notifications.filter(item=>!item.read).length;
  const active=href=>(href==='/schedule'&&pathname==='/')||pathname===href||pathname.startsWith(href+'/');
- const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+'<span>'+label+'</span>'+(href==='/notifications'&&unread?'<span class="nav-unread" aria-label="Есть новые уведомления"></span>':'')+'</a>').join('');
+ const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+(href==='/support'?portalIllustration('support-nav'):icon(glyph))+'<span>'+label+'</span>'+(href==='/notifications'&&unread?'<span class="nav-unread" aria-label="Есть новые уведомления"></span>':'')+'</a>').join('');
  const page=pages.get(pathname);
  const content=page?page(snapshot,params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
  app.innerHTML='<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">'+brand+'</a><button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">'+icon('menu')+'</button></header><aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">'+brand+'</a><nav class="main-nav" aria-label="Основное меню">'+nav+'</nav><a class="sidebar-profile" href="/profile"'+(pathname==='/profile'?' aria-current="page"':'')+'>'+portrait(snapshot.student)+'<span>'+e(snapshot.student.shortName)+'<small>'+e(snapshot.student.group)+'</small></span>'+icon('down')+'</a></aside><nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>'+nav+'<a href="/profile">'+icon('person')+'Мой профиль</a></nav><div class="workspace"><main id="main" class="page" tabindex="-1">'+content+'</main><footer class="page-footer">Конкурсный прототип</footer></div>';
@@ -83,9 +83,13 @@ function render(focus=false,navigating=false) {
    ? app.querySelector('.week-title')?.textContent
    : ['q','office','filter','view','term'].map(key=>key==='term'?(app.querySelector('.term-picker select')?.value??''):(params.get(key)||'')).join('\n'),
  };
- if(lastView?.path===path&&lastView.scope===currentView.scope&&scrollLeft){
+ if(lastView?.path===path&&lastView.scope===currentView.scope&&(scrollLeft||scrollTop)){
   const nextScroller=app.querySelector('.calendar-scroll,.teacher-list');
-  if(nextScroller)nextScroller.scrollLeft=scrollLeft;
+  if(nextScroller)nextScroller.scrollTo(scrollLeft,scrollTop);
+ }else if(path==='/teachers'&&activeItem){
+  const list=activeItem.parentElement;
+  const bounds=list.getBoundingClientRect(),item=activeItem.getBoundingClientRect();
+  list.scrollTo(Math.max(0,item.right-bounds.right),Math.max(0,item.bottom-bounds.bottom));
  }
  if(navigating||!lastView)animateNavigation(lastView,currentView);
  lastView=currentView;

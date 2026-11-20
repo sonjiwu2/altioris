@@ -58,7 +58,22 @@ h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1
 .page .setting-row{gap:20px;padding-block:20px;min-height:78px}
 .page .settings-main>.settings-panel:nth-child(2) .setting-row{min-height:78px;padding-block:20px}
 .page .teacher-list .person-link{gap:18px;padding-block:20px}
+.page .teacher-list{min-width:0;min-height:0;max-height:min(74vh,850px);overflow:auto;align-self:start}
+.page .teacher-details{align-self:start}
 .page .teacher-identity>div{min-width:0;overflow-wrap:anywhere}
+.teacher-seal{
+ --seal-ink:#58477b;--seal-paper:#e1daed;
+ display:grid;place-items:center;flex:0 0 36px;min-height:36px;border:1px solid var(--seal-ink);border-radius:12px 12px 14px 14px;
+ box-shadow:inset 0 0 0 2px var(--seal-paper),inset 0 0 0 3px color-mix(in srgb,var(--seal-ink) 35%,transparent);
+ background:var(--seal-paper);color:var(--seal-ink);font-size:13px;font-weight:700;line-height:1;
+}
+.seal-indigo{--seal-ink:#37466a;--seal-paper:#d7dfee}
+.seal-blue{--seal-ink:#385c76;--seal-paper:#d3e5ec}
+.seal-ochre{--seal-ink:#78512d;--seal-paper:#eedbb5}
+.seal-teal{--seal-ink:#315953;--seal-paper:#d4e6de}
+.seal-rose{--seal-ink:#85494d;--seal-paper:#f2dbd8}
+.seal-olive{--seal-ink:#53603b;--seal-paper:#e6e9ce}
+.teacher-section .subject-chip{flex:none;max-width:100%;overflow-wrap:anywhere}
 .page .service-row{gap:20px;padding-block:24px}
 .page .notification-row{gap:24px;padding-block:26px}
 @media(max-width:980px){
@@ -118,6 +133,7 @@ h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1
 @media(min-width:1351px){:root{--sidebar:260px}}
 @media(max-width:980px){.mobile-header .brand{font-size:1.1rem}.mobile-header .brand small{font-size:.7em}}
 @media(max-width:680px){
+ .page .teacher-list{max-height:none}
  .page .chat{height:calc(100dvh - 235px);min-height:460px}
  .page .chat-header{padding:16px;gap:12px}
  .page .chat-header h2{font-size:1.15rem}

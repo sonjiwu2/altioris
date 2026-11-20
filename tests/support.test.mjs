@@ -116,7 +116,11 @@ test('the annual plan covers both sessions with no group, teacher or room confli
   assert.deepEqual(a.lessons.filter(lesson=>lesson.start.startsWith('2026-11-18')).map(lesson=>lesson.type),['День ВУЦ'])
   assert.equal(b.lessons.some(lesson=>lesson.start.startsWith('2026-11-18')),false)
   assert.deepEqual(new Set(accounts.map(account=>account.profile.group)),new Set(['24КНТ-1','24КНТ-2']))
-  assert.equal(new Set(a.teachers.map(teacher=>teacher.departmentIcon)).size,a.teachers.length)
+  assert.equal(a.teachers.length,24)
+  assert.equal(new Set(a.teachers.map(teacher=>teacher.department)).size,7)
+  assert.equal(new Set(a.teachers.map(teacher=>teacher.initials)).size,a.teachers.length)
+  assert.equal(new Set(a.teachers.map(teacher=>teacher.portrait)).size,a.teachers.length)
+  assert.equal(new Set(a.exams.map(exam=>exam.teacherId)).size,a.exams.length)
   assert.notEqual(a.exams[0].start,b.exams[0].start)
   const grades=academicGrades(accounts[0],demoClock)
   for(const term of ['2025-autumn','2026-spring']){
@@ -127,7 +131,12 @@ test('the annual plan covers both sessions with no group, teacher or room confli
   assert.ok(grades.filter(grade=>grade.termId==='2027-spring').every(grade=>!grade.published&&grade.mark===null))
   for(const [index, campus] of campuses.entries()){
     for(const grade of academicGrades(accounts[index],demoClock)){
+      const teacher=campus.teachers.find(person=>person.id===grade.teacherId)
+      assert.equal(teacher.courseId,grade.id)
+      assert.equal(teacher.subject,grade.title)
+      assert.equal(campus.exams.find(item=>item.id===grade.examId).teacherId,teacher.id)
       assert.equal(grade.classHours,campus.lessons.filter(lesson=>lesson.courseId===grade.id).length*2)
+      assert.ok(campus.lessons.filter(lesson=>lesson.courseId===grade.id).every(lesson=>lesson.teacherId===teacher.id))
     }
   }
 })

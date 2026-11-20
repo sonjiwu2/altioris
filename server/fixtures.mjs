@@ -1,13 +1,12 @@
-import { academicGrades, coursesForTeacher, timetableFor } from './academic-year.mjs'
+import { faculty } from './faculty.mjs'
+import { academicGrades, courseForTeacher, timetableFor } from './academic-year.mjs'
 
 export const demoClock = '2026-11-23T10:05:00+03:00'
 
-export const teachers = [
-  { id: 'voronova', departmentIcon: 'chip', name: 'Надежда Леонидовна Воронова', shortName: 'Надежда Воронова', subject: 'Архитектура ПО', role: 'Доцент', office: 'Б · каб. 418', consultation: 'Четверг, 16:20', experience: '11 лет' },
-  { id: 'krylov', departmentIcon: 'database', name: 'Сергей Андреевич Крылов', shortName: 'Сергей Крылов', subject: 'Базы данных', role: 'Преподаватель', office: 'Б · каб. 308', consultation: 'Вторник, 16:20', experience: '8 лет' },
-  { id: 'pavlova', departmentIcon: 'project', name: 'Елена Михайловна Павлова', shortName: 'Елена Павлова', subject: 'Проектный семинар', role: 'Преподаватель', office: 'Б · каб. 506', consultation: 'Среда, 16:20', experience: '7 лет' },
-  { id: 'sokolov', departmentIcon: 'theory', name: 'Михаил Андреевич Сафонов', shortName: 'Михаил Сафонов', subject: 'Алгоритмы', role: 'Преподаватель', office: 'А · каб. 204', consultation: 'Понедельник, 16:20', experience: '9 лет' },
-].map((teacher) => ({ ...teacher, department: teacher.id === 'voronova' ? 'программной инженерии' : teacher.id === 'krylov' ? 'информационных систем' : teacher.id === 'pavlova' ? 'проектной деятельности' : 'информатики', subjects: coursesForTeacher(teacher.id), bio: teacher.id === 'voronova' ? 'Ведёт курсы по архитектуре приложений и распределённым системам. Помогает студентам проектировать надёжные программные решения и развивать исследовательские проекты.' : teacher.id === 'krylov' ? 'Занимается моделированием данных и информационными системами. На занятиях сочетает теоретические основы с практикой проектирования и работы с базами данных.' : teacher.id === 'pavlova' ? 'Курирует студенческие проекты: от первой идеи до работающего прототипа. Помогает с исследованием, командной работой и подготовкой презентаций.' : 'Преподаёт алгоритмы и теорию вычислений. Разбирает сложные темы на практических примерах и ведёт консультации по подготовке к экзаменам.', campus: 'Нижний Новгород', email: `${teacher.id}@altioris.example` }))
+export const teachers = faculty.map(teacher => {
+  const course = courseForTeacher(teacher.id)
+  return { ...teacher, subject: course.title, courseId: course.id }
+})
 
 const sharedProfile = {
   faculty: 'Цифровых технологий', program: 'Компьютерные науки и технологии',

@@ -1,4 +1,4 @@
-import { escape as e, badge, date, decimal, empty, fields, icon, portrait, subjectIcon, tab, termPicker } from '../ui.js?v=20261120-8';
+import { escape as e, badge, date, decimal, empty, fields, icon, portrait, subjectIllustration, tab, termPicker } from '../ui.js?v=20261120-9';
 function header(rating){return '<h1>Успеваемость</h1><nav class="tabs academic-tabs" aria-label="Учебные результаты">'+tab('/grades','Зачётка',!rating,'doc')+tab('/grades/ranking','Рейтинг',rating,'trophy')+'</nav>';}
 export function grades(data,params){
  const {campus}=data;
@@ -16,7 +16,7 @@ export function grades(data,params){
   const tone=grade.published&&(grade.mark>=8||grade.result==='Зачтено')?'positive':'';
   const mark=grade.mark??(grade.result==='Зачтено'?'✓':'—');
   return '<a class="grade-row '+tone+' '+(grade.id===selected?.id?'active':'')+'" href="/grades?term='+e(period.id)+'&amp;item='+e(grade.id)+'"'+
-   (grade.id===selected?.id?' aria-current="true"':'')+'>'+icon(subjectIcon(grade.code))+
+   (grade.id===selected?.id?' aria-current="true"':'')+'>'+subjectIllustration(grade.id)+
    '<strong>'+e(grade.title)+'</strong><span class="grade-mark">'+mark+'</span><span class="grade-result">'+e(grade.result)+'</span></a>';
  }
  const rows=termIds.map(id=>{
@@ -43,18 +43,32 @@ export function ranking({ranking:data,student},params=new URLSearchParams()){
  return header(true)+'<div class="section-heading rank-heading"><h2>Рейтинг на программе</h2><span class="term">Опубликованные результаты</span></div><dl class="rank-strip"><div>'+icon('podium')+'<span><dt>Место</dt><dd>'+(data.rank??'—')+' / '+data.total+'</dd></span></div><div>'+icon('clipboard')+'<span><dt>Средний балл</dt><dd>'+decimal(data.mean)+'</dd></span></div><div>'+icon('cap')+'<span><dt>GPA</dt><dd>'+decimal(data.gpa)+'</dd></span></div></dl><div class="panel ranking-panel"><table class="ranking-table"><thead><tr><th scope="col">Место</th><th scope="col">Студент</th><th scope="col">GPA</th></tr></thead><tbody>'+rows.map(peer=>'<tr class="'+(peer.self?'self':'')+'"><td>'+peer.rank+'</td><td><span class="rank-student">'+portrait(peer.self?student:{id:peer.id,name:peer.name,shortName:peer.name,initials:peer.initials})+'<span>'+e(peer.name)+(peer.self?'<span class="sr-only"> — вы</span>':'')+'</span></span></td><td>'+decimal(peer.gpa)+'</td></tr>').join('')+'</tbody></table></div><div class="section-heading rank-meta"><a class="text-link" href="/grades/ranking'+(all?'':'?view=all')+'">'+(all?'Показать моё окружение':'Все участники · '+data.total)+'</a><button class="text-link" type="button" data-dialog="rating-rule">Как считается рейтинг</button></div><dialog id="rating-rule" aria-labelledby="rating-title"><div class="section-heading"><h2 id="rating-title">Как считается рейтинг</h2><button class="icon-button" type="button" data-close aria-label="Закрыть">'+icon('close')+'</button></div><p>Средний балл — среднее арифметическое числовых оценок. GPA учитывает вес каждой дисциплины в кредитах. «Зачтено» и дисциплины без числовой оценки в расчёт не входят.</p><p>Места определяются по GPA до округления. При равенстве баллов используется имя студента в алфавитном порядке. Здесь показаны аккаунты, для которых настроен доступ.</p></dialog>';
 }
 const normalizeSearch=value=>value.toLocaleLowerCase('ru').replaceAll('ё','е');
-export function teachers({campus,grades},params){
+export function teachers({campus},params){
  const query=params.get('q')?.trim()??'';
  const departments=[...new Set(campus.teachers.map(p=>p.department))].sort((a,b)=>a.localeCompare(b,'ru'));
  const office=departments.includes(params.get('office'))?params.get('office'):'';
  const terms=normalizeSearch(query).split(/\s+/u).filter(Boolean);
  const filtered=campus.teachers.filter(teacher=>{
   if(office&&teacher.department!==office)return false;
-  const searchText=normalizeSearch([teacher.name,...teacher.subjects].join(' '));
+  const searchText=normalizeSearch([teacher.name,teacher.subject,teacher.department].join(' '));
   return terms.every(term=>searchText.includes(term));
  });
  const selected=filtered.find(p=>p.id===params.get('item'))||filtered[0],filters=new URLSearchParams();
  if(query)filters.set('q',query);if(office)filters.set('office',office);
+ const people=filtered.map(person=>{
+  const item=new URLSearchParams(filters);
+  item.set('item',person.id);
+  const active=person.id===selected?.id;
+  return `<a class="person-link${active?' active':''}" href="/teachers?${e(item)}"${active?' aria-current="true"':''}>${portrait(person)}<span><strong>${e(person.shortName)}</strong><small>${e(person.subject)}</small></span></a>`;
+ }).join('');
+ const detail=selected?`<aside class="panel teacher-details">
+   <div class="teacher-identity">${portrait(selected)}<div><h2>${e(selected.name)}</h2>${badge(selected.role)}
+    <p class="teacher-department"><span class="teacher-seal seal-${e(selected.sealTone)}" aria-hidden="true">${e(selected.initials)}</span>Кафедра ${e(selected.department)}</p>
+   </div></div>
+   <div class="teacher-facts">${fact('calendar','Стаж',selected.experience)}${fact('pin','Кабинет',selected.office)}${fact('mail','Учебная почта',selected.email,true)}${fact('clock','Консультации',selected.consultation)}</div>
+   <section class="teacher-section"><h3>Дисциплина</h3><div class="subject-chips"><a class="subject-chip" href="/grades?item=${e(selected.courseId)}">${e(selected.subject)}</a></div></section>
+   <section class="teacher-section"><h3>О преподавателе</h3><p>${e(selected.bio)}</p></section>
+  </aside>`:'';
  return `<h1>Преподаватели</h1>
  <form class="filters teacher-filters" method="get" action="/teachers" data-teacher-filters>
   <label class="search-field">${icon('search')}<span class="sr-only">Имя или дисциплина</span><input type="search" name="q" placeholder="Имя или дисциплина" value="${e(query)}"></label>
@@ -63,10 +77,7 @@ export function teachers({campus,grades},params){
    ${departments.map(department=>`<option value="${e(department)}"${office===department?' selected':''}>${e(department[0].toUpperCase()+department.slice(1))}</option>`).join('')}
   </select></div>
   <button class="button button-outline">Найти</button>
- </form>`+'<div class="split directory"><section class="panel teacher-list" aria-label="Список преподавателей">'+filtered.map(p=>{const item=new URLSearchParams(filters);item.set('item',p.id);return '<a class="person-link '+(p.id===selected?.id?'active':'')+'" href="/teachers?'+e(item)+'"'+(p.id===selected?.id?' aria-current="true"':'')+'>'+portrait(p)+'<span><strong>'+e(p.shortName)+'</strong><small>'+e(p.subject)+'</small></span></a>';}).join('')+(!filtered.length?empty('Преподаватели не найдены. Попробуйте другой запрос.'):'')+'</section>'+(selected?'<aside class="panel teacher-details"><div class="teacher-identity">'+portrait(selected)+'<div><h2>'+e(selected.name)+'</h2>'+badge(selected.role)+'<p class="teacher-department">'+icon(selected.departmentIcon)+'Кафедра '+e(selected.department)+'</p></div></div><div class="teacher-facts">'+fact('calendar','Стаж',selected.experience)+fact('pin','Кабинет',selected.office)+fact('mail','Учебная почта',selected.email,true)+fact('clock','Консультации',selected.consultation)+'</div><section class="teacher-section"><h3>Дисциплины</h3><div class="subject-chips">'+selected.subjects.map(subject=>{
-  const grade=grades.findLast(value=>value.teacherId===selected.id&&value.title===subject);
-  return '<a class="subject-chip" href="/grades?item='+e(grade.id)+'">'+icon(subjectIcon(grade.code))+e(subject)+'</a>';
- }).join('')+'</div></section><section class="teacher-section"><h3>О преподавателе</h3><p>'+e(selected.bio)+'</p></section><a class="text-link" href="/support?teacher='+e(selected.id)+'">'+icon('chat')+'Задать вопрос</a></aside>':'')+'</div>';
+ </form><div class="split directory"><section class="panel teacher-list" aria-label="Список преподавателей">${people||empty('Преподаватели не найдены. Попробуйте другой запрос.')}</section>${detail}</div>`;
 }
 function fact(glyph,label,value,copy=false){return '<div class="info-line">'+icon(glyph)+'<span>'+label+'<small>'+e(value)+'</small></span>'+(copy?'<button class="icon-button" type="button" data-copy="'+e(value)+'" aria-label="Скопировать почту">'+icon('copy')+'</button>':'')+'</div>';}
 export function profile({student,documents}){

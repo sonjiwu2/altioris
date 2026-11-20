@@ -1,11 +1,10 @@
-import { escape as e, icon } from '../ui.js?v=20261120-8';
-import { accentIcon } from './accent-icons.js';
+import { escape as e, portalIllustration } from '../ui.js?v=20261120-9';
 
 const scales = [100, 115, 130];
 const themes = [
- ['light','Светлая','sun'],
- ['dark','Тёмная','moon'],
- ['system','Как в системе','computer'],
+ ['light','Светлая'],
+ ['dark','Тёмная'],
+ ['system','Как в системе'],
 ];
 const systemTheme = matchMedia('(prefers-color-scheme: dark)');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -70,32 +69,32 @@ export function settings({ student }) {
  const scaleButtons = scales.map(value =>
   '<button type="button" data-scale="'+value+'" aria-pressed="'+(scale===value)+'"'+(scale===value?' class="selected"':'')+'>'+value+'%</button>'
  ).join('');
- const themeButtons = themes.map(([value, label, glyph]) => `
+ const themeButtons = themes.map(([value, label]) => `
   <button type="button" class="theme-choice ${value}${theme===value?' selected':''}" data-theme-choice="${value}" aria-pressed="${theme===value}">
    <span class="theme-preview" aria-hidden="true"><i></i><span><i></i><i></i></span></span>
-   <span class="theme-choice-label">${icon(glyph)}<span>${label}</span><span class="theme-mark" aria-hidden="true"></span></span>
+   <span class="theme-choice-label">${portalIllustration(value)}<span>${label}</span><span class="theme-mark" aria-hidden="true"></span></span>
   </button>`).join('');
 
  return `<h1>Настройки</h1>
  <div class="settings-stack">
   <section class="panel settings-panel appearance-panel" aria-labelledby="appearance-title">
-   <h2 id="appearance-title">${icon('computer')}Интерфейс</h2>
+   <h2 id="appearance-title">${portalIllustration('appearance')}Интерфейс</h2>
    <div class="settings-feature theme-feature">
     <h3 id="theme-title">Тема оформления</h3>
     <div class="theme-choices" role="group" aria-labelledby="theme-title">${themeButtons}</div>
    </div>
    <div class="settings-feature scale-feature">
-    <h3>${icon('text')}Размер текста</h3>
+    <h3>${portalIllustration('text-size')}Размер текста</h3>
     <div class="segmented" role="group" aria-label="Размер текста">${scaleButtons}</div>
    </div>
   </section>
   <section class="panel settings-panel access-panel" aria-labelledby="session-title">
-   ${accentIcon('shield')}
+   ${portalIllustration('session')}
    <div class="session-copy">
     <h2 id="session-title">Текущий сеанс</h2>
     <p>${e(student.shortName)} · этот браузер</p>
    </div>
-   <button class="button button-danger" type="button" data-logout>${accentIcon('exit')}Выйти из аккаунта</button>
+   <button class="button button-danger" type="button" data-logout>${portalIllustration('logout')}Выйти из аккаунта</button>
   </section>
  </div>`;
 }

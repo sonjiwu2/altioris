@@ -42,7 +42,7 @@ Selected pairing: Philosopher + Golos Text. At 100% browser zoom use 24px page p
 
 Use local upright Philosopher throughout the interface, including schedule, exams, navigation and wordmark. Headings/names/actions use Bold; reading text uses Regular. Body copy is approximately 22px and chat copy 24px at the 26px desktop rem scale; retain account text scaling and responsive wrapping. Keep generous control spacing. On narrow screens grade statuses reflow below course names.
 
-Support is one full-width conversation, without the right topics panel. Use the original SVG headset-person avatar in the header and assistant messages; do not repeat the university shield in chat. Keep honest automated-assistant copy, owned message history and inline quick actions. The composer supports Enter to submit and Shift+Enter for a new line.
+Support is one full-width conversation, without the right topics panel. Use the dedicated illustrated Altioris assistant avatar in the conversation header and assistant messages. Keep honest automated-assistant copy, owned message history and inline quick actions. The composer supports Enter to submit and Shift+Enter for a new line.
 
 Profile photo editing uses a file picker, square preview and save/reset controls. Browser-readable image files up to 20 MB are center-cropped and encoded to a 640px PNG before upload. The authenticated server accepts at most 2 MiB PNG with bounded dimensions; SQLite schema v2 stores the image as an owned BLOB. GET/PUT/DELETE /api/profile/avatar use the current session owner, no caller-supplied owner, no public media directory. Preserve account credentials and all existing records during migration. Custom photo URLs use a content revision and no-store responses; the photo appears on the owner's profile, rail and ranking row.
 
@@ -53,3 +53,9 @@ Keep upright Philosopher. Settings show light, dark and system theme previews wi
 ## Theme and filter transitions
 
 Theme controls use 160 ms feedback and a 330 ms crossfade when the browser supports view transitions. Text size and theme choices preserve focus and are applied independently. On reduced-motion systems the new state appears immediately. Filter changes animate the results area. Choosing an item animates its detail panel only if the displayed item actually changes. Entering a new week animates the calendar and its detail panel.
+
+## Faculty, course illustrations and support
+
+Each teacher profile pairs a distinct portrait and monogram with one discipline, a department and consultation details. Use the course link to open the corresponding gradebook record. Keep the directory scrollable with the selected teacher in view.
+
+Course illustrations belong to the gradebook. Their 24 compositions use the shapes and colors of academic illustrations. Portal illustrations cover appearance settings, session controls, support navigation and the assistant portrait. Carry the same illustrated assistant identity from the chat header into the conversation.

@@ -66,20 +66,15 @@ export function termPicker(path, terms, selected){
   '</select></label></form>';
 }
 export const fields=entries=>'<dl class="fields">'+entries.map(([label,value,glyph])=>'<div>'+(glyph?icon(glyph):'')+'<dt>'+escape(label)+'</dt><dd>'+escape(value??'—')+'</dd></div>').join('')+'</dl>';
-const courseIcons={
- algorithms:'network',construction:'books',os:'chip',teamwork:'people',probability:'grades',project:'project',
- discrete:'theory',databases:'database',stats:'grades',practice:'clipboard',security:'shield',networks:'computer',
- theory:'theory',distributed:'network',architecture:'chip',testing:'clipboard',
- analysis:'grades',storage:'database',devops:'network',quality:'check',cloud:'computer',
-};
-export const subjectIcon=id=>courseIcons[id]??'books';
-const portraits={voronova:'teacher-voronova',sokolov:'teacher-safonov',krylov:'teacher-krylov',pavlova:'teacher-pavlova'};
+export const subjectIllustration=id=>'<svg class="icon subject-illustration" viewBox="0 0 64 64" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="/assets/subject-illustrations.svg#subject-'+escape(id)+'"/></svg>';
+export const portalIllustration=id=>'<svg class="icon portal-illustration" viewBox="0 0 '+(id==='support-avatar'?'64 64':'36 36')+'" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="/assets/portal-illustrations.svg#portal-'+escape(id)+'"/></svg>';
 const studentFaces={a:'vetrova',b:'zolotov',c:'orlova',d:'gromov',e:'belova',f:'serov',g:'lanskaya',h:'severin',i:'rudin',j:'lesina',k:'melnikov',l:'safonova',m:'volkov'};
 const studentNames={'Ветрова':'vetrova','Золотов':'zolotov','Орлова':'orlova','Громов':'gromov','Белова':'belova','Серов':'serov','Ланская':'lanskaya','Северин':'severin','Рудин':'rudin','Лесина':'lesina','Мельников':'melnikov','Сафонова':'safonova','Волков':'volkov'};
 export function portrait(person,className='') {
  if(person.avatar==='custom'&&/^\/api\/profile\/avatar\?v=[a-f0-9]{64}$/.test(person.avatarUrl||''))return '<img class="portrait '+className+'" src="'+escape(person.avatarUrl)+'" alt="" width="160" height="160">';
  const login=studentFaces[person.id]||Object.entries(studentNames).find(([last])=>person.name?.includes(last))?.[1];
- const source=portraits[person.id]||(login?'student-'+login:null);
+ const teacher=/^teacher-[a-z]+$/.test(person.portrait??'')?person.portrait:null;
+ const source=teacher||(login?'student-'+login:null);
  const initials=person.initials||person.shortName?.split(' ').map(p=>p[0]).join('')||'?';
  return source&&person.avatar!=='initials'?'<img class="portrait '+className+'" src="/assets/'+source+'.webp" alt="" width="160" height="160">':'<span class="portrait initials '+className+'" aria-hidden="true">'+escape(initials)+'</span>';
 }
