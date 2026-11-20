@@ -8,6 +8,7 @@ Font software is distributed under its own SIL Open Font License 1.1; the projec
 | Great Vibes | [Google Fonts](https://github.com/google/fonts/tree/main/ofl/greatvibes) | `public/assets/fonts/` — original OFL notice |
 | Marck Script | [Google Fonts](https://github.com/google/fonts/tree/main/ofl/marckscript) | `public/assets/fonts/` — original OFL notice |
 | Golos Text (browser and embedded PDF font) | [Google Fonts](https://github.com/google/fonts/tree/main/ofl/golostext) | `public/assets/fonts/` and `server/fonts/OFL.txt` |
+| Philosopher | [Google Fonts](https://github.com/google/fonts/tree/main/ofl/philosopher) | `public/assets/fonts/philosopher-OFL.txt` |
 
 The [asset register](docs/licenses/ASSET_REGISTER.md) records the actual bundled files and their purpose.
 Campus artwork, the fictional crest, individual portraits and approved visual references were created with image generation for this project. Their inclusion does not imply that generated material has exclusive copyright protection. Names, student records and the university are fictional. No real university endorsement is implied.

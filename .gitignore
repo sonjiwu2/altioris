@@ -45,3 +45,7 @@ node_modules/
 /test-results/
 .DS_Store
 Thumbs.db
+
+# Local browser evidence and generated typography explorations
+/.playwright-cli/
+/output/
