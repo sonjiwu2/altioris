@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | campus-evening.webp | Original ImageGen architectural photograph | Sign-in background only |
 | crest.webp | Original ImageGen transparent fictional shield | University identity |
-| student-*.webp | 13 individual ImageGen fictional student portraits | Same person across profile, sidebar and rating |
+| student-*.webp | 13 individual ImageGen fictional student portraits | Retained as sources for future use |
 | teacher-*.webp | 24 individually generated ImageGen fictional staff portraits | Teacher list, detail and teaching links |
 | GreatVibes-Regular.woff2 | Google Fonts / Great Vibes, OFL 1.1 | Connected Cyrillic calligraphy and wordmark |
 | MarckScript-Regular.woff2 | Google Fonts / Marck Script, OFL 1.1 | Core handwritten Cyrillic labels and data |
@@ -20,6 +20,6 @@ Asset generation briefs specified one person per portrait, natural window light,
 
 Selected upright pairing: Philosopher-Regular.woff2 (40800 bytes) and Philosopher-Bold.woff2 (40644 bytes), from https://github.com/google/fonts/tree/main/ofl/philosopher, OFL 1.1 with philosopher-OFL.txt alongside the fonts. Philosopher supplies headings and names; existing Golos Text supplies navigation, body text and numbers. Both downloaded Philosopher files were checked for the complete Russian alphabet including Ё/ё, then compressed using the existing local fontTools/Brotli tooling. No application dependency added. Cormorant Garamond and Vollkorn were explored in local previews but are not shipped.
 
-Philosopher Regular/Bold covers all interface text, including the wordmark and timetable. User-uploaded profile images stay in the ignored private SQLite database. The 20 new ImageGen faculty portraits were packaged as 240 × 240 WebP files. The original four portraits stay assigned to their existing identities.
+Philosopher Regular/Bold covers all interface text, including the wordmark and timetable. Student avatars use rendered initials and optionally a personal upload stored in the private SQLite database. The 20 newer ImageGen faculty portraits were packaged as 240 × 240 WebP files. The original four portraits stay assigned to their existing identities.
 
 The sticker briefs used the supplied «Altioris — бумажные стикеры» mood board for gouache texture, cut-paper edges and the collegiate palette. ImageGen produced eight themed sheets. The individual silhouettes were prepared as 144 × 144 transparent WebP files. Each discipline uses its own composition based on concepts from the teaching plan.

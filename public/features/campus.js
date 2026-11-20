@@ -1,4 +1,4 @@
-import { escape as e, badge, date, empty, icon, key, line, portrait, range, tab, termPicker } from '../ui.js?v=20261120-11';
+import { escape as e, badge, date, empty, icon, key, line, portrait, range, tab, termPicker } from '../ui.js?v=20261120-12';
 
 const moscow = {timeZone:'Europe/Moscow'};
 const fullDay = value => value+'T12:00:00+03:00';

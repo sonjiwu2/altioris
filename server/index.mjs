@@ -320,7 +320,7 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
         const data = await readJson(req)
         validateKeys(data, ['avatar'])
         if (!avatars.has(data.avatar)) throw badRequest('Выберите доступный аватар.')
-        store.setAvatar(owner, data.avatar)
+        store.removeAvatarImage(owner)
         json(res, 200, { student: store.profile(owner) })
         return
       }
@@ -331,7 +331,7 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
       }
       if (pathname === '/api/profile/avatar' && method === 'DELETE') {
         req.resume()
-        store.setAvatar(owner, 'portrait')
+        store.removeAvatarImage(owner)
         json(res, 200, { student: store.profile(owner) })
         return
       }

@@ -145,7 +145,7 @@ test('private records, workspace actions and sessions are isolated and survive a
       method: 'PATCH', token: a.token, body: { avatar: 'initials' }, origin: 'https://another.example',
     })
     assert.equal(originDenied.status, 403)
-    assert.equal((await dashboard(app, a.token)).student.avatar, 'portrait')
+    assert.equal((await dashboard(app, a.token)).student.avatar, 'initials')
 
     assert.equal((await app.request('/api/profile', {
       method: 'PATCH', token: a.token, body: { avatar: 'initials' },
@@ -200,7 +200,7 @@ test('private records, workspace actions and sessions are isolated and survive a
     assert.equal(saved.support.at(-1).href, `/requests?item=${request.id}`)
     const other = await dashboard(app, b.token)
     assert.equal(other.requests.length, snapshotB.requests.length)
-    assert.equal(other.student.avatar, 'portrait')
+    assert.equal(other.student.avatar, 'initials')
     assert.equal(other.support.length, 0)
     assert.equal(other.notifications.length,0)
     assert.equal((await app.request(`/api/documents/${request.documentId}`, { token: b.token })).status, 404)
@@ -261,9 +261,12 @@ test('profile image uploads migrate existing data, validate bounds and stay priv
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aOCcAAAAASUVORK5CYII=','base64');
  try{
   await app.close();
-  const db=new DatabaseSync(env.ALTIORIS_DB);db.exec('DROP TABLE profile_images; PRAGMA user_version=1');db.close();
+  const db=new DatabaseSync(env.ALTIORIS_DB);
+  db.exec("UPDATE accounts SET avatar='portrait'; DROP TABLE profile_images; PRAGMA user_version=1");db.close();
   app=await launch(readConfig(env));
   const a=await login(app,env,'vetrova'),b=await login(app,env,'zolotov');
+  assert.equal((await dashboard(app,a.token)).student.avatar,'initials');
+  assert.equal((await dashboard(app,b.token)).student.avatar,'initials');
   const upload=(raw=png,extra={})=>app.request('/api/profile/avatar',{method:'PUT',token:a.token,raw,headers:{'Content-Type':'image/png'},...extra});
   assert.equal((await upload(png,{token:undefined})).status,401);
   assert.equal((await upload(png,{origin:'https://foreign.example'})).status,403);
@@ -284,7 +287,7 @@ test('profile image uploads migrate existing data, validate bounds and stay priv
   assert.equal((await app.request('/api/profile/avatar',{method:'DELETE',token:b.token})).status,200);
   assert.equal((await app.request(student.avatarUrl,{token:a.token})).status,200);
   assert.equal((await app.request('/api/profile/avatar',{method:'DELETE',token:a.token})).status,200);
-  assert.equal((await dashboard(app,a.token)).student.avatar,'portrait');
+  assert.equal((await dashboard(app,a.token)).student.avatar,'initials');
   assert.equal((await app.request(student.avatarUrl,{token:a.token})).status,404);
  }finally{await app.close();await rm(directory,{recursive:true,force:true});}
 });

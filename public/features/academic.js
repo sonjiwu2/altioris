@@ -1,4 +1,4 @@
-import { escape as e, badge, date, decimal, empty, fields, icon, portrait, subjectIllustration, tab, termPicker } from '../ui.js?v=20261120-11';
+import { escape as e, badge, date, decimal, empty, fields, icon, portrait, subjectIllustration, tab, termPicker } from '../ui.js?v=20261120-12';
 import { searchTeachers } from './teacher-search.js';
 function header(rating){return '<h1>Успеваемость</h1><nav class="tabs academic-tabs" aria-label="Учебные результаты">'+tab('/grades','Зачётка',!rating,'doc')+tab('/grades/ranking','Рейтинг',rating,'trophy')+'</nav>';}
 export function grades(data,params){
@@ -111,7 +111,7 @@ export function teachers({campus},params){
   </aside>`:'';
  return `<h1>Преподаватели</h1>
  <form class="filters teacher-filters" method="get" action="/teachers" data-teacher-filters>
-  <label class="search-field">${icon('search')}<span class="sr-only">Имя или дисциплина</span><input type="search" name="q" placeholder="Имя или дисциплина" value="${e(query)}"></label>
+  <label class="search-field">${icon('search')}<span class="sr-only">Имя, фамилия или отчество</span><input type="search" name="q" placeholder="Имя или фамилия" value="${e(query)}"></label>
   <div class="department-filter"><label for="teacher-department">Кафедра</label><select id="teacher-department" name="office">
    <option value="">Все кафедры</option>
    ${[...departments].sort((a,b)=>a[1].localeCompare(b[1],'ru')).map(([department,label])=>`<option value="${e(department)}"${office===department?' selected':''}>${e(label)}</option>`).join('')}
@@ -121,6 +121,46 @@ export function teachers({campus},params){
 }
 function fact(glyph,label,value,copy=false){return '<div class="info-line">'+icon(glyph)+'<span>'+label+'<small>'+e(value)+'</small></span>'+(copy?'<button class="icon-button" type="button" data-copy="'+e(value)+'" aria-label="Скопировать почту">'+icon('copy')+'</button>':'')+'</div>';}
 export function profile({student,documents}){
- return '<h1>Мой профиль</h1><section class="panel profile-identity">'+portrait(student)+'<div><h2>'+e(student.name)+'</h2><div class="inline-group">'+badge('Студент')+badge(student.group,'sage')+'</div></div><button class="button button-outline" type="button" data-dialog="avatar-dialog">'+icon('camera')+'Изменить фото</button></section><div class="split profile-grid"><section class="panel"><h2>Учебные данные</h2>'+fields([['Факультет',student.faculty,'cap'],['Направление',student.program,'books'],['Форма обучения',student.form],['Курс',student.year],['Группа',student.group],['Год поступления',student.admissionYear,'calendar'],['Учебная почта',student.email,'mail']])+'</section><section class="panel"><div class="student-card"><header class="student-card-header"><img src="/assets/crest.webp" alt="" width="65" height="83"><h3>Студенческий билет</h3></header><div class="student-card-body"><h3>'+e(student.name)+'</h3><div class="student-number"><span>'+e(student.number)+'</span><button class="icon-button" type="button" data-copy="'+e(student.number)+'" aria-label="Скопировать номер студенческого билета">'+icon('copy')+'</button></div><p class="student-valid">Действует до 30 июня 2028</p><span class="sample-stamp">Образец</span></div></div></section></div><section class="panel profile-documents"><h2>Мои документы</h2>'+documents.map(doc=>'<a class="file-row" href="/api/documents/'+encodeURIComponent(doc.id)+'" download>'+icon(doc.title.includes('успеваемости')?'books':'doc')+'<span><strong>'+e(doc.title)+'</strong><small>'+date(doc.createdAt)+'</small></span>'+badge('PDF')+'<span class="text-link">'+icon('out')+'<span>Открыть</span></span></a>').join('')+(!documents.length?empty('Документы появятся здесь после готовности заявки.'):'')+'</section><dialog id="avatar-dialog" aria-labelledby="avatar-title"><div class="section-heading"><h2 id="avatar-title">Фото профиля</h2><button class="icon-button" type="button" data-close aria-label="Закрыть">'+icon('close')+'</button></div><form data-mutation="photo" class="photo-form"><div class="photo-preview">'+portrait(student)+'<span>Предпросмотр фото</span></div><label class="photo-picker">Выбрать изображение<input type="file" accept="image/*" data-photo-file aria-describedby="photo-help"></label><p id="photo-help">JPG, PNG, WebP, GIF и другие форматы, которые открывает браузер. До 20 МБ. Фото будет обрезано по центру до квадрата.</p><p class="form-error" role="alert" hidden></p><div class="photo-actions"><button class="button" data-photo-save disabled>Сохранить фото</button>'+(student.avatar==='custom'?'<button class="button button-outline" type="button" data-remove-photo>Вернуть исходное фото</button>':'')+'</div></form></dialog>';
-}
+ const hasPhoto=student.avatar==='custom';
+ const academicFields=fields([
+  ['Факультет',student.faculty,'cap'],['Направление',student.program,'books'],
+  ['Форма обучения',student.form],['Курс',student.year],['Группа',student.group],
+  ['Год поступления',student.admissionYear,'calendar'],['Учебная почта',student.email,'mail'],
+ ]);
+ const files=documents.map(doc=>`<a class="file-row" href="/api/documents/${encodeURIComponent(doc.id)}" download>
+   ${icon(doc.title.includes('успеваемости')?'books':'doc')}
+   <span><strong>${e(doc.title)}</strong><small>${date(doc.createdAt)}</small></span>${badge('PDF')}
+   <span class="text-link">${icon('out')}<span>Открыть</span></span>
+  </a>`).join('');
 
+ return `<h1>Мой профиль</h1>
+  <section class="panel profile-identity">
+   ${portrait(student)}
+   <div class="profile-name"><h2>${e(student.name)}</h2><div class="inline-group">${badge('Студент')}${badge(student.group,'sage')}</div></div>
+   <button class="button button-outline profile-avatar-action" type="button" data-dialog="avatar-dialog">${icon('camera')}${hasPhoto?'Изменить фото':'Добавить фото'}</button>
+  </section>
+  <div class="split profile-grid">
+   <section class="panel"><h2>Учебные данные</h2>${academicFields}</section>
+   <section class="panel"><div class="student-card">
+    <header class="student-card-header"><img src="/assets/crest.webp" alt="" width="52" height="68"><h3>Студенческий билет</h3></header>
+    <div class="student-card-body">
+     <h3>${e(student.name)}</h3>
+     <div class="student-number"><span>${e(student.number)}</span><button class="icon-button" type="button" data-copy="${e(student.number)}" aria-label="Скопировать номер студенческого билета">${icon('copy')}</button></div>
+     <p class="student-valid">Действует до 30 июня 2028</p><span class="sample-stamp">Образец</span>
+    </div>
+   </div></section>
+  </div>
+  <section class="panel profile-documents"><h2>Мои документы</h2>${files||empty('Документы появятся здесь после готовности заявки.')}</section>
+  <dialog id="avatar-dialog" aria-labelledby="avatar-title">
+   <div class="section-heading"><h2 id="avatar-title">Фото профиля</h2><button class="icon-button" type="button" data-close aria-label="Закрыть">${icon('close')}</button></div>
+   <form data-mutation="photo" class="photo-form">
+    <div class="photo-preview">${portrait(student)}<span>Предпросмотр аватара</span></div>
+    <label class="photo-picker">Выбрать изображение<input type="file" accept="image/*" data-photo-file aria-describedby="photo-help"></label>
+    <p id="photo-help">JPG, PNG, WebP, GIF и другие форматы, которые открывает браузер. До 20 МБ. Фото будет обрезано по центру до квадрата.</p>
+    <p class="form-error" role="alert" hidden></p>
+    <div class="photo-actions"><button class="button" data-photo-save disabled>Сохранить фото</button>
+     ${hasPhoto?'<button class="button button-outline" type="button" data-remove-photo>Вернуть инициалы</button>':''}
+    </div>
+   </form>
+  </dialog>`;
+}

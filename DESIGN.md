@@ -4,7 +4,7 @@ Altioris University is a Russian-language fictional digital dean's office. Its v
 
 Use a collegiate cream/navy/gold system: paper #fcf6ef, ink #07234c, navy #052451, fine warm borders #e8d8c7, gold #b58226, pale green, peach and lavender status surfaces. Great Vibes supplies expressive headings, names, navigation and the wordmark; Marck Script supplies readable handwritten Cyrillic interface text; Golos Text supplies technical errors and neutral fallback text. All font files are served locally with their OFL notices. Keep text size generous enough for script legibility.
 
-The desktop shell has a 240 px left rail, vertical shield and Altioris University wordmark, seven icon/text links, and student identity anchored below. Navigation: Расписание, Успеваемость, Преподаватели, Заявки, Чат поддержки, Уведомления, Настройки. The gear for settings is an explicit product requirement. The root route opens the schedule. Profile lives at /profile. Use the paper-sticker illustration system for navigation, settings, course and ranking imagery. Use clean monochrome symbols on compact action controls. Preserve the same portrait for the same identity; never assign one face to different people.
+The desktop shell has a 204–224 px left rail, vertical shield and Altioris University wordmark, seven icon/text links, and student identity anchored below. Navigation: Расписание, Успеваемость, Преподаватели, Заявки, Чат поддержки, Уведомления, Настройки. The gear for settings is an explicit product requirement. The root route opens the schedule. Profile lives at /profile. Use the paper-sticker illustration system for navigation, settings, course and ranking imagery. Use clean monochrome symbols on compact action controls. Preserve the same portrait for the same identity; never assign one face to different people.
 
 At 980 px and below, use a compact mobile header and collapsible navigation. At 680 px and below, reflow details below lists and default the timetable to a day. Verify 360 x 800, 768 x 1024, 1280 x 1024 and 1536 x 1024. Preserve keyboard access, focus, loading, errors, persistent settings, reduced motion and actual account isolation. UI values come from the authenticated snapshot; screenshot example values are not fixtures.
 
@@ -22,7 +22,7 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 | 08-support-chat.png | /support | Full-width conversation with inline quick actions and a headset avatar |
 | 09-notifications.png | /notifications | Read-state filters; illustrated list and linked detail |
 | 10-settings.png | /settings | Three theme choices with previews, text scale and current session in a single column |
-| 11-student-profile.png | /profile | Portrait identity banner; academic details; navy/gold student card; documents |
+| 11-student-profile.png | /profile | Initials or an owned avatar; academic details; navy/gold student card; documents |
 
 ## Interaction contract
 
@@ -40,11 +40,11 @@ Selected pairing: Philosopher + Golos Text. At 100% browser zoom use 24px page p
 
 ## Current interface refinement — 2026-11-20 (supersedes earlier typography exceptions)
 
-Use local upright Philosopher throughout the interface, including schedule, exams, navigation and wordmark. Headings/names/actions use Bold; reading text uses Regular. Body copy is approximately 22px and chat copy 24px at the 26px desktop rem scale; retain account text scaling and responsive wrapping. Keep generous control spacing. On narrow screens grade statuses reflow below course names.
+Use local upright Philosopher throughout the interface, including schedule, exams, navigation and wordmark. Headings/names/actions use Bold; reading text uses Regular. Use a 22px rem baseline at browser zoom 100% and account scale 100%. Retain account text scaling and responsive wrapping. Keep generous control spacing. On narrow screens grade statuses reflow below course names.
 
 Support is one full-width conversation, without the right topics panel. Use the dedicated illustrated Altioris assistant avatar in the conversation header and assistant messages. Keep honest automated-assistant copy, owned message history and inline quick actions. The composer supports Enter to submit and Shift+Enter for a new line.
 
-Profile photo editing uses a file picker, square preview and save/reset controls. Browser-readable image files up to 20 MB are center-cropped and encoded to a 640px PNG before upload. The authenticated server accepts at most 2 MiB PNG with bounded dimensions; SQLite schema v2 stores the image as an owned BLOB. GET/PUT/DELETE /api/profile/avatar use the current session owner, no caller-supplied owner, no public media directory. Preserve account credentials and all existing records during migration. Custom photo URLs use a content revision and no-store responses; the photo appears on the owner's profile, rail and ranking row.
+Profile photo editing uses a file picker, square preview and save/reset controls. Browser-readable image files up to 20 MB are center-cropped and encoded to a 640px PNG before upload. The authenticated server accepts at most 2 MiB PNG with bounded dimensions; SQLite schema v2 stores the image as an owned BLOB. GET/PUT/DELETE /api/profile/avatar use the current session owner, no caller-supplied owner, no public media directory. Preserve account credentials and all existing records during migration. Use initials for students without an upload. Custom photo URLs use a content revision and no-store responses and appear on the owner's profile, rail and ranking row.
 
 ## Latest settings, layout and motion refinement
 
@@ -58,6 +58,6 @@ Theme controls use 160 ms feedback and a 330 ms crossfade when the browser suppo
 
 Each teacher profile pairs a distinct portrait and monogram with one discipline, a department and consultation details. Use the course link to open the corresponding gradebook record. Keep the directory scrollable with the selected teacher in view.
 
-Keep biographies to one compact paragraph on the profile card. Search by word prefix within names or subjects and combine the query with the department filter. Native options use the active theme palette. The gradebook inspector shows assessment details without a separate assessment link.
+Keep biographies to one compact paragraph on the profile card. Search by word prefix within names and combine the query with the department filter. Native options use the active theme palette. The gradebook inspector shows assessment details without a separate assessment link.
 
 Course illustrations belong to the gradebook. Each of the 24 disciplines has its own gouache-style paper sticker, tied to a concrete concept taught in the course. Paper stickers also cover the navigation, settings, ranking metrics and assistant. Core actions use monochrome UI symbols. Carry the same illustrated assistant identity from the chat header into the conversation.

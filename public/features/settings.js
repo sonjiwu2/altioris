@@ -1,4 +1,4 @@
-import { escape as e, icon } from '../ui.js?v=20261120-11';
+import { escape as e, icon } from '../ui.js?v=20261120-12';
 
 const scales = [100, 115, 130];
 const themes = [

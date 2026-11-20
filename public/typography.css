@@ -2,7 +2,7 @@
 @font-face{font-family:Philosopher;src:url("/assets/fonts/Philosopher-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
 
 /* The rem scale also controls the account's 100/115/130% preference. */
-:root{--heading-font:Philosopher,Georgia,serif;--body-font:Philosopher,Georgia,serif;font-family:var(--body-font);line-height:1.5;-webkit-text-stroke:0}
+:root{--heading-font:Philosopher,Georgia,serif;--body-font:Philosopher,Georgia,serif;font-family:var(--body-font);font-size:calc(22px * var(--text-scale));line-height:1.5;-webkit-text-stroke:0}
 body{font-size:.8rem}
 h1,h2,h3{font-family:var(--heading-font);font-style:normal;font-weight:700;line-height:1.12;-webkit-text-stroke:0}
 h1{font-size:2.15rem;letter-spacing:-.015em;margin-bottom:.65rem;overflow-wrap:anywhere;hyphens:auto}
@@ -133,7 +133,64 @@ h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1
 .photo-form #photo-help{font-size:.72rem;color:var(--muted);line-height:1.5}
 .photo-actions{display:flex;flex-wrap:wrap;gap:12px}
 #avatar-dialog{font-family:var(--body-font);font-size:.85rem;width:min(600px,calc(100% - 28px));max-height:calc(100dvh - 32px);overflow:auto}
-@media(min-width:1351px){:root{--sidebar:260px}}
+@media(min-width:981px){
+ :root{--sidebar:clamp(204px,14.5vw,224px)}
+ .sidebar{padding:16px 10px 14px}
+ .sidebar .brand-link{flex:none;padding-bottom:14px}
+ .sidebar .brand{font-size:1.32rem}
+ .sidebar .brand img{height:76px;margin-bottom:7px}
+ .main-nav{
+  --nav-room:clamp(0px,calc((100dvh - 740px) / 6),32px);
+  min-height:0;margin:calc(8px + var(--nav-room)) 0 0;gap:calc(4px + var(--nav-room) * .45);
+  padding:4px 3px;overflow-y:auto;scrollbar-width:thin;
+ }
+ .main-nav a{min-height:calc(49px + var(--nav-room) * .4);padding:6px 10px;gap:10px;font-size:.78rem}
+ .main-nav a>.icon{width:36px;height:36px}
+}
+.sidebar-account{flex:none;margin-top:auto;padding-top:20px}
+.sidebar-profile{
+ margin:0;padding:8px 9px;gap:10px;min-height:57px;
+ border:1px solid var(--line);border-radius:12px;background:var(--surface);
+ transition:border-color 160ms,background-color 160ms;
+}
+.sidebar-profile:hover{border-color:var(--gold)}
+.sidebar-profile[aria-current],.mobile-nav .mobile-profile[aria-current]{
+ border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,var(--surface));
+}
+.sidebar-profile .portrait,.mobile-profile .portrait{width:38px;height:38px;border-radius:11px}
+.sidebar-profile small{margin-top:2px;color:var(--muted)}
+.portrait.initials{
+ background:color-mix(in srgb,var(--gold) 12%,var(--surface));color:var(--ink);
+ border:1px solid color-mix(in srgb,var(--gold) 34%,var(--line));font:700 .8rem/1 var(--heading-font);
+}
+.rank-student .initials{font-size:.66rem}
+.mobile-nav .mobile-profile{border:1px solid var(--line);margin-top:8px}
+.page .profile-identity{gap:18px;padding:18px 20px;margin-bottom:20px}
+.page .profile-identity>.portrait{width:96px;height:96px;border-radius:18px}
+.page .profile-identity>.initials{font-size:1.65rem}
+.page .profile-identity>.profile-name{border:0;padding:0;min-width:0}
+.page .profile-identity h2{margin-bottom:9px;overflow-wrap:anywhere}
+.profile-identity .inline-group{gap:8px}
+.page .profile-avatar-action{min-height:44px;padding:7px 14px;gap:8px}
+.page .profile-avatar-action .icon{width:25px;height:25px}
+.page .profile-grid{gap:18px}
+.page .profile-grid>.panel{padding:16px 18px}
+.profile-grid h2{font-size:1.43rem}
+.page .profile-grid .fields{margin-top:10px}
+.page .profile-grid .fields>div{grid-template-columns:28px minmax(78px,.8fr) minmax(0,1.2fr);gap:10px;padding-block:7px}
+.page .profile-grid .fields .icon{width:27px;height:27px}
+.page .student-card{min-height:0}
+.student-card-header{gap:14px;padding:12px 16px}
+.student-card-header img{width:44px;height:54px}
+.student-card-header h3{padding-left:14px}
+.student-card-body{padding:16px}
+.page .student-card-body>h3{font-size:1.36rem;overflow-wrap:anywhere;margin-bottom:10px}
+.student-number{gap:8px}
+.student-number .icon-button{color:#183859;min-width:44px;min-height:44px}
+.student-valid{margin-top:12px;padding-top:10px}
+.page .student-card .sample-stamp{position:static;display:block;width:fit-content;margin:8px 6px 2px auto;color:#6f5187;border-color:#9274a8}
+.photo-preview .initials{font-size:1.75rem}
+@media(max-width:820px){.page .profile-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:980px){.mobile-header .brand{font-size:1.1rem}.mobile-header .brand small{font-size:.7em}}
 @media(max-width:680px){
  .page .teacher-list{max-height:none}
@@ -305,7 +362,6 @@ select :is(option,optgroup){color:var(--ink);background-color:var(--surface)}
 [data-theme=dark] .icon{filter:none}
 [data-theme=dark] :is(.tab,.pills a)[aria-current]{background:var(--peach);color:var(--ink)}
 [data-theme=dark] .badge.sage{color:#dbeac5}
-[data-theme=dark] .sidebar-profile[aria-current]{background:var(--peach)}
 [data-theme=dark] :is(.button-outline,input,select,textarea,.search-field,.segmented,.segmented button){border-color:var(--line)}
 [data-theme=dark] .button-danger{color:var(--negative);border-color:#9c6356}
 [data-theme=dark] .online-card{background:#234261;color:var(--ink)}
@@ -396,4 +452,9 @@ select :is(option,optgroup){color:var(--ink);background-color:var(--surface)}
  .teacher-filters .search-field{grid-column:1 / -1}
  .teacher-filters .button{padding-inline:12px}
  .page .access-panel .button-danger{width:100%;margin-top:4px}
+ .page .profile-identity{padding:15px;gap:12px}
+ .page .profile-identity>.portrait{width:64px;height:64px;border-radius:14px}
+ .page .profile-identity>.initials{font-size:1.24rem}
+ .page .profile-identity h2{font-size:1.1rem}
+ .page .profile-grid>.panel{padding:14px}
 }

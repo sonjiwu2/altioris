@@ -42,14 +42,10 @@ export function termPicker(path, terms, selected){
 }
 export const fields=entries=>'<dl class="fields">'+entries.map(([label,value,glyph])=>'<div>'+(glyph?icon(glyph):'')+'<dt>'+escape(label)+'</dt><dd>'+escape(value??'—')+'</dd></div>').join('')+'</dl>';
 export const subjectIllustration=id=>sticker('subject-'+id,' subject-illustration');
-const studentFaces={a:'vetrova',b:'zolotov',c:'orlova',d:'gromov',e:'belova',f:'serov',g:'lanskaya',h:'severin',i:'rudin',j:'lesina',k:'melnikov',l:'safonova',m:'volkov'};
-const studentNames={'Ветрова':'vetrova','Золотов':'zolotov','Орлова':'orlova','Громов':'gromov','Белова':'belova','Серов':'serov','Ланская':'lanskaya','Северин':'severin','Рудин':'rudin','Лесина':'lesina','Мельников':'melnikov','Сафонова':'safonova','Волков':'volkov'};
 export function portrait(person,className='') {
  if(person.avatar==='custom'&&/^\/api\/profile\/avatar\?v=[a-f0-9]{64}$/.test(person.avatarUrl||''))return '<img class="portrait '+className+'" src="'+escape(person.avatarUrl)+'" alt="" width="160" height="160">';
- const login=studentFaces[person.id]||Object.entries(studentNames).find(([last])=>person.name?.includes(last))?.[1];
- const teacher=/^teacher-[a-z]+$/.test(person.portrait??'')?person.portrait:null;
- const source=teacher||(login?'student-'+login:null);
+ if(/^teacher-[a-z]+$/.test(person.portrait??''))return '<img class="portrait '+className+'" src="/assets/'+person.portrait+'.webp" alt="" width="160" height="160">';
  const initials=person.initials||person.shortName?.split(' ').map(p=>p[0]).join('')||'?';
- return source&&person.avatar!=='initials'?'<img class="portrait '+className+'" src="/assets/'+source+'.webp" alt="" width="160" height="160">':'<span class="portrait initials '+className+'" aria-hidden="true">'+escape(initials)+'</span>';
+ return '<span class="portrait initials '+className+'" aria-hidden="true">'+escape(initials)+'</span>';
 }
 

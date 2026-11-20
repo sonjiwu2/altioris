@@ -7,11 +7,7 @@ function matchPriority(teacher,terms){
  if(terms.every(term=>startsWithAny(name,term)))return 1;
  const anchoredName=terms.some(term=>startsWithAny(name,term));
  if(terms.length>1&&anchoredName&&terms.every(term=>startsWithAny(fullName,term)))return 2;
-
- const subject=words(teacher.subject);
- const withAbbreviations=subject.join(' ').replaceAll('программного обеспечения','по').replaceAll('баз данных','бд').split(' ');
- if(terms.every(term=>startsWithAny(subject,term)||withAbbreviations.includes(term)))return 3;
- if(terms.length===1&&fullName.includes(terms[0]))return 4;
+ if(terms.length===1&&fullName.includes(terms[0]))return 2;
  return Infinity;
 }
 

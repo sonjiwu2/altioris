@@ -47,7 +47,7 @@ function migrate(db) {
       login TEXT UNIQUE NOT NULL,
       salt BLOB NOT NULL,
       password_hash BLOB NOT NULL,
-      avatar TEXT NOT NULL DEFAULT 'portrait' CHECK (avatar IN ('portrait', 'initials'))
+      avatar TEXT NOT NULL DEFAULT 'initials' CHECK (avatar IN ('portrait', 'initials'))
     );
     CREATE TABLE IF NOT EXISTS sessions (
       token_hash TEXT PRIMARY KEY,
@@ -171,9 +171,8 @@ export function openStore({ databasePath, passwords, clock }) {
 
     function profile(owner) {
       const account = accounts.find(({ id }) => id === owner)
-      const { avatar } = db.prepare('SELECT avatar FROM accounts WHERE id = ?').get(owner)
       const image = db.prepare('SELECT revision FROM profile_images WHERE owner = ?').get(owner)
-      return { ...account.profile, avatar: image ? 'custom' : avatar,
+      return { ...account.profile, avatar: image ? 'custom' : 'initials',
         ...(image ? { avatarUrl: '/api/profile/avatar?v=' + image.revision } : {}) }
     }
 
@@ -344,11 +343,8 @@ export function openStore({ databasePath, passwords, clock }) {
       readAllNotifications(owner) {
         db.prepare('UPDATE notifications SET is_read = 1 WHERE owner = ? AND is_read = 0').run(owner)
       },
-      setAvatar(owner, avatar) {
-        transaction(() => {
-          db.prepare('DELETE FROM profile_images WHERE owner = ?').run(owner)
-          db.prepare('UPDATE accounts SET avatar = ? WHERE id = ?').run(avatar, owner)
-        })
+      removeAvatarImage(owner) {
+        db.prepare('DELETE FROM profile_images WHERE owner = ?').run(owner)
       },
       avatarImage: (owner) => db.prepare('SELECT data FROM profile_images WHERE owner = ?').get(owner)?.data,
       saveAvatarImage(owner, data) {

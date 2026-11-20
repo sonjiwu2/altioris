@@ -1,9 +1,9 @@
 import { preparePhoto, disposePhotoPreview } from './features/photo.js';
-import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-11';
-import { exams, schedule } from './features/campus.js?v=20261120-11';
-import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-11';
-import { notifications, requests, support } from './features/services.js?v=20261120-11';
-import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-11';
+import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-12';
+import { exams, schedule } from './features/campus.js?v=20261120-12';
+import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-12';
+import { notifications, requests, support } from './features/services.js?v=20261120-12';
+import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
 
 const app=document.querySelector('#app'), announcement=document.querySelector('#status');
 const navigation=[['/schedule','Расписание','nav-schedule'],['/grades','Успеваемость','nav-grades'],['/teachers','Преподаватели','nav-faculty'],['/requests','Заявки','nav-requests'],['/support','Чат поддержки','nav-chat'],['/notifications','Уведомления','nav-alerts'],['/settings','Настройки','nav-settings']];
@@ -70,9 +70,19 @@ function render(focus=false,navigating=false) {
  const unread=snapshot.notifications.filter(item=>!item.read).length;
  const active=href=>(href==='/schedule'&&pathname==='/')||pathname===href||pathname.startsWith(href+'/');
  const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+'<span>'+label+'</span>'+(href==='/notifications'&&unread?'<span class="nav-unread" aria-label="Есть новые уведомления"></span>':'')+'</a>').join('');
+ const student=snapshot.student;
+ const currentProfile=pathname==='/profile'?' aria-current="page"':'';
  const page=pages.get(pathname);
  const content=page?page(snapshot,params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
- app.innerHTML='<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">'+brand+'</a><button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">'+icon('menu')+'</button></header><aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">'+brand+'</a><nav class="main-nav" aria-label="Основное меню">'+nav+'</nav><a class="sidebar-profile" href="/profile"'+(pathname==='/profile'?' aria-current="page"':'')+'>'+portrait(snapshot.student)+'<span>'+e(snapshot.student.shortName)+'<small>'+e(snapshot.student.group)+'</small></span>'+icon('down')+'</a></aside><nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>'+nav+'<a href="/profile">'+icon('nav-profile')+'Мой профиль</a></nav><div class="workspace"><main id="main" class="page" tabindex="-1">'+content+'</main><footer class="page-footer">Конкурсный прототип</footer></div>';
+ app.innerHTML=`<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">${brand}</a>
+  <button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">${icon('menu')}</button></header>
+  <aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">${brand}</a>
+   <nav class="main-nav" aria-label="Основное меню">${nav}</nav>
+   <div class="sidebar-account"><a class="sidebar-profile" href="/profile" aria-label="Мой профиль · ${e(student.shortName)}"${currentProfile}>
+    ${portrait(student)}<span>${e(student.shortName)}<small>${e(student.group)}</small></span></a></div>
+  </aside>
+  <nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>${nav}<a class="mobile-profile" href="/profile"${currentProfile}>${portrait(student)}<span>Мой профиль</span></a></nav>
+  <div class="workspace"><main id="main" class="page" tabindex="-1">${content}</main><footer class="page-footer">Конкурсный прототип</footer></div>`;
  document.title=(app.querySelector('h1')?.textContent||'Кабинет')+' · Altioris University';
  const path=viewPath(pathname);
  const activeItem=app.querySelector('main a[aria-current="true"]');
@@ -150,7 +160,7 @@ async function save(name,body,control,errorBox){
   render(['login','request','avatar'].includes(name));
   if(name==='message')app.querySelector('#chat-message')?.focus();
   if(['avatar','photo','removePhoto'].includes(name))app.querySelector('[data-dialog="avatar-dialog"]')?.focus();
-  const confirmation={request:'Заявка подана',avatar:'Фото профиля сохранено',photo:'Фото профиля сохранено',removePhoto:'Исходное фото восстановлено',read:'Уведомления обновлены',support:'Помощник ответил',message:'Помощник ответил'};
+  const confirmation={request:'Заявка подана',avatar:'Фото профиля сохранено',photo:'Фото профиля сохранено',removePhoto:'В профиле отображаются инициалы',read:'Уведомления обновлены',support:'Помощник ответил',message:'Помощник ответил'};
   if(confirmation[name])announce(confirmation[name]);
  }catch(error){
   if(error.status===401&&name!=='login'){snapshot=undefined;render(true);announce('Сеанс завершён. Войдите снова.');}
