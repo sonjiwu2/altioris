@@ -3,9 +3,11 @@ import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { promisify } from 'node:util'
-import { accounts, campusFor, gradesFor, rankingFor, requestTypes, teachers } from './fixtures.mjs'
+import { accounts, requestTypes, sessionSeasons, teachers } from './fixtures.mjs'
 import { academicDateTime, academicNotices, academicTimeRange, moscowDay } from './academic-year.mjs'
 import { profileDocumentsFor } from './profile-documents.mjs'
+import { campusWithChanges, gradesWithChanges, rankingWithChanges } from './academic-events.mjs'
+import { openAcademicQueue } from './academic-queue.mjs'
 
 const derive = promisify(scrypt)
 export const sessionLifetime = 60 * 60 * 12
@@ -13,8 +15,29 @@ const digest = (token) => createHash('sha256').update(token).digest('hex')
 
 function migrate(db) {
   const { user_version: version } = db.prepare('PRAGMA user_version').get()
-  if (version > 3) throw new Error('Unsupported database schema')
-  if (version === 3) return
+  if (version > 5) throw new Error('Unsupported database schema')
+  if (version === 5) return
+  if (version === 4) {
+    db.exec(`BEGIN IMMEDIATE;
+      DELETE FROM notifications WHERE type='Заявка' OR href='/requests' OR href LIKE '/requests?%';
+      PRAGMA user_version = 5;
+      COMMIT;`)
+    return
+  }
+  if (version === 3) {
+    db.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE IF NOT EXISTS academic_events (
+        id TEXT PRIMARY KEY, due_at INTEGER NOT NULL, payload TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending','published','rejected')),
+        effect TEXT, published_no INTEGER UNIQUE, reason TEXT
+      );
+      CREATE INDEX IF NOT EXISTS academic_events_due ON academic_events(state,due_at,id);
+      CREATE INDEX IF NOT EXISTS notifications_owner ON notifications(owner);
+      PRAGMA user_version = 4;
+      COMMIT;`)
+    migrate(db)
+    return
+  }
   if (version === 2) {
     // Previous releases reserved these exact owner/id pairs for fixtures.
     db.exec(`BEGIN IMMEDIATE;
@@ -26,6 +49,7 @@ function migrate(db) {
         OR (owner='b' AND id IN ('b-ready','b-change','b-signal'));
       PRAGMA user_version = 3;
       COMMIT;`)
+    migrate(db)
     return
   }
   if (version === 1) {
@@ -109,7 +133,7 @@ function migrate(db) {
   migrate(db)
 }
 
-export function openStore({ databasePath, passwords, clock }) {
+export function openStore({ databasePath, passwords, clock, simulation = false }) {
   if (databasePath !== ':memory:') mkdirSync(dirname(databasePath), { recursive: true, mode: 0o700 })
   const db = new DatabaseSync(databasePath)
   db.exec('PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;')
@@ -123,7 +147,6 @@ export function openStore({ databasePath, passwords, clock }) {
     const insertDocument = db.prepare('INSERT INTO documents (id, owner, title, created_at) VALUES (?, ?, ?, ?)')
     const insertRequest = db.prepare('INSERT INTO requests (id, owner, type, title, status, created_at, document_id) VALUES (?, ?, ?, ?, ?, ?, ?)')
     const insertHistory = db.prepare('INSERT INTO request_history (request_id, owner, created_at, label) VALUES (?, ?, ?, ?)')
-    const insertNotification = db.prepare('INSERT INTO notifications (id, owner, title, type, body, created_at, href, is_read) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
     const insertAcademicNotice = db.prepare(`INSERT INTO notifications (id, owner, title, type, body, created_at, href, is_read)
       VALUES (?, ?, ?, ?, ?, ?, ?, 0) ON CONFLICT(owner,id) DO NOTHING`)
     const selectNotifications = db.prepare(`SELECT id, title, type, body, created_at AS at, href, is_read AS read
@@ -162,6 +185,18 @@ export function openStore({ databasePath, passwords, clock }) {
         }
       }
     })
+
+    const cohort=accounts.filter(({id})=>passwords[id]!==undefined)
+    const academic=openAcademicQueue(db,{clock,cohort,transaction,recordNotice:(...args)=>insertAcademicNotice.run(...args),simulation})
+    const campusView=(owner,at=clock(),changes=academic.changes())=>campusWithChanges(owner,at,changes)
+    const gradeView=(owner,at=clock(),changes=academic.changes())=>gradesWithChanges(accounts.find(account=>account.id===owner),at,changes)
+    const rankingView=(owner,at,changes,grades)=>rankingWithChanges(accounts.find(account=>account.id===owner),at,cohort,changes,grades)
+    const noticeVersion=db.prepare('SELECT count(*) AS total, coalesce(sum(is_read),0) AS read, coalesce(max(rowid),0) AS newest FROM notifications WHERE owner=?')
+    const existingNotice=db.prepare('SELECT 1 FROM notifications WHERE owner=? AND id=?')
+    function inboxRevision(owner){
+      const {total,read,newest}=noticeVersion.get(owner)
+      return total+':'+read+':'+newest
+    }
 
     const dummySalt = randomBytes(16)
     const dummyHash = randomBytes(64)
@@ -210,16 +245,12 @@ export function openStore({ databasePath, passwords, clock }) {
         insertRequest.run(id, owner, type, title, status, createdAt, documentId)
         insertHistory.run(id, owner, createdAt, 'Заявка принята')
         if (documentId) insertHistory.run(id, owner, createdAt, 'Учебный образец PDF готов')
-        insertNotification.run(
-          randomUUID(), owner, documentId ? 'Документ готов · '+title : 'Заявка принята · '+title, 'Заявка',
-          documentId ? 'Учебный образец доступен для скачивания.' : 'Текущий статус: «На рассмотрении».',
-          createdAt, `/requests?item=${id}`, 0,
-        )
         return { id, type, title, status, createdAt, documentId }
       })
     }
 
     function addSupport(owner, action, input) {
+      academic.tick()
       const at = clock()
       const labels = {
         certificate: 'Заказать справку',
@@ -253,8 +284,7 @@ export function openStore({ databasePath, passwords, clock }) {
         text = request ? `${request.title} · ${request.status}. Откройте карточку, чтобы увидеть историю${request.documentId ? ' и скачать PDF' : ''}.` : 'У вас пока нет заявок. Создайте первую в разделе «Заявки».'
         href = request ? `/requests?item=${request.id}` : '/requests'
       } else if (action === 'grades') {
-        const account = accounts.find((item) => item.id === owner)
-        const stats = rankingFor(account, gradesFor(account, at), accounts.filter(({ id }) => passwords[id] !== undefined), at)
+        const stats = rankingView(owner,at,academic.changes())
         const format = (value) => value == null ? '—' : value.toFixed(2).replace('.', ',')
         text = stats.rank===null ? 'Рейтинг появится после завершения первой сессии.' :
           `${stats.label}. Ваш средний балл — ${format(stats.mean)}, GPA — ${format(stats.gpa)}. Место в рейтинге: ${stats.rank} из ${stats.total}. Подробные результаты доступны в разделе «Успеваемость».`
@@ -268,15 +298,15 @@ export function openStore({ databasePath, passwords, clock }) {
       } else if (action === 'schedule') {
         if (/онлайн|подключ/u.test(query)) {
           text = 'Выберите занятие в расписании: в его карточке указан формат. Онлайн-занятие отмечено значком ноутбука. В демонстрационном портале видеоконференции не подключены.'
-          const next = campusFor(owner, at).lessons.find(lesson=>lesson.format==='online'&&Date.parse(lesson.start)>=Date.parse(at))
+          const next = campusView(owner, at).lessons.find(lesson=>lesson.format==='online'&&Date.parse(lesson.start)>=Date.parse(at))
           href = next ? '/schedule?lesson='+next.id : '/schedule'
         } else if (/экзамен|сесси|зач[её]т|контрол/u.test(query)) {
-          const next = campusFor(owner, at).exams.find(item=>Date.parse(item.start)>=Date.parse(at))
+          const next = campusView(owner, at).exams.find(item=>Date.parse(item.start)>=Date.parse(at))
           text = next ? `Ближайший контроль: ${next.title}, ${academicDateTime(next.start,next.end)}. ${next.room}. Остальные даты есть в разделе экзаменов.` : 'Назначенных экзаменов пока нет. Учебный офис опубликует их в расписании.'
           href = next ? '/schedule/exams?item='+next.id : '/schedule/exams'
         } else {
           const day = moscowDay(at)
-          const lessons = campusFor(owner, at).lessons.filter((item) => moscowDay(item.start) === day)
+          const lessons = campusView(owner, at).lessons.filter((item) => moscowDay(item.start) === day)
           text = lessons.length ? 'Сегодня в расписании:\n' + lessons.map((item) => `${academicTimeRange(item.start,item.end)} · ${item.title} · ${item.room}`).join('\n') : 'Сегодня занятий нет. Даты других занятий можно посмотреть в расписании.'
           href = '/schedule'
         }
@@ -296,18 +326,43 @@ export function openStore({ databasePath, passwords, clock }) {
       })
     }
 
-    function notifications(owner, campus = campusFor(owner, clock()), grades = gradesFor(accounts.find(account=>account.id===owner), campus.clock)) {
+    function publishScheduledNotices(owner,campus,grades){
       const due = academicNotices(campus, grades)
-      if (due.length) transaction(()=>{
-        for (const item of due) insertAcademicNotice.run(item.id,owner,item.title,item.type,item.body,item.at,item.href)
+      const now=Date.parse(campus.clock)
+      const season=sessionSeasons.findLast(item=>Date.parse(item.publishedAt)<=now&&now-Date.parse(item.publishedAt)<7*86_400_000)
+      if(season&&!existingNotice.get(owner,'season-'+season.id)){
+        const standing=rankingView(owner,campus.clock,academic.changes(),grades).seasons.find(item=>item.id===season.id)
+        if(standing?.rank)due.push({id:'season-'+season.id,title:'Опубликован рейтинг · '+season.label,type:'Рейтинг',
+          body:'Ваше место — '+standing.rank+' из '+standing.total,at:season.publishedAt,href:'/grades/ranking?season='+season.id})
+      }
+      const pending=due.filter(item=>!existingNotice.get(owner,item.id))
+      if (pending.length) transaction(()=>{
+        for (const item of pending) insertAcademicNotice.run(item.id,owner,item.title,item.type,item.body,item.at,item.href)
       })
+    }
+
+    function notifications(owner){
+      academic.tick()
+      const campus=campusView(owner)
+      publishScheduledNotices(owner,campus,gradeView(owner,campus.clock))
       return selectNotifications.all(owner).map(notice=>({...notice,read:Boolean(notice.read)}))
     }
 
     return {
       close: () => db.close(),
       profile,
-      campus: (owner) => campusFor(owner, clock()),
+      campus(owner){academic.tick();return campusView(owner)},
+      grades:gradeView,
+      enqueueAcademicEvent:academic.enqueue,
+      academicEvents:academic.list,
+      advanceAcademicEvents(publishReminders=false){
+        academic.tick()
+        if(publishReminders){
+          const at=clock(),changes=academic.changes()
+          for(const account of cohort)publishScheduledNotices(account.id,campusView(account.id,at,changes),gradeView(account.id,at,changes))
+        }
+      },
+      noticeVersion:inboxRevision,
       notifications,
       async authenticate(login, password) {
         const account = selectAccount.get(login)
@@ -323,9 +378,11 @@ export function openStore({ databasePath, passwords, clock }) {
       session: (token) => getSession.get(digest(token), Date.now()),
       revokeSession: (token) => deleteSession.run(digest(token)),
       dashboard(owner) {
-        const account = accounts.find(({ id }) => id === owner)
-        const campus = campusFor(owner, clock())
-        const grades = gradesFor(account, campus.clock)
+        academic.tick()
+        const account=accounts.find(account=>account.id===owner)
+        const at=clock(),changes=academic.changes()
+        const campus=campusView(owner,at,changes),grades=gradeView(owner,at,changes)
+        publishScheduledNotices(owner,campus,grades)
         const documents = db.prepare(`
           SELECT id, title, created_at AS createdAt FROM documents WHERE owner = ? ORDER BY julianday(created_at) DESC, rowid DESC
         `).all(owner)
@@ -336,9 +393,9 @@ export function openStore({ databasePath, passwords, clock }) {
         `).all(owner)
         return {
           student: profile(owner), campus, grades, requestTypes:[...requestTypes],
-          ranking: rankingFor(account, grades, accounts.filter(({ id }) => passwords[id] !== undefined), campus.clock),
+          ranking: rankingView(owner,at,changes,grades),liveRevision:inboxRevision(owner),
           requests: requests(owner), documents, profileDocuments:profileDocumentsFor(account),
-          notifications:notifications(owner,campus,grades), support,
+          notifications:selectNotifications.all(owner).map(notice=>({...notice,read:Boolean(notice.read)})), support,
         }
       },
       document(owner, id) {

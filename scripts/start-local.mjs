@@ -14,6 +14,7 @@ if (existsSync(addressFile)) {
 const config = readConfig({
   ...process.env,
   NODE_ENV: 'development',
+  ALTIORIS_ACADEMIC_SIMULATION: process.env.ALTIORIS_ACADEMIC_SIMULATION ?? '1',
   HOST: '127.0.0.1',
   PORT: String(port),
   ALTIORIS_ORIGIN: '',

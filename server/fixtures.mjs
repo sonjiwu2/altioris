@@ -73,16 +73,16 @@ function summarize(grades) {
   }
 }
 
-const sessionSeasons = academicTerms.map(term=>({
+export const sessionSeasons = academicTerms.map(term=>({
   id:term.id,
   label:term.sessionLabel,
   publishedAt:new Date(Date.parse(term.end+'T00:00:00+03:00')+86_400_000).toISOString(),
 }))
 
-export function rankingFor(account, grades, cohort = accounts, clock = demoClock) {
+export function rankingFor(account, grades, cohort = accounts, clock = demoClock, getGrades = student=>gradesFor(student,clock)) {
   const now=Date.parse(clock)
   const nextSeason=sessionSeasons.find(season=>Date.parse(season.publishedAt)>now)??null
-  const records=cohort.map(student=>({student, grades:student.id===account.id?grades:gradesFor(student,clock)}))
+  const records=cohort.map(student=>({student, grades:student.id===account.id?grades:getGrades(student)}))
   const seasons=[]
   let previousPlaces=new Map()
   for(const season of sessionSeasons){

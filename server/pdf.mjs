@@ -154,10 +154,10 @@ function makePdf(title, pageSpecs) {
   return Buffer.concat(chunks)
 }
 
-export function studentPdf(document, student, account) {
+export function studentPdf(document, student, account, grades = gradesFor(account,document.createdAt)) {
   let periods = [null]
   if (/успеваемост/iu.test(document.title)) {
-    const published = gradesFor(account, document.createdAt).filter(grade=>grade.published)
+    const published = grades.filter(grade=>grade.published)
     periods = academicTerms.map(term=>({
       label:term.sessionLabel,grades:published.filter(grade=>grade.termId===term.id),
     })).filter(term=>term.grades.length)

@@ -1,4 +1,6 @@
-import { escape as e, badge, date, detailedDate, empty, icon, safeLink, when } from '../ui.js?v=20261120-15';
+import { escape as e, badge, calendarDate, date, detailedDate, empty, icon, safeLink, when } from '../ui.js?v=20261120-15';
+import { detailIcon } from './detail-icons.js';
+import { noticeSoundEnabled } from './live-notices.js';
 const completed=status=>/готов|заверш|отклон/iu.test(status);
 const statusBadge=status=>badge(status,completed(status)&&!/отклон/iu.test(status)?'sage':'peach');
 const requestGlyph=type=>({'certificate':'doc','academic-leave':'calendar',dormitory:'home','media-lab':'camera'}[type]||'doc');
@@ -11,12 +13,54 @@ export function requests({requests:items,requestTypes},params){
  const history=selected?[...selected.history].reverse():[];
  return '<div class="section-heading"><h1>Заявки</h1><button type="button" class="button" data-dialog="request-dialog">'+icon('plus')+'Новая заявка</button></div><div class="split work-layout"><section class="panel list-panel" aria-label="Список заявок"><nav class="pills" aria-label="Состояние заявки">'+[['','Все заявки'],['open','В работе'],['done','Завершённые']].map(([value,label])=>'<a href="'+urlFor('filter',value)+'"'+(filter===value?' aria-current="page"':'')+'>'+label+'</a>').join('')+'</nav>'+filtered.map(item=>'<a class="service-row '+(item.id===selected?.id?'active':'')+'" href="'+urlFor('item',item.id)+'"'+(item.id===selected?.id?' aria-current="true"':'')+'>'+icon(requestGlyph(item.type))+'<span><strong>'+e(item.title)+'</strong><small>'+date(item.createdAt)+'</small></span>'+statusBadge(item.status)+'</a>').join('')+(!filtered.length?empty('Заявок пока нет. Создайте новую — она появится здесь.'):'')+'</section><aside class="panel request-inspector">'+(selected?'<header class="request-title">'+icon(requestGlyph(selected.type))+'<div><h2>'+e(selected.title)+'</h2><p>Заявка № '+e(requestNumber(selected.id))+' · '+date(selected.createdAt)+'</p></div>'+statusBadge(selected.status)+'</header><h3>История заявки</h3><ol class="timeline">'+history.map((step,i)=>'<li><span class="step-icon">'+icon(i===history.length-1&&completed(selected.status)?'check':i===0?'clipboard':'doc')+'</span><strong>'+e(step.label)+'</strong><time datetime="'+e(step.at)+'">'+detailedDate(step.at)+'</time></li>').join('')+'</ol><p class="request-format">Получение<span>'+(selected.documentId?'Электронный документ':'Электронная заявка')+'</span></p>'+(selected.documentId?'<div class="file-row">'+icon('pdf')+'<span><strong>'+e(selected.title)+'.pdf</strong><small>Учебный образец документа</small></span><a class="button" href="/api/documents/'+encodeURIComponent(selected.documentId)+'" download>Скачать PDF</a></div>':'<p class="notice">Заявка сохранена. Статус и история отображаются в этом разделе.</p>')+'<div class="request-help"><span>Вопрос по заявке?</span><a class="text-link" href="/support?request='+encodeURIComponent(selected.id)+'">'+icon('nav-chat')+'Чат поддержки</a></div>':empty('Выберите заявку, чтобы увидеть статус и историю.'))+'</aside></div><dialog id="request-dialog" aria-labelledby="request-title"'+(requestTypes.some(([value])=>value===newType)?' data-auto-open':'')+'><div class="section-heading"><h2 id="request-title">Новая заявка</h2><button type="button" class="icon-button" data-close aria-label="Закрыть">'+icon('close')+'</button></div><form data-mutation="request"><label>Вид заявки<select name="type" required>'+requestTypes.map(([value,label])=>'<option value="'+value+'"'+(value===newType?' selected':'')+'>'+label+'</option>').join('')+'</select></label><p class="muted">Справка об обучении и выписка из зачётки формируются сразу как учебные PDF. Остальные заявки сохраняются со статусом «На рассмотрении».</p><p class="form-error" role="alert" hidden></p><button class="button">Подать заявку</button></form></dialog>';
 }
-function noticeGlyph(item){return item.type==='Изменение'?'calendar':item.type==='Дедлайн'?'calendar':item.type==='Результат'?'rank-gpa':item.type==='Новость'?'megaphone':item.type==='Заявка'?'clipboard':'doc';}
-export function notifications({notifications:items},params){
- const unread=items.filter(x=>!x.read).length,only=params.get('filter')==='unread',visible=only?items.filter(x=>!x.read):items;
- const selected=visible.find(x=>x.id===params.get('item'))||visible[0],url=safeLink(selected?.href);
- const label=url.startsWith('/schedule/exams')?'Открыть расписание сессии':url.startsWith('/grades')?'Открыть зачётку':url.startsWith('/schedule')?'Открыть расписание':url.startsWith('/requests')?'Открыть заявку':'Открыть раздел';
- return '<h1>Уведомления</h1><div class="notifications-toolbar"><nav class="pills" aria-label="Фильтр уведомлений"><a href="/notifications"'+(!only?' aria-current="page"':'')+'>Все</a><a href="/notifications?filter=unread"'+(only?' aria-current="page"':'')+'>Непрочитанные</a></nav>'+(unread?'<button type="button" class="button button-outline" data-read-all>'+icon('check')+'Прочитать все</button>':'')+'</div><div class="split notifications-layout"><section class="panel list-panel" aria-label="Список уведомлений">'+visible.map(item=>'<a class="notification-row '+(item.id===selected?.id?'active':'')+'" href="/notifications?item='+encodeURIComponent(item.id)+(only?'&amp;filter=unread':'')+'"'+(item.id===selected?.id?' aria-current="true"':'')+'>'+icon(noticeGlyph(item))+'<span><strong>'+e(item.title)+'</strong><small>'+e(item.body.length>125?item.body.slice(0,122)+'…':item.body)+'</small><time datetime="'+e(item.at)+'">'+detailedDate(item.at)+'</time></span>'+(!item.read?'<i class="unread-dot" aria-label="Не прочитано"></i>':'')+'</a>').join('')+(!visible.length?empty('Новых уведомлений нет. Все важные события будут здесь.'):'')+'</section><aside class="panel notification-detail">'+(selected?'<div class="notification-category">'+icon(selected.type==='Изменение'?'computer':noticeGlyph(selected))+'<span>'+e(selected.type==='Изменение'?'Расписание':selected.type)+'</span></div><h2>'+e(selected.title)+'</h2><p>'+e(selected.body)+'</p><div class="info-line">'+icon('calendar')+'<span>Когда<strong>'+detailedDate(selected.at)+'</strong></span></div>'+(selected.type==='Изменение'?'<div class="info-line">'+icon('computer')+'<span>Раздел<strong>Учебное расписание</strong></span></div>':'')+(url?'<a class="button" href="'+url+'">'+label+'</a>':'')+(!selected.read?'<button class="text-link" type="button" data-read="'+e(selected.id)+'" style="margin-top:20px">Отметить прочитанным</button>':'')+'<div class="notification-source">'+icon('cap')+'Учебный офис</div>':empty('Выберите уведомление.'))+'</aside></div>';
+const noticeTypes={
+ 'Расписание':['inbox-schedule','Учебный офис'], 'Изменение':['inbox-schedule','Учебный офис'],
+ 'Онлайн':['inbox-online','Учебный офис'], 'Дедлайн':['inbox-deadline','Учебный офис'],
+ 'Результат':['inbox-grade','Учебный офис'], 'Рейтинг':['inbox-ranking','Учебный офис'],
+ 'Библиотека':['inbox-library','Библиотека Altioris'], 'Событие':['inbox-event','Студенческий центр'],
+ 'Возможности':['inbox-opportunity','Студенческий центр'], 'Новость':['inbox-event','Студенческий центр'],
+ 'Учебный офис':['inbox-office','Учебный офис'],
+};
+const noticeType=item=>Object.hasOwn(noticeTypes,item.type)?noticeTypes[item.type]:noticeTypes['Учебный офис'];
+const receivedFormat=new Intl.DateTimeFormat('ru-RU',{
+ timeZone:'Europe/Moscow',hour:'2-digit',minute:'2-digit',second:'2-digit',
+});
+
+function messageDetails(item){
+ const [,sender]=noticeType(item),url=safeLink(item.href);
+ const label=url.startsWith('/schedule/exams')?'Открыть расписание сессии':url.startsWith('/grades/ranking')?'Открыть рейтинг':
+  url.startsWith('/grades')?'Открыть зачётку':url.includes('lesson=')?'Открыть занятие':'Открыть расписание';
+ return `<header class="inbox-detail-header">${badge(item.type,'sage')}
+  <h2>${e(item.title)}</h2>${sender===item.type?'':`<span class="inbox-sender">${e(sender)}</span>`}</header>
+  <div class="notice-body">${item.body.split(/\n\s*\n/u).map(paragraph=>'<p>'+e(paragraph)+'</p>').join('')}</div>
+  <div class="info-line inbox-arrival">${detailIcon('inbox-received')}<span>Получено по Москве
+   <time datetime="${e(item.at)}">${calendarDate.format(new Date(item.at))} · ${receivedFormat.format(new Date(item.at))}</time></span></div>
+  <div class="inbox-actions">${url?`<a class="button" href="${url}">${label}</a>`:''}
+   ${!item.read?`<button class="button button-outline" type="button" data-read="${e(item.id)}">Отметить прочитанным</button>`:''}
+  </div>`;
+}
+
+export function notifications({notifications:items,student},params){
+ const unread=items.filter(item=>!item.read),only=params.get('filter')==='unread',visible=only?unread:items;
+ const selected=visible.find(item=>item.id===params.get('item'))??visible[0];
+ const sound=noticeSoundEnabled(student);
+ const rows=visible.map(item=>{
+  const [glyph]=noticeType(item);
+  const current=item.id===selected?.id;
+  const preview=item.body.replace(/\s+/gu,' ');
+  return `<a class="notification-row ${current?'active':''}" href="/notifications?item=${encodeURIComponent(item.id)}${only?'&amp;filter=unread':''}"${current?' aria-current="true"':''}>
+   ${detailIcon(glyph)}<span><span class="inbox-row-topic">${e(item.type)}</span><strong>${e(item.title)}</strong>
+   <small>${e(preview)}</small><time datetime="${e(item.at)}">${detailedDate(item.at)}</time></span>
+   ${item.read?'':'<i class="unread-dot" aria-label="Не прочитано"></i>'}</a>`;
+ }).join('');
+ return `<h1>Уведомления</h1><div class="notifications-toolbar">
+  <nav class="pills" aria-label="Фильтр уведомлений"><a href="/notifications"${!only?' aria-current="page"':''}>Все</a>
+   <a href="/notifications?filter=unread"${only?' aria-current="page"':''}>Непрочитанные</a></nav>
+  <div class="inbox-toolbar-actions"><button class="button button-outline" type="button" aria-pressed="${sound}" data-notice-sound><span>${sound?'Звук включён':'Звук выключен'}</span></button>
+   ${unread.length?'<button type="button" class="button button-outline" data-read-all>Прочитать все</button>':''}</div>
+  </div><div class="split notifications-layout"><section class="panel list-panel notification-inbox" aria-label="Список уведомлений">
+   ${rows||empty(only?'Все уведомления прочитаны.':'Новых уведомлений пока нет.')}</section>
+   ${selected?`<aside class="panel notification-detail" aria-label="Текст уведомления">${messageDetails(selected)}</aside>`:''}</div>`;
 }
 const assistant='<span class="assistant-icon support-avatar" aria-hidden="true">'+icon('assistant')+'</span>';
 const topics=[['certificate','doc','Заказать справку'],['status','clipboard','Проверить заявку'],['faq','search','Найти ответ']];

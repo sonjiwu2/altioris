@@ -8,6 +8,7 @@ import { accounts, demoClock, requestTypes } from './fixtures.mjs'
 import { calendar, demoPdf } from './exports.mjs'
 import { profileDocumentPdf } from './pdf.mjs'
 import { profileDocumentsFor } from './profile-documents.mjs'
+import { createNotificationStream } from './notification-stream.mjs'
 import { openStore, sessionLifetime } from './store.mjs'
 import { configuredPasswords } from './demo-accounts.mjs'
 
@@ -61,6 +62,7 @@ export function readConfig(env = process.env) {
   return {
     passwords, secure, origin, port, host: env.HOST || '127.0.0.1',
     databasePath: env.ALTIORIS_DB || defaultDatabase,
+    simulation: env.ALTIORIS_ACADEMIC_SIMULATION === '1',
     clock: env.ALTIORIS_CLOCK === 'demo' ? () => demoClock : () => new Date().toISOString(),
   }
 }
@@ -214,6 +216,7 @@ async function serveStatic(req, res, pathname, directory) {
 
 export function createApplication(config, { staticDirectory = publicDirectory } = {}) {
   const store = openStore(config)
+  const notificationStream=createNotificationStream(store,config.clock)
   const cookieName = config.secure ? '__Host-altioris_session' : 'altioris_session'
   const cookie = (token, age) => [
     `${cookieName}=${token}`, 'Path=/', 'HttpOnly', 'SameSite=Strict',
@@ -298,6 +301,10 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
         json(res, 200, { notifications: store.notifications(owner) })
         return
       }
+      if (method === 'GET' && pathname === '/api/notifications/stream') {
+        if(!notificationStream.subscribe(owner,token,res))throw new HttpError(429,'Слишком много открытых кабинетов.')
+        return
+      }
       if (method === 'POST' && pathname === '/api/requests') {
         const data = await readJson(req)
         validateKeys(data, ['type'])
@@ -367,7 +374,7 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
         }
         const document = identifier.test(id) && store.document(owner, id)
         if (!document) throw new HttpError(404, 'Документ не найден.')
-        attachment(res, demoPdf(document, store.profile(owner), account), 'application/pdf', `altioris-${id}.pdf`)
+        attachment(res, demoPdf(document, store.profile(owner), account, store.grades(owner,document.createdAt)), 'application/pdf', `altioris-${id}.pdf`)
         return
       }
       if (method === 'GET' && pathname === '/api/calendar/exams') {
@@ -394,7 +401,8 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
       json(res, 500, { error: 'Сервис временно недоступен. Попробуйте ещё раз.' })
     }
   })
-  server.once('close', () => store.close())
+  server.once('listening',()=>notificationStream.start())
+  server.once('close', () => { notificationStream.stop();store.close() })
   return server
 }
 

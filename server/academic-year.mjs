@@ -47,6 +47,7 @@ const nonTeaching = new Set([
   '2025-11-03','2025-11-04','2026-02-23','2026-03-09','2026-05-01','2026-05-11',
   '2026-06-12','2026-11-04','2027-02-23','2027-03-08','2027-05-03','2027-05-10','2027-06-14',
 ]);
+export const isTeachingDay = day=>!nonTeaching.has(day)&&[1,2,3,4,5].includes(new Date(day+'T12:00:00Z').getUTCDay());
 const times = [['08:50','10:10'],['10:30','11:50'],['12:10','13:30'],['14:40','16:00']];
 // Each entry specifies a time slot and either one shared course or two parallel workshops.
 const rotations = [

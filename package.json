@@ -13,7 +13,7 @@
     "start": "node --env-file-if-exists=runtime/.env server/index.mjs",
     "demo:setup": "node scripts/setup-demo.mjs",
     "demo:init": "node scripts/setup-demo.mjs --init",
-    "test": "node --test tests/http.test.mjs tests/support.test.mjs",
+    "test": "node --test tests/http.test.mjs tests/support.test.mjs tests/academic-events.test.mjs",
     "dev": "node --watch scripts/start-local.mjs"
   }
 }

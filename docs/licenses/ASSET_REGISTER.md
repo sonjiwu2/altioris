@@ -13,6 +13,7 @@
 | GolosText.woff2 | Google Fonts / Golos Text, OFL 1.1 | Technical error copy and neutral fallback |
 | server/fonts/GolosText-Regular.ttf | Static 400 instance of Golos Text, OFL 1.1 with notice retained | Embedded Cyrillic document typography |
 | public/ui.js | Original monochrome paths | Compact interactive controls |
+| public/features/detail-icons.js | Original illustrated SVG paths | Document rows, faculty facts and notification topics |
 | public/assets/stickers/subject-*.webp | 24 separate ImageGen designs | One subject-specific paper sticker per discipline in the gradebook |
 | public/assets/stickers/*.webp (other files) | 36 separate ImageGen designs | Navigation, ranking, settings, support and illustrated details |
 

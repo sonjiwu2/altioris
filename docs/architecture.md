@@ -9,7 +9,8 @@ Node.js 24+ serves buildless HTML, CSS, browser ES modules, local fonts and artw
 | GET /api/dashboard | Student, campus, grades, published session standings, next ranking publication and owned records |
 | POST /api/requests | Owned request/history/document generation |
 | GET /api/documents/:id | Ownership-checked PDF. Opens profile documents inline and downloads request documents |
-| GET /api/notifications | Owned events and current academic reminders |
+| GET /api/notifications | Owned campus and academic notices |
+| GET /api/notifications/stream | Authenticated live inbox revision |
 | PATCH /api/notifications | Owned read state |
 | PATCH /api/profile | Owned avatar selection |
 | POST /api/support | Deterministic intent processing and owned conversation |
@@ -20,6 +21,8 @@ The browser uses URL query parameters for list selection, date, filters and disp
 Ranking sorts by unrounded credit-weighted GPA, then the displayed student name. Mean and GPA omit nonnumeric results. Instruction and assessment times use Europe/Moscow. The clock is live by default and can be fixed with ALTIORIS_CLOCK=demo. The local launcher binds to 127.0.0.1, uses runtime/altioris.sqlite and can choose a free port.
 
 Visual tokens and screen composition are specified in DESIGN.md. Runtime image assets never contain a complete screen or interactive text.
+
+The server processes queued academic events on a timer without browser traffic. Schema 5 removes request alerts from the inbox while preserving request records and PDFs. The queue applies validated changes and their notices in the same SQLite transaction. [Delivery and local controls](academic-events.md).
 
 ## Documents
 

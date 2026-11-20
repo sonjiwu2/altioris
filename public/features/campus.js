@@ -46,7 +46,17 @@ function lessonDetails(selected,teachers){
   line('people','Вид занятия<strong>'+e(selected.type)+'</strong>')+
   line(online?'computer':'pin','Формат<strong>'+(online?'Онлайн':'Очно · '+e(selected.room))+'</strong>')+
   line('doc','Тема<strong class="lesson-description">'+e(selected.topic)+'</strong>')+
-  (online?'<a class="online-card" href="/support?topic=online">'+icon('computer')+'Онлайн-занятие<small>Вопросы подключения — в поддержке</small></a>':'');
+  (online?(selected.onlineUrl?
+   '<a class="online-card" href="'+e(selected.onlineUrl)+'"'+(selected.onlineUrl.startsWith('https:')?' target="_blank" rel="noopener noreferrer"':'')+'>'+icon('computer')+'Открыть комнату занятия</a>':
+   '<a class="online-card" href="/support?topic=online">'+icon('computer')+'Онлайн-занятие<small>Вопросы подключения — в поддержке</small></a>'):'');
+}
+
+export function onlineRoom({campus},params){
+ const lesson=campus.lessons.find(item=>item.id===params.get('lesson')&&item.onlineUrl==='/schedule/online?lesson='+item.id);
+ return '<h1>Онлайн-занятие</h1><section class="panel inspector">'+(lesson?
+  '<h2>'+e(lesson.title)+'</h2>'+line('clock','Время<strong>'+assessmentDateTime(lesson.start,lesson.end)+'</strong>')+
+  '<p>Учебная комната Altioris показывает время и тему занятия. Видеосвязь в демонстрационной комнате недоступна.</p>'+
+  '<a class="text-link" href="/schedule?lesson='+e(lesson.id)+'">Вернуться к занятию</a>':empty('Комната больше недоступна. Проверьте расписание.'))+'</section>';
 }
 
 export function schedule({campus},params){
@@ -59,7 +69,8 @@ export function schedule({campus},params){
  const week=startOfWeek(day), last=shiftDay(week,6), distance=mode==='day'?1:7;
  const days=mode==='day'?[day]:Array.from({length:5},(_,index)=>shiftDay(week,index));
  const visible=campus.lessons.filter(lesson=>days.includes(key(lesson.start)));
- const slots=[...new Set(visible.map(lesson=>lesson.slot))].sort((a,b)=>a-b);
+ const slotTime=lesson=>lesson.courseId?lesson.start.slice(11,16):'10:30';
+ const slots=[...new Set(visible.map(slotTime))].sort();
  const selected=active??visible.find(lesson=>key(lesson.start)===day)??visible[0];
  const title=mode==='day'?calendarDate.format(new Date(fullDay(day))):weekLabel(week,last);
  const previous=shiftDay(day,-distance),next=shiftDay(day,distance);
@@ -73,7 +84,7 @@ export function schedule({campus},params){
   (mode==='day'?'single-day':'')+'" style="--days:'+days.length+';--slots:'+slots.length+'">'+days.map(value=>{
    const timestamp=new Date(fullDay(value));
    const cards=visible.filter(lesson=>key(lesson.start)===value)
-    .map(lesson=>lessonCard(lesson,lesson.id===selected?.id,slots.indexOf(lesson.slot)+2)).join('');
+    .map(lesson=>lessonCard(lesson,lesson.id===selected?.id,slots.indexOf(slotTime(lesson))+2)).join('');
    return '<div class="calendar-day"><h2 class="sentence">'+weekdayLabel.format(timestamp)+' '+Number(value.slice(-2))+
     '<strong>'+monthLabel.format(timestamp)+'</strong></h2>'+(cards||'<p class="calendar-day-empty">Нет пар</p>')+'</div>';
   }).join('')+'</div></div>':empty(mode==='day'?'В этот день занятий нет.':'На этой неделе занятий нет.');

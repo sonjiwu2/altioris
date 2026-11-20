@@ -180,12 +180,7 @@ test('private records, workspace actions and sessions are isolated and survive a
     const { request } = await letter.json()
     assert.equal(request.status, 'Готова')
     assert.ok(request.documentId)
-    const notice = (await dashboard(app,a.token)).notifications.find(item=>item.href==='/requests?item='+request.id)
-    assert.equal(notice.type,'Заявка')
-    const otherAccountNotice = await app.request('/api/notifications', {
-      method: 'PATCH', token: b.token, body: { id: notice.id },
-    })
-    assert.equal(otherAccountNotice.status, 404)
+    assert.ok(!(await dashboard(app,a.token)).notifications.some(item=>item.href==='/requests?item='+request.id))
     const originDenied = await app.request('/api/profile', {
       method: 'PATCH', token: a.token, body: { avatar: 'initials' }, origin: 'https://another.example',
     })
@@ -229,6 +224,7 @@ test('private records, workspace actions and sessions are isolated and survive a
       INSERT INTO requests VALUES ('024','a','certificate','Legacy','Готова','2026-11-19','a-certificate');
       INSERT INTO request_history (request_id,owner,created_at,label) VALUES ('024','a','2026-11-19','Legacy');
       INSERT INTO notifications VALUES ('a-ready','a','Legacy','Заявка','Legacy','2026-11-19','/requests?item=024',0);
+      INSERT INTO notifications VALUES ('old-request-notice','a','Legacy','Заявка','Legacy','2026-11-19','/requests',0);
       PRAGMA user_version=2;
     `)
     legacy.close()
@@ -239,6 +235,7 @@ test('private records, workspace actions and sessions are isolated and survive a
     assert.equal(saved.requests.length, 2)
     assert.equal(saved.requests.some(({id})=>id==='024'),false)
     assert.equal(saved.notifications.some(({id})=>id==='a-ready'),false)
+    assert.equal(saved.notifications.some(({id})=>id==='old-request-notice'),false)
     assert.equal((await app.request('/api/documents/a-certificate',{token:a.token})).status,404)
     assert.equal(saved.student.avatar, 'initials')
     assert.ok(saved.notifications.every(({ read }) => read))

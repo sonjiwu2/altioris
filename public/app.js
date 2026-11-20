@@ -1,17 +1,61 @@
 import { preparePhoto, disposePhotoPreview } from './features/photo.js';
 import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-15';
-import { exams, schedule } from './features/campus.js?v=20261120-15';
-import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-15';
+import { exams, onlineRoom, schedule } from './features/campus.js?v=20261120-16';
+import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-16';
 import { turnCampusPass } from './features/campus-pass.js?v=20261120-14';
-import { notifications, requests, support } from './features/services.js?v=20261120-15';
+import { notifications, requests, support } from './features/services.js?v=20261120-17';
 import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
+import { armNoticeSound, resetLiveNotice, showLiveNotice, toggleNoticeSound } from './features/live-notices.js';
 
 const app=document.querySelector('#app'), announcement=document.querySelector('#status');
 const navigation=[['/schedule','Расписание','nav-schedule'],['/grades','Успеваемость','nav-grades'],['/teachers','Преподаватели','nav-faculty'],['/requests','Заявки','nav-requests'],['/support','Чат поддержки','nav-chat'],['/notifications','Уведомления','nav-alerts'],['/settings','Настройки','nav-settings']];
-const pages=new Map([['/',schedule],['/schedule',schedule],['/schedule/exams',exams],['/grades',grades],['/grades/ranking',ranking],['/teachers',teachers],['/requests',requests],['/support',support],['/notifications',notifications],['/profile',profile],['/settings',settings]]);
+const pages=new Map([['/',schedule],['/schedule',schedule],['/schedule/exams',exams],['/schedule/online',onlineRoom],['/grades',grades],['/grades/ranking',ranking],['/teachers',teachers],['/requests',requests],['/support',support],['/notifications',notifications],['/profile',profile],['/settings',settings]]);
 let snapshot,busy=false;
 let lastView;
 let teacherSearchTimer;
+let noticeStream,streamOwner,pendingRevision,refreshingInbox=false,deferredInboxView;
+const toast=document.querySelector('#notice-toast');
+const favicon=document.querySelector('link[rel="icon"]');
+const crestIcon=favicon.href;
+let badgeIcon;
+
+function updateInboxIndicators(){
+ const count=snapshot.notifications.filter(item=>!item.read).length;
+ for(const badge of app.querySelectorAll('[data-inbox-count]')){
+  badge.hidden=count===0;
+  badge.textContent=count>99?'99+':String(count);
+  badge.setAttribute('aria-label','Непрочитанных: '+count);
+ }
+ document.title=(count?'('+count+') ':'')+(app.querySelector('h1')?.textContent||'Кабинет')+' · Altioris University';
+ favicon.type=count&&badgeIcon?'image/png':'image/webp';
+ favicon.href=count&&badgeIcon?badgeIcon:crestIcon;
+}
+
+const badgeCrest=new Image();
+badgeCrest.onload=()=>{
+ const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;
+ const context=canvas.getContext('2d');
+ if(!context)return;
+ context.drawImage(badgeCrest,3,1,25,30);
+ context.beginPath();context.arc(25,7,5.5,0,2*Math.PI);
+ context.fillStyle='#b94029';context.fill();context.strokeStyle='#fff4dc';context.lineWidth=1.5;context.stroke();
+ badgeIcon=canvas.toDataURL('image/png');
+ if(snapshot)updateInboxIndicators();
+};
+badgeCrest.src=crestIcon;
+
+function connectNoticeStream(){
+ const owner=snapshot?.student.number;
+ if(owner===streamOwner)return;
+ noticeStream?.close();noticeStream=undefined;pendingRevision=undefined;streamOwner=owner;
+ resetLiveNotice();favicon.type='image/webp';favicon.href=crestIcon;
+ if(!owner)return;
+ noticeStream=new EventSource('/api/notifications/stream');
+ noticeStream.addEventListener('inbox',event=>{
+  pendingRevision=JSON.parse(event.data);
+  void refreshNotices();
+ });
+}
 const detailPanels=new Map([
  ['/schedule','.schedule-inspector'],['/schedule/exams','.schedule-inspector'],['/grades','.grade-inspector'],
  ['/teachers','.teacher-details'],['/requests','.request-inspector'],['/notifications','.notification-detail'],
@@ -63,14 +107,15 @@ function signIn() {
 }
 function render(focus=false,navigating=false) {
  disposePhotoPreview();
+ deferredInboxView=undefined;
+ connectNoticeStream();
  if(!snapshot){signIn();if(focus)app.querySelector('#username').focus();return;}
  applyPreferences(snapshot.student);
  const {pathname,search}=location,params=new URLSearchParams(search);
- const scroller=app.querySelector('.calendar-scroll,.teacher-list');
+ const scroller=app.querySelector('.calendar-scroll,.teacher-list,.notification-inbox');
  const scrollLeft=scroller?.scrollLeft??0,scrollTop=scroller?.scrollTop??0;
- const unread=snapshot.notifications.filter(item=>!item.read).length;
  const active=href=>(href==='/schedule'&&pathname==='/')||pathname===href||pathname.startsWith(href+'/');
- const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+'<span>'+label+'</span>'+(href==='/notifications'&&unread?'<span class="nav-unread" aria-label="Есть новые уведомления"></span>':'')+'</a>').join('');
+ const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+'<span>'+label+'</span>'+(href==='/notifications'?'<span class="nav-unread" data-inbox-count hidden></span>':'')+'</a>').join('');
  const student=snapshot.student;
  const currentProfile=pathname==='/profile'?' aria-current="page"':'';
  const page=pages.get(pathname);
@@ -84,7 +129,7 @@ function render(focus=false,navigating=false) {
   </aside>
   <nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>${nav}<a class="mobile-profile" href="/profile"${currentProfile}>${portrait(student)}<span>Мой профиль</span></a></nav>
   <div class="workspace"><main id="main" class="page" tabindex="-1">${content}</main><footer class="page-footer">Конкурсный прототип</footer></div>`;
- document.title=(app.querySelector('h1')?.textContent||'Кабинет')+' · Altioris University';
+ updateInboxIndicators();
  const path=viewPath(pathname);
  const activeItem=app.querySelector('main a[aria-current="true"]');
  const selected=activeItem?new URL(activeItem.href).searchParams:null;
@@ -96,7 +141,7 @@ function render(focus=false,navigating=false) {
    : ['q','office','filter','view','term','season'].map(key=>key==='term'?(app.querySelector('.term-picker select')?.value??''):(params.get(key)||'')).join('\n'),
  };
  if(lastView?.path===path&&lastView.scope===currentView.scope&&(scrollLeft||scrollTop)){
-  const nextScroller=app.querySelector('.calendar-scroll,.teacher-list');
+  const nextScroller=app.querySelector('.calendar-scroll,.teacher-list,.notification-inbox');
   if(nextScroller)nextScroller.scrollTo(scrollLeft,scrollTop);
  }else if(path==='/teachers'&&activeItem){
   const list=activeItem.parentElement;
@@ -117,7 +162,7 @@ function go(href,restoreFocus,replace=false){
  if(restoreFocus){app.querySelector(restoreFocus)?.focus({preventScroll:true});}
  else if(selectedDetail){selectedDetail.tabIndex=-1;selectedDetail.focus({preventScroll:true});selectedDetail.scrollIntoView({block:'start'});}
  else if(same){const selected=[...app.querySelectorAll('main a[href]')].find(link=>link.href===next.href);(selected||app.querySelector('main'))?.focus({preventScroll:true});}
- if(!same&&path==='/notifications')void refreshNotices();
+ if(!same&&path==='/notifications')void refreshNotices(true);
  if(path==='/grades/ranking')void refreshPublishedRanking();
 }
 async function refreshPublishedRanking(){
@@ -132,17 +177,41 @@ async function refreshPublishedRanking(){
   if(focusedLink)[...app.querySelectorAll('main a')].find(link=>link.href===focusedLink)?.focus({preventScroll:true});
  }catch{/* Keep the last published standings if the refresh fails. */}
 }
-async function refreshNotices(){
+async function refreshNotices(force=false){
  const prior=snapshot;
- if(!prior||busy||location.pathname!=='/notifications')return;
+ if(!prior||busy||refreshingInbox||(!force&&(!pendingRevision||pendingRevision===prior.liveRevision)))return;
+ refreshingInbox=true;
+ pendingRevision=undefined;
  try{
-  const {notifications}=await api('/api/notifications');
-  if(snapshot!==prior||busy||location.pathname!=='/notifications')return;
-  if(JSON.stringify(notifications)===JSON.stringify(prior.notifications))return;
-  const focus=document.activeElement===app.querySelector('#main');
-  snapshot={...prior,notifications};
-  render(focus);
- }catch{/* Keep the last successful snapshot until the next refresh. */}
+  const updated=await api('/api/dashboard');
+  if(snapshot!==prior||busy||updated.liveRevision===prior.liveRevision)return;
+  const known=new Set(prior.notifications.map(item=>item.id));
+  const fresh=updated.notifications.filter(item=>!item.read&&!known.has(item.id));
+  snapshot=updated;
+  const path=viewPath(location.pathname);
+  const liveView=path==='/notifications'||(path.startsWith('/schedule')&&JSON.stringify(updated.campus.lessons)!==JSON.stringify(prior.campus.lessons))||
+   (path.startsWith('/grades')&&JSON.stringify(updated.grades)!==JSON.stringify(prior.grades))||
+   (path==='/grades/ranking'&&JSON.stringify(updated.ranking)!==JSON.stringify(prior.ranking));
+  if(liveView){
+   const focused=document.activeElement;
+   const href=focused?.closest('a[href]')?.href;
+   if(focused?.matches('input,select')||document.querySelector('dialog[open]')){
+    deferredInboxView=location.href;
+    updateInboxIndicators();
+   }
+   else{
+    render(focused===app.querySelector('#main'));
+    if(href)[...app.querySelectorAll('a[href]')].find(link=>link.href===href)?.focus({preventScroll:true});
+   }
+  }else updateInboxIndicators();
+  showLiveNotice(updated.student,fresh);
+ }catch(error){
+  if(error.status===401&&snapshot===prior){snapshot=undefined;render(true);}
+ }
+ finally{
+  refreshingInbox=false;
+  if(pendingRevision&&pendingRevision!==snapshot?.liveRevision)void refreshNotices();
+ }
 }
 async function load(){
  try{snapshot=await api('/api/dashboard');render();}
@@ -167,7 +236,7 @@ async function save(name,body,control,errorBox){
   if(error.status===401&&name!=='login'){snapshot=undefined;render(true);announce('Сеанс завершён. Войдите снова.');}
   else if(errorBox){errorBox.hidden=false;errorBox.textContent=error.message;}
   else{app.querySelector('.action-error')?.remove();const banner=document.createElement('p');banner.className='form-error action-error';banner.setAttribute('role','alert');banner.textContent=error.message;document.querySelector('#main')?.prepend(banner);}
- }finally{if(control){control.disabled=false;control.removeAttribute('aria-busy');}busy=false;}
+ }finally{if(control){control.disabled=false;control.removeAttribute('aria-busy');}busy=false;void refreshNotices();}
 }
 function submitTeacherFilters(form,focusSelector,live=false){
  clearTimeout(teacherSearchTimer);
@@ -230,6 +299,16 @@ app.addEventListener('click',event=>{
   return;
  }
  if(button){
+  if(button.hasAttribute('data-notice-sound')){
+   if(button.disabled)return;
+   button.disabled=true;
+   void toggleNoticeSound(snapshot.student).then(enabled=>{
+    button.setAttribute('aria-pressed',String(enabled));
+    button.querySelector('span').textContent=enabled?'Звук включён':'Звук выключен';
+    button.disabled=false;
+   });
+   return;
+  }
   if(button.dataset.themeChoice){
    if(button.getAttribute('aria-pressed')==='true')return;
    setTheme(snapshot.student,button.dataset.themeChoice);
@@ -297,9 +376,21 @@ app.addEventListener('compositionend',scheduleTeacherSearch);
 app.addEventListener('keydown',event=>{if(event.target.id==='chat-message'&&event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();event.target.form.requestSubmit();return;}if(event.key==='Escape'){const toggle=app.querySelector('[data-menu][aria-expanded="true"]');if(toggle){toggle.click();toggle.focus();}}});
 matchMedia('(max-width:680px)').addEventListener('change',()=>{if(snapshot&&(location.pathname==='/'||location.pathname==='/schedule'))render();});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(snapshot)syncSystemTheme(snapshot.student);});
+for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=>armNoticeSound(snapshot?.student));
+for(const event of ['focusout','close'])document.addEventListener(event,()=>{
+ if(deferredInboxView!==location.href)return;
+ setTimeout(()=>{
+  if(deferredInboxView===location.href&&!document.activeElement?.matches('input,select')&&!document.querySelector('dialog[open]'))render();
+ },0);
+},true);
+toast.addEventListener('click',event=>{
+ if(event.target.closest('button')){toast.hidden=true;return;}
+ const link=event.target.closest('a');
+ if(link&&snapshot){event.preventDefault();toast.hidden=true;go(link.href);}
+});
 window.addEventListener('popstate',()=>{render(false,true);void refreshPublishedRanking();});
 document.addEventListener('visibilitychange',()=>{
- if(!document.hidden){void refreshNotices();void refreshPublishedRanking();}
+ if(!document.hidden){void refreshNotices(true);void refreshPublishedRanking();}
 });
 window.addEventListener('pageshow',event=>{if(event.persisted)void load();});
 void load();

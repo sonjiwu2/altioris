@@ -11,6 +11,7 @@
 !/scripts/start-local.mjs
 !/scripts/import-references.py
 !/scripts/install-skills.mjs
+!/scripts/queue-academic-event.mjs
 /evidence/
 /screenshots/
 /references/
