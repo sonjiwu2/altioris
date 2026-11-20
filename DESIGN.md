@@ -13,8 +13,8 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 | Reference | Route | Composition |
 | --- | --- | --- |
 | 01-login.png | Signed out | Full evening cloister photograph; centered cream card, gold double edge, crest and script form |
-| 02-schedule.png | /schedule | Tabs; five independent day columns; green lectures, peach seminars; right lesson inspector |
-| 03-exams.png | /schedule/exams | Dated exam cards; pending section; detailed exam inspector |
+| 02-schedule.png | /schedule | Tabs, date picker and aligned day columns with a lesson inspector |
+| 03-exams.png | /schedule/exams | Semester picker, dated assessment cards and detail inspector |
 | 04-grades.png | /grades | Icon, discipline, grade and result rows; selected course, retake and teacher |
 | 05-ranking.png | /grades/ranking | Three illustrated metrics, table of actual demo accounts, highlighted signed-in student |
 | 06-teachers.png | /teachers | Search and department filter; portrait list; biography and consultation detail |

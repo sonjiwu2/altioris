@@ -3,7 +3,8 @@ import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { promisify } from 'node:util'
-import { accounts, baselines, campusFor, gradesFor, rankingFor, requestTypes } from './fixtures.mjs'
+import { accounts, campusFor, gradesFor, rankingFor, requestTypes, teachers } from './fixtures.mjs'
+import { academicNotices, moscowDay } from './academic-year.mjs'
 
 const derive = promisify(scrypt)
 export const sessionLifetime = 60 * 60 * 12
@@ -11,8 +12,21 @@ const digest = (token) => createHash('sha256').update(token).digest('hex')
 
 function migrate(db) {
   const { user_version: version } = db.prepare('PRAGMA user_version').get()
-  if (version > 2) throw new Error('Unsupported database schema')
-  if (version === 2) return
+  if (version > 3) throw new Error('Unsupported database schema')
+  if (version === 3) return
+  if (version === 2) {
+    // Previous releases reserved these exact owner/id pairs for fixtures.
+    db.exec(`BEGIN IMMEDIATE;
+      DELETE FROM request_history WHERE (owner='a' AND request_id IN ('020','024','025')) OR (owner='b' AND request_id='026');
+      DELETE FROM requests WHERE (owner='a' AND id IN ('020','024','025')) OR (owner='b' AND id='026');
+      DELETE FROM documents WHERE ((owner='a' AND id IN ('a-certificate','a-grades')) OR (owner='b' AND id IN ('b-certificate','b-grades')))
+        AND NOT EXISTS (SELECT 1 FROM requests WHERE requests.owner=documents.owner AND document_id=documents.id);
+      DELETE FROM notifications WHERE (owner='a' AND id IN ('a-report','a-change','a-consult','a-ready','a-signal'))
+        OR (owner='b' AND id IN ('b-ready','b-change','b-signal'));
+      PRAGMA user_version = 3;
+      COMMIT;`)
+    return
+  }
   if (version === 1) {
     db.exec(`BEGIN IMMEDIATE;
       CREATE TABLE profile_images (
@@ -22,6 +36,7 @@ function migrate(db) {
       );
       PRAGMA user_version = 2;
       COMMIT;`)
+    migrate(db)
     return
   }
 
@@ -108,6 +123,10 @@ export function openStore({ databasePath, passwords, clock }) {
     const insertRequest = db.prepare('INSERT INTO requests (id, owner, type, title, status, created_at, document_id) VALUES (?, ?, ?, ?, ?, ?, ?)')
     const insertHistory = db.prepare('INSERT INTO request_history (request_id, owner, created_at, label) VALUES (?, ?, ?, ?)')
     const insertNotification = db.prepare('INSERT INTO notifications (id, owner, title, type, body, created_at, href, is_read) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    const insertAcademicNotice = db.prepare(`INSERT INTO notifications (id, owner, title, type, body, created_at, href, is_read)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0) ON CONFLICT(owner,id) DO NOTHING`)
+    const selectNotifications = db.prepare(`SELECT id, title, type, body, created_at AS at, href, is_read AS read
+      FROM notifications WHERE owner = ? ORDER BY julianday(created_at) DESC, rowid DESC`)
     const insertMessage = db.prepare('INSERT INTO support (owner, role, text, created_at, href) VALUES (?, ?, ?, ?, ?)')
 
     function transaction(work) {
@@ -119,23 +138,6 @@ export function openStore({ databasePath, passwords, clock }) {
       } catch (error) {
         db.exec('ROLLBACK')
         throw error
-      }
-    }
-
-    function seedAccount(account) {
-      const owner = account.id
-      const baseline = baselines[owner] ?? { requests: [], documents: [], notifications: [] }
-      for (const document of baseline.documents) {
-        insertDocument.run(document.id, owner, document.title, document.createdAt)
-      }
-      for (const request of baseline.requests) {
-        insertRequest.run(request.id, owner, request.type, request.title, request.status, request.createdAt, request.documentId)
-        for (const event of [...request.history].reverse()) {
-          insertHistory.run(request.id, owner, event.at, event.label)
-        }
-      }
-      for (const notice of baseline.notifications) {
-        insertNotification.run(notice.id, owner, notice.title, notice.type, notice.body, notice.at, notice.href, Number(notice.read))
       }
     }
 
@@ -156,7 +158,6 @@ export function openStore({ databasePath, passwords, clock }) {
           removeSessions.run(account.id)
         } else {
           insertAccount.run(account.id, account.login, salt, hash)
-          seedAccount(account)
         }
       }
     })
@@ -195,7 +196,7 @@ export function openStore({ databasePath, passwords, clock }) {
       const id = randomUUID()
       const createdAt = clock()
       const title = requestTypes.get(type)
-      const documentId = type === 'certificate' ? randomUUID() : null
+      const documentId = ['certificate','transcript'].includes(type) ? randomUUID() : null
       const status = documentId ? 'Готова' : 'На рассмотрении'
       return transaction(() => {
         if (documentId) insertDocument.run(documentId, owner, title, createdAt)
@@ -203,8 +204,8 @@ export function openStore({ databasePath, passwords, clock }) {
         insertHistory.run(id, owner, createdAt, 'Заявка принята')
         if (documentId) insertHistory.run(id, owner, createdAt, 'Учебный образец PDF готов')
         insertNotification.run(
-          randomUUID(), owner, documentId ? 'Справка об обучении готова' : 'Новая заявка принята', 'Заявка',
-          documentId ? 'Учебный образец доступен для скачивания.' : 'Статус заявки доступен в личном кабинете.',
+          randomUUID(), owner, documentId ? 'Документ готов · '+title : 'Заявка принята · '+title, 'Заявка',
+          documentId ? 'Учебный образец доступен для скачивания.' : 'Текущий статус: «На рассмотрении».',
           createdAt, `/requests?item=${id}`, 0,
         )
         return { id, type, title, status, createdAt, documentId }
@@ -221,10 +222,11 @@ export function openStore({ databasePath, passwords, clock }) {
       }
       const message = action === 'message' ? input : labels[action]
       const query = String(input ?? '').toLocaleLowerCase('ru')
-      const namedTeacher = campusFor(owner, at).teachers.find((teacher) => query.includes(teacher.shortName.split(' ').at(-1).toLocaleLowerCase('ru').slice(0, -1)))
+      const namedTeacher = teachers.find((teacher) => query.includes(teacher.shortName.split(' ').at(-1).toLocaleLowerCase('ru').slice(0, -1)))
       if (action === 'message') {
         if (/статус|провер.*заяв|готов.*справ|заявк.*[0-9a-f]{3}/u.test(query)) action = 'status'
         else if (/справк|документ|выписк/u.test(query)) action = 'certificate'
+        else if (/зач[её]тк/u.test(query)) action = 'gradebook'
         else if (namedTeacher) action = 'teacher'
         else if (/оценк|рейтинг|успеваем|gpa|средний балл/u.test(query)) action = 'grades'
         else if (/расписан|заняти|экзамен|сесси|онлайн|подключ|пары|семинар|лекци/u.test(query)) action = 'schedule'
@@ -234,8 +236,9 @@ export function openStore({ databasePath, passwords, clock }) {
       let text
       let href = null
       if (action === 'certificate') {
-        text = 'Откройте раздел «Заявки» и выберите «Справка об обучении». Учебный PDF появится сразу после подачи.'
-        href = '/requests?new=certificate'
+        const transcript = /выписк|зач[её]тк/u.test(query)
+        text = 'Откройте раздел «Заявки» и выберите «'+requestTypes.get(transcript?'transcript':'certificate')+'». Учебный PDF появится сразу после подачи.'
+        href = '/requests?new='+(transcript?'transcript':'certificate')
       } else if (action === 'status') {
         const owned = requests(owner)
         const request = owned.find((item) => query.includes(item.id.toLocaleLowerCase('ru'))) ??
@@ -244,25 +247,28 @@ export function openStore({ databasePath, passwords, clock }) {
         href = request ? `/requests?item=${request.id}` : '/requests'
       } else if (action === 'grades') {
         const account = accounts.find((item) => item.id === owner)
-        const stats = rankingFor(account, gradesFor(account), accounts.filter(({ id }) => passwords[id] !== undefined))
+        const stats = rankingFor(account, gradesFor(account, at), accounts.filter(({ id }) => passwords[id] !== undefined), at)
         const format = (value) => value == null ? '—' : value.toFixed(2).replace('.', ',')
         text = `Ваш средний балл — ${format(stats.mean)}, GPA — ${format(stats.gpa)}. Место в рейтинге: ${stats.rank ?? '—'} из ${stats.total}. Подробные результаты доступны в разделе «Успеваемость».`
         href = '/grades/ranking'
+      } else if (action === 'gradebook') {
+        text = 'В зачётке можно выбрать учебный год или семестр, посмотреть опубликованные результаты и зачётные единицы. Выписку в PDF можно заказать в разделе «Заявки».'
+        href = '/grades'
       } else if (action === 'teacher') {
         text = `${namedTeacher.name}. ${namedTeacher.subject}. Консультации: ${namedTeacher.consultation}. Кабинет: ${namedTeacher.office}. Учебная почта: ${namedTeacher.email}.`
         href = `/teachers?item=${namedTeacher.id}`
       } else if (action === 'schedule') {
         if (/онлайн|подключ/u.test(query)) {
           text = 'Выберите занятие в расписании: в его карточке указан формат. Онлайн-занятие отмечено значком ноутбука. В демонстрационном портале видеоконференции не подключены.'
-          href = '/schedule?lesson=lesson-4'
+          const next = campusFor(owner, at).lessons.find(lesson=>lesson.format==='online'&&Date.parse(lesson.start)>=Date.parse(at))
+          href = next ? '/schedule?lesson='+next.id : '/schedule'
         } else if (/экзамен|сесси|зач[её]т|контрол/u.test(query)) {
-          const slots = campusFor(owner, at).exams.filter((item) => item.start)
-          const next = [...slots].sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0]
+          const next = campusFor(owner, at).exams.find(item=>Date.parse(item.start)>=Date.parse(at))
           const when = next ? new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(next.start)) : ''
           text = next ? `Ближайший контроль: ${next.title}, ${when}. ${next.room}. В разделе экзаменов есть остальные даты и экспорт в календарь.` : 'Назначенных экзаменов пока нет. Учебный офис опубликует их в расписании.'
-          href = '/schedule/exams'
+          href = next ? '/schedule/exams?item='+next.id : '/schedule/exams'
         } else {
-          const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date(at))
+          const day = moscowDay(at)
           const lessons = campusFor(owner, at).lessons.filter((item) => item.start.slice(0, 10) === day)
           text = lessons.length ? 'Сегодня в расписании:\n' + lessons.map((item) => `${item.start.slice(11, 16)}–${item.end.slice(11, 16)} · ${item.title} · ${item.room}`).join('\n') : 'Сегодня занятий нет. Даты других занятий можно посмотреть в расписании.'
           href = '/schedule'
@@ -283,10 +289,19 @@ export function openStore({ databasePath, passwords, clock }) {
       })
     }
 
+    function notifications(owner, campus = campusFor(owner, clock()), grades = gradesFor(accounts.find(account=>account.id===owner), campus.clock)) {
+      const due = academicNotices(campus, grades)
+      if (due.length) transaction(()=>{
+        for (const item of due) insertAcademicNotice.run(item.id,owner,item.title,item.type,item.body,item.at,item.href)
+      })
+      return selectNotifications.all(owner).map(notice=>({...notice,read:Boolean(notice.read)}))
+    }
+
     return {
       close: () => db.close(),
       profile,
       campus: (owner) => campusFor(owner, clock()),
+      notifications,
       async authenticate(login, password) {
         const account = selectAccount.get(login)
         const attempt = await derive(password, account?.salt ?? dummySalt, 64)
@@ -302,11 +317,8 @@ export function openStore({ databasePath, passwords, clock }) {
       revokeSession: (token) => deleteSession.run(digest(token)),
       dashboard(owner) {
         const account = accounts.find(({ id }) => id === owner)
-        const grades = gradesFor(account)
-        const notifications = db.prepare(`
-          SELECT id, title, type, body, created_at AS at, href, is_read AS read
-          FROM notifications WHERE owner = ? ORDER BY julianday(created_at) DESC, rowid DESC
-        `).all(owner).map((notice) => ({ ...notice, read: Boolean(notice.read) }))
+        const campus = campusFor(owner, clock())
+        const grades = gradesFor(account, campus.clock)
         const documents = db.prepare(`
           SELECT id, title, created_at AS createdAt FROM documents WHERE owner = ? ORDER BY julianday(created_at) DESC, rowid DESC
         `).all(owner)
@@ -316,9 +328,9 @@ export function openStore({ databasePath, passwords, clock }) {
           ) ORDER BY id
         `).all(owner)
         return {
-          student: profile(owner), campus: campusFor(owner, clock()), grades,
-          ranking: rankingFor(account, grades, accounts.filter(({ id }) => passwords[id] !== undefined)),
-          requests: requests(owner), documents, notifications, support,
+          student: profile(owner), campus, grades, requestTypes:[...requestTypes],
+          ranking: rankingFor(account, grades, accounts.filter(({ id }) => passwords[id] !== undefined), campus.clock),
+          requests: requests(owner), documents, notifications:notifications(owner,campus,grades), support,
         }
       },
       document(owner, id) {

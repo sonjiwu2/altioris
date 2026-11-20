@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { accounts, demoClock } from '../server/fixtures.mjs'
+import { accounts, campusFor, demoClock } from '../server/fixtures.mjs'
+import { academicGrades } from '../server/academic-year.mjs'
 import { openStore } from '../server/store.mjs'
 
 test('the guided assistant resolves owned records and meaningful student intents', async (t) => {
@@ -53,18 +54,20 @@ test('the guided assistant resolves owned records and meaningful student intents
   })
   await t.test('exam questions link to confirmed assessment dates', () => {
     const result = reply('a', 'Когда ближайший экзамен?')
-    assert.equal(result.href, '/schedule/exams')
+    assert.equal(result.href, '/schedule/exams?item=2026-autumn-theory')
     assert.ok(result.text.includes('Ближайший контроль'))
   })
   await t.test('online help accurately describes demonstration capability', () => {
     const result = reply('a', 'Как подключиться к онлайн занятию?')
-    assert.equal(result.href, '/schedule?lesson=lesson-4')
+    const lesson = store.dashboard('a').campus.lessons.find(item=>item.format==='online'&&Date.parse(item.start)>Date.parse(demoClock))
+    assert.notEqual(lesson,undefined)
+    assert.equal(result.href, '/schedule?lesson='+lesson.id)
     assert.ok(result.text.includes('не подключены'))
   })
   await t.test('a class question returns actual lessons rather than exam dates', () => {
     const result = reply('a', 'Какие у меня пары сегодня?')
     assert.equal(result.href, '/schedule')
-    assert.ok(result.text.includes('Архитектура ПО'))
+    assert.ok(result.text.includes('Теория вычислений'))
     assert.ok(result.text.includes('10:30'))
   })
   await t.test('certificate questions offer the actual request form', () => {
@@ -75,5 +78,78 @@ test('the guided assistant resolves owned records and meaningful student intents
     assert.ok(reply('a', 'Здравствуйте').text.includes('Помогу'))
     assert.ok(reply('a', 'Нужен специалист').text.includes('специалист не получает сообщения'))
   })
+})
+
+test('the annual plan covers both sessions with no group, teacher or room conflicts',()=>{
+  const campuses = ['a','b'].map(owner=>campusFor(owner,demoClock))
+  const [a,b] = campuses
+  assert.equal(a.terms.length,4)
+  const assignments = new Map()
+  for(const [group,campus] of campuses.entries()){
+    assert.equal(new Set(campus.lessons.map(lesson=>lesson.id)).size,campus.lessons.length)
+    assert.equal(campus.exams.length,24)
+    for(const term of campus.terms){
+      const lessons=campus.lessons.filter(lesson=>lesson.termId===term.id)
+      const exams=campus.exams.filter(exam=>exam.termId===term.id)
+      assert.ok(lessons.length>=150)
+      const days=new Map()
+      for(const lesson of lessons){
+        const day=lesson.start.slice(0,10)
+        days.set(day,(days.get(day)??0)+1)
+      }
+      assert.deepEqual([...new Set(days.values())].sort(),[1,2,3,4])
+      assert.ok(lessons.every(lesson=>lesson.start.slice(0,10)>=term.start&&lesson.end.slice(0,10)<=term.teachingEnd))
+      assert.ok(exams.every(exam=>exam.start.slice(0,10)>=term.sessionStart&&exam.end.slice(0,10)<=term.end))
+    }
+    for(const event of [...campus.lessons,...campus.exams]){
+      const keys=['group:'+group,'teacher:'+event.teacherId]
+      if(event.format!=='online')keys.push('room:'+event.room)
+      for(const key of keys){
+        const booked=assignments.get(key+'|'+event.start)
+        if(booked)assert.ok(key!=='group:'+group&&booked.type==='Лекция'&&event.type==='Лекция'&&booked.title===event.title)
+        assignments.set(key+'|'+event.start,event)
+      }
+    }
+  }
+  assert.equal(a.lessons.some(lesson=>lesson.start.startsWith('2026-11-04')),false)
+  assert.equal(a.lessons.some(lesson=>lesson.start.startsWith('2027-01-05')),false)
+  assert.deepEqual(a.lessons.filter(lesson=>lesson.start.startsWith('2026-11-18')).map(lesson=>lesson.type),['День ВУЦ'])
+  assert.equal(b.lessons.some(lesson=>lesson.start.startsWith('2026-11-18')),false)
+  assert.deepEqual(new Set(accounts.map(account=>account.profile.group)),new Set(['24КНТ-1','24КНТ-2']))
+  assert.equal(new Set(a.teachers.map(teacher=>teacher.departmentIcon)).size,a.teachers.length)
+  assert.notEqual(a.exams[0].start,b.exams[0].start)
+  const grades=academicGrades(accounts[0],demoClock)
+  for(const term of ['2025-autumn','2026-spring']){
+    const semester=grades.filter(grade=>grade.termId===term)
+    assert.ok(semester.every(grade=>grade.published))
+    assert.equal(semester.reduce((credits,grade)=>credits+grade.credits,0),30)
+  }
+  assert.ok(grades.filter(grade=>grade.termId==='2027-spring').every(grade=>!grade.published&&grade.mark===null))
+  for(const [index, campus] of campuses.entries()){
+    for(const grade of academicGrades(accounts[index],demoClock)){
+      assert.equal(grade.classHours,campus.lessons.filter(lesson=>lesson.courseId===grade.id).length*2)
+    }
+  }
+})
+
+test('academic notices appear at the right time and never reset the read state',()=>{
+  let now='2026-12-13T12:00:00+03:00'
+  const store=openStore({databasePath:':memory:',passwords:{a:'isolated-test-password-a',b:'isolated-test-password-b'},clock:()=>now})
+  try{
+    assert.deepEqual(store.notifications('a'),[])
+    now='2026-12-14T11:00:00+03:00'
+    const [reminder]=store.notifications('a')
+    assert.equal(reminder.href,'/schedule/exams?item=2026-autumn-theory')
+    assert.equal(reminder.read,false)
+    assert.deepEqual(store.notifications('b'),[])
+    store.markNotification('a',reminder.id)
+    assert.deepEqual(store.notifications('a'),[{...reminder,read:true}])
+    now='2026-12-21T12:00:00+03:00'
+    const result=store.notifications('a').find(item=>item.type==='Результат')
+    assert.equal(result.href,'/grades?term=2026-autumn&item=2026-autumn-theory')
+    assert.ok(!store.notifications('b').some(item=>item.type==='Результат'))
+    assert.equal(store.notifications('a').filter(item=>item.id===reminder.id).length,1)
+    assert.ok(store.dashboard('a').grades.find(grade=>grade.id==='2026-autumn-theory').published)
+  }finally{store.close()}
 })
 

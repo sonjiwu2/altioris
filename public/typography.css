@@ -148,35 +148,38 @@ h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1
 
 
 /* Keep the weekly grid at the previous density and grow rows with text scaling. */
-.calendar-grid:not(.single-day){min-width:calc(740px * var(--text-scale));min-height:0}
+.calendar-grid:not(.single-day){
+ --calendar-header:calc(70px * var(--text-scale));
+ --calendar-row:calc(164px * var(--text-scale));
+ min-width:calc(740px * var(--text-scale));min-height:0;
+}
 .calendar-grid:not(.single-day) .calendar-day{
- grid-template-rows:calc(70px * var(--text-scale)) repeat(3,minmax(calc(164px * var(--text-scale)),auto));
+ grid-template-rows:var(--calendar-header) repeat(var(--slots),minmax(var(--calendar-row),auto));
 }
 .calendar-day>h2{font-size:1rem;line-height:1.12}
 .lesson{font-size:.73rem;line-height:1.15}
 .calendar-grid:not(.single-day) .lesson>strong{font-size:.79rem;line-height:1.14}
 .lesson time{font-size:.73rem;line-height:1.18;white-space:nowrap}
 .lesson .badge{font-size:.62rem;line-height:1.18}
+.lesson.campus-activity,.lesson.campus-activity .badge{background:var(--lavender);color:var(--ink)}
+.lesson.campus-activity{border-color:var(--line)}
+.lesson.campus-activity time{color:var(--ink)}
+.page .calendar-day-empty{margin:8px 0;text-align:center;color:var(--muted);font-size:.73rem}
 .page .schedule-inspector .info-line{padding-block:14px}
 @supports (grid-template-rows:subgrid){
  .calendar-grid:not(.single-day){
-  grid-template-rows:calc(70px * var(--text-scale)) repeat(3,minmax(calc(164px * var(--text-scale)),auto));
+  grid-template-rows:var(--calendar-header) repeat(var(--slots),minmax(var(--calendar-row),auto));
   row-gap:12px;
  }
  .calendar-grid:not(.single-day) .calendar-day{
-  grid-row:span 4;
+  grid-row:span calc(var(--slots) + 1);
   grid-template-rows:subgrid;
  }
 }
 @media(max-width:1350px){
- .calendar-grid:not(.single-day) .calendar-day{
-  grid-template-rows:calc(64px * var(--text-scale)) repeat(3,minmax(calc(150px * var(--text-scale)),auto));
- }
- @supports (grid-template-rows:subgrid){
-  .calendar-grid:not(.single-day){
-   grid-template-rows:calc(64px * var(--text-scale)) repeat(3,minmax(calc(150px * var(--text-scale)),auto));
-  }
-  .calendar-grid:not(.single-day) .calendar-day{grid-template-rows:subgrid}
+ .calendar-grid:not(.single-day){
+  --calendar-header:calc(64px * var(--text-scale));
+  --calendar-row:calc(150px * var(--text-scale));
  }
 }
 @media(max-width:680px){
@@ -288,6 +291,29 @@ h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1
 [data-theme=dark] .online-card{background:#234261;color:var(--ink)}
 [data-theme=dark] .online-card small{color:#c1d9f1}
 [data-theme=dark] .retake-notice{background:#46302c;color:var(--negative)}
+.term-picker{flex:0 1 12rem;min-width:0}
+.term-picker select{min-height:44px}
+.exam-panel>.section-heading{margin-bottom:20px;flex-wrap:wrap}
+.schedule-date{min-width:0;max-width:100%}
+.page .schedule-date input{width:auto;max-width:100%;min-height:44px;font-size:.72rem}
+.calendar-tools{flex-wrap:wrap}
+.calendar-tools .inline-group{flex-wrap:nowrap;min-width:0;gap:6px}
+.calendar-tools .week-title{font-size:clamp(1rem,1.8vw,1.24rem);text-align:center}
+.calendar-tools .icon-button{flex:0 0 44px}
+.calendar-tools button:disabled{cursor:default}
+.page .grade-progress{color:var(--muted);margin:0 0 18px;font-size:.72rem}
+.grade-term-heading{margin:20px 10px 10px;font-size:.9rem}
+.grade-exam-link{margin-top:18px}
+.exam-status{gap:6px}
+.exam-status .badge{white-space:normal}
+.grade-row>strong,.grade-result,.result-summary>em,.exam-event h3{overflow-wrap:anywhere;min-width:0}
+.lesson .badge{white-space:normal;text-align:left}
+@media(max-width:680px){
+ .calendar-tools .inline-group{width:100%;justify-content:space-between}
+ .schedule-date{width:100%}
+ .page .schedule-date input{width:100%}
+ .term-picker{flex:1 1 100%}
+}
 @media(prefers-reduced-motion:reduce){
  ::view-transition-old(root),::view-transition-new(root){animation:none}
 }

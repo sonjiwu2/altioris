@@ -11,11 +11,11 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 ## Acceptance
 
 - Login accepts the 13 fixed independent demo accounts. Wrong credentials produce a visible error. Logout revokes the session.
-- Schedule adapts to week/day by viewport without a mode switch, supports period navigation, selection, lecture/seminar, room/online format and teacher links. Exams support selection and ICS export.
-- Grade calculations exclude pass/fail courses. GPA weights numeric marks by credits; ranking uses the enabled cohort and a deterministic tie rule.
+- Schedule adapts to week/day by viewport without a mode switch, supports period navigation, selection, lecture/seminar, room/online format and teacher links. Exams and checkpoints are grouped by term, support selection and export to ICS.
+- The gradebook shows the completed 2025/26 year and progress through 2026/27. Grades publish after the corresponding control. Grade calculations exclude pass/fail courses. GPA weights numeric marks by credits; ranking uses the enabled cohort and a deterministic tie rule.
 - Teachers have distinct synthetic portraits, biographies, subjects, departments, office, email and consultations. Search covers names and all subjects a teacher teaches. Department selection applies immediately and can be combined with search. Each department has its own icon.
 - Requests persist, have actual recorded history and owned PDFs. The same records appear in chat cards and profile documents.
-- Notifications have durable read state, read-state filters and linked details.
+- Notifications are produced by actual request status, examination windows and result publication. Their read state persists and links open the relevant item.
 - Settings support light, dark and system themes, a 100/115/130% text control, current session and sign-out. Theme and text scale survive reload and stay separate for each account. Animations honor the operating system preference.
 - Profile shows the signed-in student's details and an explicitly labeled sample student card.
 - Support responds to status, certificate, grade/ranking, teacher, schedule/online and greeting intents. Human support availability is stated accurately.

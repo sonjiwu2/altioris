@@ -1,9 +1,9 @@
 import { preparePhoto, disposePhotoPreview } from './features/photo.js';
-import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-6';
-import { exams, news, schedule } from './features/campus.js?v=20261120-6';
-import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-6';
-import { notifications, requests, support } from './features/services.js?v=20261120-6';
-import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-6';
+import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-8';
+import { exams, schedule } from './features/campus.js?v=20261120-8';
+import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-8';
+import { notifications, requests, support } from './features/services.js?v=20261120-8';
+import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-8';
 
 const app=document.querySelector('#app'), announcement=document.querySelector('#status');
 const navigation=[['/schedule','Расписание','calendar'],['/grades','Успеваемость','grades'],['/teachers','Преподаватели','people'],['/requests','Заявки','doc'],['/support','Чат поддержки','chat'],['/notifications','Уведомления','bell'],['/settings','Настройки','settings']];
@@ -23,6 +23,7 @@ const viewPath=path=>path==='/'?'/schedule':path;
 const resultsPanels=new Map([
  ['/teachers','.directory'],['/requests','.work-layout'],['/notifications','.notifications-layout'],
  ['/grades/ranking','.ranking-panel'],['/schedule','.calendar'],
+ ['/grades','.academic-layout'],['/schedule/exams','.exam-layout'],
 ]);
 
 function animateNavigation(previous,current){
@@ -69,7 +70,7 @@ function render(focus=false,navigating=false) {
  const active=href=>(href==='/schedule'&&pathname==='/')||pathname===href||pathname.startsWith(href+'/');
  const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+'<span>'+label+'</span>'+(href==='/notifications'&&unread?'<span class="nav-unread" aria-label="Есть новые уведомления"></span>':'')+'</a>').join('');
  const page=pages.get(pathname);
- const content=pathname.startsWith('/news/')?news(pathname):page?page(snapshot,params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
+ const content=page?page(snapshot,params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
  app.innerHTML='<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">'+brand+'</a><button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">'+icon('menu')+'</button></header><aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">'+brand+'</a><nav class="main-nav" aria-label="Основное меню">'+nav+'</nav><a class="sidebar-profile" href="/profile"'+(pathname==='/profile'?' aria-current="page"':'')+'>'+portrait(snapshot.student)+'<span>'+e(snapshot.student.shortName)+'<small>'+e(snapshot.student.group)+'</small></span>'+icon('down')+'</a></aside><nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>'+nav+'<a href="/profile">'+icon('person')+'Мой профиль</a></nav><div class="workspace"><main id="main" class="page" tabindex="-1">'+content+'</main><footer class="page-footer">Конкурсный прототип</footer></div>';
  document.title=(app.querySelector('h1')?.textContent||'Кабинет')+' · Altioris University';
  const path=viewPath(pathname);
@@ -80,7 +81,7 @@ function render(focus=false,navigating=false) {
   selection:selected?.get('lesson')??selected?.get('item'),
   scope:path==='/schedule'
    ? app.querySelector('.week-title')?.textContent
-   : ['q','office','filter','view'].map(key=>params.get(key)||'').join('\n'),
+   : ['q','office','filter','view','term'].map(key=>key==='term'?(app.querySelector('.term-picker select')?.value??''):(params.get(key)||'')).join('\n'),
  };
  if(lastView?.path===path&&lastView.scope===currentView.scope&&scrollLeft){
   const nextScroller=app.querySelector('.calendar-scroll,.teacher-list');
@@ -100,6 +101,19 @@ function go(href,restoreFocus){
  if(restoreFocus){app.querySelector(restoreFocus)?.focus({preventScroll:true});}
  else if(selectedDetail){selectedDetail.tabIndex=-1;selectedDetail.focus({preventScroll:true});selectedDetail.scrollIntoView({block:'start'});}
  else if(same){const selected=[...app.querySelectorAll('main a[href]')].find(link=>link.href===next.href);(selected||app.querySelector('main'))?.focus({preventScroll:true});}
+ if(!same&&path==='/notifications')void refreshNotices();
+}
+async function refreshNotices(){
+ const prior=snapshot;
+ if(!prior||busy||location.pathname!=='/notifications')return;
+ try{
+  const {notifications}=await api('/api/notifications');
+  if(snapshot!==prior||busy||location.pathname!=='/notifications')return;
+  if(JSON.stringify(notifications)===JSON.stringify(prior.notifications))return;
+  const focus=document.activeElement===app.querySelector('#main');
+  snapshot={...prior,notifications};
+  render(focus);
+ }catch{/* Keep the last successful snapshot until the next refresh. */}
 }
 async function load(){
  try{snapshot=await api('/api/dashboard');render();}
@@ -138,12 +152,22 @@ function submitTeacherFilters(form,focusSelector){
  announce('Найдено преподавателей: '+count);
 }
 
+function submitQuickFilter(form){
+ if(!form.reportValidity())return;
+ const control=form.querySelector('select,input');
+ if(!control.value)return;
+ const query=new URLSearchParams([[control.name,control.value]]);
+ const url=new URL(form.action).pathname+'?'+query;
+ if(url!==location.pathname+location.search)go(url,'[data-quick-filter] [name="'+control.name+'"]');
+}
+
 app.addEventListener('submit',event=>{
  const form=event.target;if(!(form instanceof HTMLFormElement))return;event.preventDefault();
  if(form.matches('[data-teacher-filters]')){
   submitTeacherFilters(form,document.activeElement===form.elements.q?'.teacher-filters input':'.teacher-filters button');
   return;
  }
+ if(form.matches('[data-quick-filter]')){submitQuickFilter(form);return;}
  const fields=new FormData(form),kind=form.dataset.mutation;
  if(!kind){const query=new URLSearchParams(fields);for(const [name,value] of query)if(!value)query.delete(name);go(new URL(form.action).pathname+(query.size?'?'+query:''));return;}
  if(kind==='photo'){if(form.photoBlob)void save('photo',form.photoBlob,event.submitter,form.querySelector('.form-error'));return;}
@@ -202,6 +226,10 @@ app.addEventListener('close',event=>{
  restorePhotoPreview(form);
 },true);
 app.addEventListener('change',event=>{
+ if(event.target.form?.matches('[data-quick-filter]')){
+  submitQuickFilter(event.target.form);
+  return;
+ }
  if(event.target.matches('.teacher-filters select')){
   submitTeacherFilters(event.target.form,'.teacher-filters select');
   return;
@@ -215,6 +243,7 @@ app.addEventListener('keydown',event=>{if(event.target.id==='chat-message'&&even
 matchMedia('(max-width:680px)').addEventListener('change',()=>{if(snapshot&&(location.pathname==='/'||location.pathname==='/schedule'))render();});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(snapshot)syncSystemTheme(snapshot.student);});
 window.addEventListener('popstate',()=>render(false,true));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshNotices();});
 window.addEventListener('pageshow',event=>{if(event.persisted)void load();});
 void load();
 

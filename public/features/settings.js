@@ -1,4 +1,4 @@
-import { escape as e, icon } from '../ui.js?v=20261120-6';
+import { escape as e, icon } from '../ui.js?v=20261120-8';
 import { accentIcon } from './accent-icons.js';
 
 const scales = [100, 115, 130];

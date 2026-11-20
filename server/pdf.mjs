@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { deflateSync } from 'node:zlib'
 import { gradesFor } from './fixtures.mjs'
+import { academicTerms } from './academic-year.mjs'
 
 const font = readFileSync(new URL('./fonts/GolosText-Regular.ttf', import.meta.url))
 const metrics = JSON.parse(readFileSync(new URL('./fonts/GolosText-Regular.metrics.json', import.meta.url), 'utf8'))
@@ -16,7 +17,7 @@ function compressedStream(value, extra = '') {
   return Buffer.concat([Buffer.from('<< /Length ' + data.length + ' /Filter /FlateDecode ' + extra + ' >>\nstream\n'), data, Buffer.from('\nendstream')])
 }
 
-export function studentPdf(document, student, account) {
+function renderPage(document, student, period, index, total) {
   const commands = []
   const text = (value, x, top, size = 11, fill = ink) => commands.push('BT /F1 ' + size + ' Tf ' + color(fill) + ' rg 1 0 0 1 ' + x + ' ' + (842 - top) + ' Tm <' + encoded(value) + '> Tj ET')
   const center = (value, top, size, fill = ink) => text(value, (595 - width(value, size)) / 2, top, size, fill)
@@ -33,7 +34,7 @@ export function studentPdf(document, student, account) {
   }
   const issued = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(document.createdAt))
   const number = 'ALT-' + new Date(document.createdAt).getUTCFullYear() + '-' + String(createHash('sha256').update(document.id).digest().readUInt32BE(0) % 1_000_000).padStart(6, '0')
-  const transcript = /успеваемост/iu.test(document.title)
+  const transcript = Boolean(period)
   rect(0, 0, 595, 111, navy)
   commands.push('q ' + color(gold) + ' RG 1.4 w 54 804 m 73 811 l 92 804 l 90 776 l 73 759 l 56 776 l h S Q')
   text('A', 64, 68, 27, '#e6c46e')
@@ -49,8 +50,9 @@ export function studentPdf(document, student, account) {
   if (transcript) {
     text(student.name, 42, 220, 14, navy)
     paragraph(student.program + ' · ' + student.year + ' курс · ' + student.group, 42, 240, 510, 9.5, muted, 14)
-    const grades = gradesFor(account)
-    const top = 271, rowHeight = 38
+    text(period.label, 42, 265, 11, navy)
+    const grades = period.grades
+    const top = 280, rowHeight = 32
     rect(42, top, 511, 28, navy)
     text('Дисциплина', 53, top + 19, 9.5, '#ffffff')
     text('Кредиты', 355, top + 19, 9.5, '#ffffff')
@@ -59,10 +61,10 @@ export function studentPdf(document, student, account) {
     for (const [index, grade] of grades.entries()) {
       const y = top + 28 + index * rowHeight
       if (index % 2 === 0) rect(42, y, 511, rowHeight, cream)
-      text(grade.title, 53, y + 23, 9.2)
-      text(String(grade.credits), 370, y + 23, 10)
-      text(grade.mark == null ? '—' : String(grade.mark), 438, y + 23, 10)
-      text(grade.retakeDate ? 'Пересдача' : grade.mark == null ? grade.result : grade.mark >= 4 ? 'Завершено' : 'Пересдача', 474, y + 23, 8)
+      paragraph(grade.title, 53, y + 15, 290, 9.2, ink, 11)
+      text(String(grade.credits), 370, y + 20, 10)
+      text(grade.mark == null ? '—' : String(grade.mark), 438, y + 20, 10)
+      text(grade.result, 474, y + 20, 8)
       rule(y + rowHeight)
     }
     const numeric = grades.filter(grade => typeof grade.mark === 'number')
@@ -70,7 +72,8 @@ export function studentPdf(document, student, account) {
     const mean = numeric.length ? numeric.reduce((sum, grade) => sum + grade.mark, 0) / numeric.length : null
     const gpa = credits ? numeric.reduce((sum, grade) => sum + grade.mark * grade.credits, 0) / credits : null
     const format = value => value == null ? '—' : value.toFixed(2).replace('.', ',')
-    const summaryY = top + 28 + grades.length * rowHeight + 24
+    if (!grades.length) text('На дату оформления итоговых результатов нет.', 53, top+54, 10, muted)
+    const summaryY = top + 28 + Math.max(1,grades.length) * rowHeight + 24
     rect(42, summaryY, 511, 62, cream, '#d7c399')
     text('СРЕДНИЙ БАЛЛ', 58, summaryY + 20, 8.5, muted)
     text(format(mean), 58, summaryY + 46, 18, navy)
@@ -101,8 +104,19 @@ export function studentPdf(document, student, account) {
   text('УЧЕБНЫЙ ОБРАЗЕЦ · СИНТЕТИЧЕСКИЕ ДАННЫЕ', 42, 780, 9, navy)
   paragraph('Не является официальным документом об обучении и не предназначен для предъявления в организации.', 42, 797, 511, 8, muted, 12)
   text('Altioris University · Сформировано автоматически', 42, 825, 7.5, muted)
-  text('1 / 1', 533, 825, 7.5, muted)
+  text(index+' / '+total, 533, 825, 7.5, muted)
+  return commands.join('\n')
+}
 
+export function studentPdf(document, student, account) {
+  let periods = [null]
+  if (/успеваемост/iu.test(document.title)) {
+    const published = gradesFor(account, document.createdAt).filter(grade=>grade.published)
+    periods = academicTerms.map(term=>({
+      label:term.label,grades:published.filter(grade=>grade.termId===term.id),
+    })).filter(term=>term.grades.length)
+    if (!periods.length) periods = [{label:'Итоговые результаты',grades:[]}]
+  }
   const objects = []
   const add = object => (objects.push(Buffer.isBuffer(object) ? object : Buffer.from(object, 'ascii')), objects.length)
   const fontFile = add(compressedStream(font, '/Length1 ' + font.length))
@@ -114,10 +128,12 @@ export function studentPdf(document, student, account) {
   const cmap = add(compressedStream('/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /AltiorisUnicode def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n1 beginbfrange\n<0000> <FFFF> <0000>\nendbfrange\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend'))
   const fontObject = add('<< /Type /Font /Subtype /Type0 /BaseFont /GolosText-Regular /Encoding /Identity-H /DescendantFonts [' + descendant + ' 0 R] /ToUnicode ' + cmap + ' 0 R >>')
   const opacity = add('<< /Type /ExtGState /ca .09 /CA .09 >>')
-  const contents = add(compressedStream(commands.join('\n')))
-  const page = add(''), pages = add('')
-  objects[page - 1] = Buffer.from('<< /Type /Page /Parent ' + pages + ' 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ' + fontObject + ' 0 R >> /ExtGState << /Watermark ' + opacity + ' 0 R >> >> /Contents ' + contents + ' 0 R >>')
-  objects[pages - 1] = Buffer.from('<< /Type /Pages /Kids [' + page + ' 0 R] /Count 1 >>')
+  const pages = add('')
+  const kids = periods.map((period,index)=>{
+    const contents = add(compressedStream(renderPage(document,student,period,index+1,periods.length)))
+    return add('<< /Type /Page /Parent ' + pages + ' 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ' + fontObject + ' 0 R >> /ExtGState << /Watermark ' + opacity + ' 0 R >> >> /Contents ' + contents + ' 0 R >>')
+  })
+  objects[pages - 1] = Buffer.from('<< /Type /Pages /Kids [' + kids.map(id=>id+' 0 R').join(' ') + '] /Count '+kids.length+' >>')
   const catalog = add('<< /Type /Catalog /Pages ' + pages + ' 0 R >>')
   const info = add('<< /Producer (Altioris University) /Title <FEFF' + encoded(document.title) + '> >>')
   const chunks = [Buffer.from('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n', 'latin1')], offsets = [0]

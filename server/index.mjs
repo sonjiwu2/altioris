@@ -4,7 +4,7 @@ import { createServer } from 'node:http'
 import { extname, isAbsolute, relative, resolve } from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { accounts, demoClock, requestTypes, signal } from './fixtures.mjs'
+import { accounts, demoClock, requestTypes } from './fixtures.mjs'
 import { calendar, demoPdf } from './exports.mjs'
 import { openStore, sessionLifetime } from './store.mjs'
 import { configuredPasswords } from './demo-accounts.mjs'
@@ -59,7 +59,7 @@ export function readConfig(env = process.env) {
   return {
     passwords, secure, origin, port, host: env.HOST || '127.0.0.1',
     databasePath: env.ALTIORIS_DB || defaultDatabase,
-    clock: env.ALTIORIS_CLOCK === 'live' ? () => new Date().toISOString() : () => demoClock,
+    clock: env.ALTIORIS_CLOCK === 'demo' ? () => demoClock : () => new Date().toISOString(),
   }
 }
 
@@ -246,7 +246,7 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
   const server = createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, async (req, res) => {
     setHeaders(res)
     try {
-      const pathname = new URL(req.url, 'http://altioris.example').pathname
+      const {pathname,searchParams} = new URL(req.url, 'http://altioris.example')
       if (pathname !== '/api' && !pathname.startsWith('/api/')) {
         await serveStatic(req, res, pathname, staticDirectory)
         return
@@ -290,6 +290,10 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
       }
       if (method === 'GET' && pathname === '/api/dashboard') {
         json(res, 200, store.dashboard(owner))
+        return
+      }
+      if (method === 'GET' && pathname === '/api/notifications') {
+        json(res, 200, { notifications: store.notifications(owner) })
         return
       }
       if (method === 'POST' && pathname === '/api/requests') {
@@ -359,11 +363,13 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
         attachment(res, demoPdf(document, store.profile(owner), account), 'application/pdf', `altioris-${id}.pdf`)
         return
       }
-      if (method === 'GET' && (pathname === '/api/calendar/exams' || pathname === '/api/calendar/signal')) {
+      if (method === 'GET' && pathname === '/api/calendar/exams') {
         const campus = store.campus(owner)
-        const exams = pathname === '/api/calendar/exams'
-        const events = exams ? campus.exams : [signal]
-        attachment(res, calendar(events, campus.clock), 'text/calendar; charset=utf-8', exams ? 'altioris-exams.ics' : 'altioris-signal.ics')
+        const term = searchParams.get('term') ?? campus.currentTerm
+        const period = [...campus.terms,...campus.years].find(item=>item.id===term)
+        if (!period) throw badRequest('Выберите учебный период.')
+        const termIds = period.termIds ?? [period.id]
+        attachment(res, calendar(campus.exams.filter(event=>termIds.includes(event.termId)), campus.clock), 'text/calendar; charset=utf-8', 'altioris-exams.ics')
         return
       }
       req.resume()

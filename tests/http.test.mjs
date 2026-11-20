@@ -80,7 +80,7 @@ async function dashboard(app, token) {
 
 test('private records, workspace actions and sessions are isolated and survive an actual server restart', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'altioris-test-'))
-  const env = { ...credentials(), ALTIORIS_DB: join(directory, 'integration.sqlite') }
+  const env = { ...credentials(), ALTIORIS_DB: join(directory, 'integration.sqlite'), ALTIORIS_CLOCK:'demo' }
   let app = await launch(readConfig(env))
   try {
     const unauthorized = await app.request('/api/dashboard')
@@ -104,16 +104,28 @@ test('private records, workspace actions and sessions are isolated and survive a
     assert.notDeepEqual(snapshotA.campus.lessons, snapshotB.campus.lessons)
     assert.equal(snapshotA.ranking.rank, 2)
     assert.equal(snapshotA.ranking.total, 2)
-    assert.equal(snapshotA.ranking.mean, 6.75)
-    assert.equal(snapshotA.ranking.gpa.toFixed(2), '7.06')
+    const marks = snapshotA.grades.filter(grade => typeof grade.mark === 'number')
+    assert.equal(snapshotA.ranking.mean, marks.reduce((sum,grade)=>sum+grade.mark,0)/marks.length)
+    assert.equal(snapshotA.ranking.gpa, marks.reduce((sum,grade)=>sum+grade.mark*grade.credits,0)/marks.reduce((sum,grade)=>sum+grade.credits,0))
+    assert.equal(snapshotA.requests.length, 0)
+    assert.equal(snapshotA.documents.length, 0)
+    assert.equal(snapshotA.notifications.length, 0)
 
-    const foreignPdf = await app.request('/api/documents/a-certificate', { token: b.token })
-    assert.equal(foreignPdf.status, 404)
-    const pdf = await app.request('/api/documents/a-certificate', { token: a.token })
+    const transcript = await app.request('/api/requests', {
+      method: 'POST', token: a.token, body: { type: 'transcript' },
+    })
+    assert.equal(transcript.status, 201)
+    const { request: transcriptRequest } = await transcript.json()
+    assert.equal(transcriptRequest.status, 'Готова')
+    const path = '/api/documents/'+transcriptRequest.documentId
+    assert.equal((await app.request(path,{ token: b.token })).status,404)
+    const pdf = await app.request(path,{ token: a.token })
     assert.equal(pdf.status, 200)
     assert.equal(pdf.headers.get('content-type'), 'application/pdf')
     assert.match(pdf.headers.get('content-disposition'), /^attachment;/)
-    assert.match(Buffer.from(await pdf.arrayBuffer()).toString('utf8'), /^%PDF-1\.4/)
+    const pdfText=Buffer.from(await pdf.arrayBuffer()).toString('latin1')
+    assert.match(pdfText, /^%PDF-1\.4/)
+    assert.match(pdfText, /\/Count 2 >>/)
 
     const letter = await app.request('/api/requests', {
       method: 'POST', token: a.token, body: { type: 'certificate' },
@@ -122,9 +134,10 @@ test('private records, workspace actions and sessions are isolated and survive a
     const { request } = await letter.json()
     assert.equal(request.status, 'Готова')
     assert.ok(request.documentId)
-
+    const notice = (await dashboard(app,a.token)).notifications.find(item=>item.href==='/requests?item='+request.id)
+    assert.equal(notice.type,'Заявка')
     const otherAccountNotice = await app.request('/api/notifications', {
-      method: 'PATCH', token: b.token, body: { id: 'a-change' },
+      method: 'PATCH', token: b.token, body: { id: notice.id },
     })
     assert.equal(otherAccountNotice.status, 404)
     const originDenied = await app.request('/api/profile', {
@@ -140,7 +153,7 @@ test('private records, workspace actions and sessions are isolated and survive a
       method: 'PATCH', token: a.token, body: { all: true },
     })).status, 200)
     assert.equal((await app.request('/api/support', {
-      method: 'POST', token: a.token, body: { action: 'status' },
+      method: 'POST', token: a.token, body: { action: 'message', text: 'Статус заявки '+request.id },
     })).status, 200)
 
     const examA = await app.request('/api/calendar/exams', { token: a.token })
@@ -148,19 +161,39 @@ test('private records, workspace actions and sessions are isolated and survive a
     const eventsA = await examA.text()
     const eventsB = await examB.text()
     assert.equal(examA.headers.get('content-type'), 'text/calendar; charset=utf-8')
-    assert.match(eventsA, /DTSTART:20261127T114000Z\r\n/)
-    assert.match(eventsA, /theory-retake/)
-    assert.doesNotMatch(eventsA, /security-exam/)
-    assert.doesNotMatch(eventsB, /theory-retake/)
+    assert.match(eventsA, /DTSTART:20261221T073000Z/)
+    assert.match(eventsB, /DTSTART:20261221T091000Z/)
+    assert.match(eventsA, /2026-autumn-theory/)
+    assert.doesNotMatch(eventsA, /2027-spring/)
     assert.ok(eventsA.split('\r\n').every((line) => Buffer.byteLength(line) <= 75))
-    assert.match(await (await app.request('/api/calendar/signal', { token: a.token })).text(), /DTSTART:20261127T150000Z/)
+    const spring = await app.request('/api/calendar/exams?term=2027-spring', { token: a.token })
+    assert.match(await spring.text(), /2027-spring-analysis/)
+    const archive = await app.request('/api/calendar/exams?term=2025-26', { token: a.token })
+    const archivedEvents = await archive.text()
+    assert.equal(archive.status, 200)
+    assert.equal((archivedEvents.match(/BEGIN:VEVENT/g) ?? []).length, 12)
+    assert.match(archivedEvents, /2025-autumn-algorithms/)
+    assert.match(archivedEvents, /2026-spring-discrete/)
+    assert.doesNotMatch(archivedEvents, /2026-autumn/)
 
     await app.close()
+    const legacy = new DatabaseSync(env.ALTIORIS_DB)
+    legacy.exec(`
+      INSERT INTO documents VALUES ('a-certificate','a','Legacy','2026-11-19');
+      INSERT INTO requests VALUES ('024','a','certificate','Legacy','Готова','2026-11-19','a-certificate');
+      INSERT INTO request_history (request_id,owner,created_at,label) VALUES ('024','a','2026-11-19','Legacy');
+      INSERT INTO notifications VALUES ('a-ready','a','Legacy','Заявка','Legacy','2026-11-19','/requests?item=024',0);
+      PRAGMA user_version=2;
+    `)
+    legacy.close()
     app = await launch(readConfig(env))
     const saved = await dashboard(app, a.token)
     const owned = saved.requests.find(({ id }) => id === request.id)
     assert.equal(owned.history.length, 2)
-    assert.equal(saved.requests.length, snapshotA.requests.length + 1)
+    assert.equal(saved.requests.length, 2)
+    assert.equal(saved.requests.some(({id})=>id==='024'),false)
+    assert.equal(saved.notifications.some(({id})=>id==='a-ready'),false)
+    assert.equal((await app.request('/api/documents/a-certificate',{token:a.token})).status,404)
     assert.equal(saved.student.avatar, 'initials')
     assert.ok(saved.notifications.every(({ read }) => read))
     assert.equal(saved.support.at(-1).href, `/requests?item=${request.id}`)
@@ -168,7 +201,7 @@ test('private records, workspace actions and sessions are isolated and survive a
     assert.equal(other.requests.length, snapshotB.requests.length)
     assert.equal(other.student.avatar, 'portrait')
     assert.equal(other.support.length, 0)
-    assert.ok(other.notifications.some(({ read }) => !read))
+    assert.equal(other.notifications.length,0)
     assert.equal((await app.request(`/api/documents/${request.documentId}`, { token: b.token })).status, 404)
     assert.equal((await app.request(`/api/documents/${request.documentId}`, { token: a.token })).status, 200)
 

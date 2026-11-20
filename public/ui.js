@@ -59,8 +59,20 @@ export const safeLink=href=>typeof href==='string'&&/^\/(?!\/)[a-z0-9/]+(?:\?[a-
 export const line=(glyph,text)=>'<div class="info-line">'+icon(glyph)+'<span>'+text+'</span></div>';
 export const badge=(text,tone='')=>'<span class="badge '+tone+'">'+escape(text)+'</span>';
 export const tab=(path,title,selected,glyph='')=>'<a class="tab" href="'+path+'"'+(selected?' aria-current="page"':'')+'>'+(glyph?icon(glyph):'')+title+'</a>';
+export function termPicker(path, terms, selected){
+ return '<form class="term-picker" action="'+path+'" data-quick-filter>'+
+  '<label><span class="sr-only">Учебный период</span><select name="term">'+
+  terms.map(term=>'<option value="'+escape(term.id)+'"'+(term.id===selected?' selected':'')+'>'+escape(term.label)+'</option>').join('')+
+  '</select></label></form>';
+}
 export const fields=entries=>'<dl class="fields">'+entries.map(([label,value,glyph])=>'<div>'+(glyph?icon(glyph):'')+'<dt>'+escape(label)+'</dt><dd>'+escape(value??'—')+'</dd></div>').join('')+'</dl>';
-export const subjectIcon=id=>({architecture:'computer',databases:'database',algorithms:'network',theory:'theory',networks:'project','project-assessment':'project','os-exam':'chip','theory-retake':'theory','security-exam':'shield'}[id]||'books');
+const courseIcons={
+ algorithms:'network',construction:'books',os:'chip',teamwork:'people',probability:'grades',project:'project',
+ discrete:'theory',databases:'database',stats:'grades',practice:'clipboard',security:'shield',networks:'computer',
+ theory:'theory',distributed:'network',architecture:'chip',testing:'clipboard',
+ analysis:'grades',storage:'database',devops:'network',quality:'check',cloud:'computer',
+};
+export const subjectIcon=id=>courseIcons[id]??'books';
 const portraits={voronova:'teacher-voronova',sokolov:'teacher-safonov',krylov:'teacher-krylov',pavlova:'teacher-pavlova'};
 const studentFaces={a:'vetrova',b:'zolotov',c:'orlova',d:'gromov',e:'belova',f:'serov',g:'lanskaya',h:'severin',i:'rudin',j:'lesina',k:'melnikov',l:'safonova',m:'volkov'};
 const studentNames={'Ветрова':'vetrova','Золотов':'zolotov','Орлова':'orlova','Громов':'gromov','Белова':'belova','Серов':'serov','Ланская':'lanskaya','Северин':'severin','Рудин':'rudin','Лесина':'lesina','Мельников':'melnikov','Сафонова':'safonova','Волков':'volkov'};
