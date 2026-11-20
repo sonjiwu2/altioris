@@ -1,4 +1,4 @@
-import { escape as e, badge, date, detailedDate, empty, icon, safeLink, when } from '../ui.js?v=20261120-10';
+import { escape as e, badge, date, detailedDate, empty, icon, safeLink, when } from '../ui.js?v=20261120-11';
 const completed=status=>/готов|заверш|отклон/iu.test(status);
 const statusBadge=status=>badge(status,completed(status)&&!/отклон/iu.test(status)?'sage':'peach');
 const requestGlyph=type=>({'certificate':'doc','academic-leave':'calendar',dormitory:'home','media-lab':'camera'}[type]||'doc');

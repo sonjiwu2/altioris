@@ -1,4 +1,5 @@
-import { escape as e, badge, date, decimal, empty, fields, icon, portrait, subjectIllustration, tab, termPicker } from '../ui.js?v=20261120-10';
+import { escape as e, badge, date, decimal, empty, fields, icon, portrait, subjectIllustration, tab, termPicker } from '../ui.js?v=20261120-11';
+import { searchTeachers } from './teacher-search.js';
 function header(rating){return '<h1>Успеваемость</h1><nav class="tabs academic-tabs" aria-label="Учебные результаты">'+tab('/grades','Зачётка',!rating,'doc')+tab('/grades/ranking','Рейтинг',rating,'trophy')+'</nav>';}
 export function grades(data,params){
  const {campus}=data;
@@ -28,7 +29,6 @@ export function grades(data,params){
   (selected.mark!==null?'<span>из 10</span>':'')+'<em>'+e(selected.result)+'</em></div>'+
   fields([['Итоговый контроль',selected.assessment,'doc'],['Дата контроля',date(selected.assessedAt),'calendar'],
    ['Кредиты',selected.credits,'books'],['Академические часы по расписанию',selected.classHours,'clock']])+
-  '<a class="text-link grade-exam-link" href="/schedule/exams?term='+e(selected.termId)+'&amp;item='+e(selected.examId)+'">'+icon('calendar')+'Открыть запись о контроле</a>'+
   (teacher?'<a class="person-link" href="/teachers?item='+e(teacher.id)+'">'+portrait(teacher)+'<span>'+e(teacher.shortName)+'</span></a>':'')+
   '</aside>':'';
  return header(false)+'<div class="split academic-layout"><section class="panel grade-list" aria-label="Зачётка">'+
@@ -88,17 +88,11 @@ export function ranking({ranking:data,student},params=new URLSearchParams()){
   </dialog>`;
 }
 
-const normalizeSearch=value=>value.toLocaleLowerCase('ru').replaceAll('ё','е');
 export function teachers({campus},params){
  const query=params.get('q')?.trim()??'';
  const departments=new Map(campus.teachers.map(teacher=>[teacher.department,teacher.departmentLabel]));
  const office=departments.has(params.get('office'))?params.get('office'):'';
- const terms=normalizeSearch(query).split(/\s+/u).filter(Boolean);
- const filtered=campus.teachers.filter(teacher=>{
-  if(office&&teacher.department!==office)return false;
-  const searchText=normalizeSearch([teacher.name,teacher.subject,teacher.department,teacher.departmentLabel].join(' '));
-  return terms.every(term=>searchText.includes(term));
- });
+ const filtered=searchTeachers(campus.teachers,query,office);
  const selected=filtered.find(p=>p.id===params.get('item'))||filtered[0],filters=new URLSearchParams();
  if(query)filters.set('q',query);if(office)filters.set('office',office);
  const people=filtered.map(person=>{
@@ -113,7 +107,7 @@ export function teachers({campus},params){
    </div></div>
    <div class="teacher-facts">${fact('calendar','Стаж',selected.experience)}${fact('pin','Кабинет',selected.office)}${fact('mail','Учебная почта',selected.email,true)}${fact('clock','Консультации',selected.consultation)}</div>
    <section class="teacher-section"><h3>Дисциплина</h3><div class="subject-chips"><a class="subject-chip" href="/grades?item=${e(selected.courseId)}">${e(selected.subject)}</a></div></section>
-   <section class="teacher-section"><h3>О преподавателе</h3><p>${e(selected.bio)}</p></section>
+   <section class="teacher-section teacher-bio"><h3>Биография</h3><p>${e(selected.bio)}</p></section>
   </aside>`:'';
  return `<h1>Преподаватели</h1>
  <form class="filters teacher-filters" method="get" action="/teachers" data-teacher-filters>

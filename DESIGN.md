@@ -58,4 +58,6 @@ Theme controls use 160 ms feedback and a 330 ms crossfade when the browser suppo
 
 Each teacher profile pairs a distinct portrait and monogram with one discipline, a department and consultation details. Use the course link to open the corresponding gradebook record. Keep the directory scrollable with the selected teacher in view.
 
+Keep biographies to one compact paragraph on the profile card. Search by word prefix within names or subjects and combine the query with the department filter. Native options use the active theme palette. The gradebook inspector shows assessment details without a separate assessment link.
+
 Course illustrations belong to the gradebook. Each of the 24 disciplines has its own gouache-style paper sticker, tied to a concrete concept taught in the course. Paper stickers also cover the navigation, settings, ranking metrics and assistant. Core actions use monochrome UI symbols. Carry the same illustrated assistant identity from the chat header into the conversation.

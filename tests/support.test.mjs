@@ -1,8 +1,24 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { accounts, campusFor, demoClock } from '../server/fixtures.mjs'
+import { accounts, campusFor, demoClock, teachers } from '../server/fixtures.mjs'
+import { searchTeachers } from '../public/features/teacher-search.js'
 import { academicGrades } from '../server/academic-year.mjs'
 import { openStore } from '../server/store.mjs'
+
+test('faculty search respects word boundaries, name intent, course aliases and department filters',()=>{
+  const ids=(query,department)=>searchTeachers(teachers,query,department).map(teacher=>teacher.id)
+  assert.deepEqual(ids('СЕР'),['krylov'])
+  assert.deepEqual(ids('Мар'),['lebedeva'])
+  assert.deepEqual(ids('Крыл'),['krylov'])
+  assert.deepEqual(ids('Крылов, Сергей Андр.'),['krylov'])
+  assert.deepEqual(ids('Артем Еремин'),['eremin'])
+  assert.deepEqual(ids('мат стат'),['karimov'])
+  assert.deepEqual(ids('арх по'),['voronova'])
+  assert.deepEqual(ids('БД'),['krylov'])
+  assert.deepEqual(ids('Мар','прикладной математики'),[])
+  assert.deepEqual(ids('мат стат','прикладной математики'),['karimov'])
+  assert.deepEqual(ids('?'),teachers.map(teacher=>teacher.id))
+})
 
 test('the guided assistant resolves owned records and meaningful student intents', async (t) => {
   const store = openStore({
