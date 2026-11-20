@@ -6,6 +6,7 @@ import { request as send } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
+import { DatabaseSync } from 'node:sqlite'
 import { createApplication, readConfig } from '../server/index.mjs'
 
 const newPassword = () => randomBytes(24).toString('base64url')
@@ -27,7 +28,7 @@ async function launch(config) {
     close: () => new Promise((resolve, reject) => {
       server.close((error) => error ? reject(error) : resolve())
     }),
-    request(path, { body, token, method = 'GET', origin = base, headers = {} } = {}) {
+    request(path, { body, raw, token, method = 'GET', origin = base, headers = {} } = {}) {
       const options = { method, headers }
       if (origin) options.headers.Origin = origin
       if (token) options.headers.Cookie = token
@@ -35,6 +36,7 @@ async function launch(config) {
         options.headers['Content-Type'] = 'application/json'
         options.body = JSON.stringify(body)
       }
+      if (raw !== undefined) options.body = raw
       if (pipe) {
         if (options.body) options.headers['Content-Length'] = Buffer.byteLength(options.body)
         return new Promise((resolve, reject) => {
@@ -216,3 +218,39 @@ test('the API validates small requests, canonical write origin, secure cookies a
   }
 })
 
+
+
+test('profile image uploads migrate existing data, validate bounds and stay private across restarts', async () => {
+ const directory=await mkdtemp(join(tmpdir(),'altioris-avatar-'));
+ const env={...credentials(),ALTIORIS_DB:join(directory,'avatar.sqlite')};
+ let app=await launch(readConfig(env));
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aOCcAAAAASUVORK5CYII=','base64');
+ try{
+  await app.close();
+  const db=new DatabaseSync(env.ALTIORIS_DB);db.exec('DROP TABLE profile_images; PRAGMA user_version=1');db.close();
+  app=await launch(readConfig(env));
+  const a=await login(app,env,'vetrova'),b=await login(app,env,'zolotov');
+  const upload=(raw=png,extra={})=>app.request('/api/profile/avatar',{method:'PUT',token:a.token,raw,headers:{'Content-Type':'image/png'},...extra});
+  assert.equal((await upload(png,{token:undefined})).status,401);
+  assert.equal((await upload(png,{origin:'https://foreign.example'})).status,403);
+  assert.equal((await upload(Buffer.from('<svg onload="alert(1)"/>'))).status,400);
+  assert.equal((await upload(png,{headers:{'Content-Type':'image/svg+xml'}})).status,415);
+  assert.equal((await upload(Buffer.alloc(2*1024*1024+1))).status,413);
+  const large=Buffer.from(png);large.writeUInt32BE(50000,16);assert.equal((await upload(large)).status,400);
+  assert.equal((await upload()).status,200);
+  const student=(await dashboard(app,a.token)).student;
+  assert.equal(student.avatar,'custom');assert.match(student.avatarUrl,/^\/api\/profile\/avatar\?v=[a-f0-9]{64}$/);
+  const image=await app.request(student.avatarUrl,{token:a.token});assert.equal(image.status,200);assert.equal(image.headers.get('content-type'),'image/png');assert.equal(image.headers.get('cache-control'),'no-store');assert.deepEqual(Buffer.from(await image.arrayBuffer()),png);
+  assert.equal((await app.request(student.avatarUrl,{token:b.token})).status,404);
+  assert.equal((await app.request(student.avatarUrl)).status,401);
+  assert.equal((await dashboard(app,b.token)).student.avatarUrl,undefined);
+  await app.close();app=await launch(readConfig(env));
+  assert.equal((await dashboard(app,a.token)).student.avatarUrl,student.avatarUrl);
+  assert.equal((await app.request(student.avatarUrl,{token:a.token})).status,200);
+  assert.equal((await app.request('/api/profile/avatar',{method:'DELETE',token:b.token})).status,200);
+  assert.equal((await app.request(student.avatarUrl,{token:a.token})).status,200);
+  assert.equal((await app.request('/api/profile/avatar',{method:'DELETE',token:a.token})).status,200);
+  assert.equal((await dashboard(app,a.token)).student.avatar,'portrait');
+  assert.equal((await app.request(student.avatarUrl,{token:a.token})).status,404);
+ }finally{await app.close();await rm(directory,{recursive:true,force:true});}
+});

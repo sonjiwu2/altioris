@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/lucide-icons/lucide",
+  "commit": "742ea78395b4122e13fd46743caba5140f47fb66",
+  "icons": {
+    "shield": "shield-check",
+    "exit": "log-out",
+    "send": "send",
+    "doc": "file-text",
+    "clipboard": "clipboard-check",
+    "search": "search",
+    "check": "check"
+  },
+  "note": "Selected chat and session contours embedded in public/features/accent-icons.js. Rounded backgrounds are original."
+}

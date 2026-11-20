@@ -11,8 +11,19 @@ const digest = (token) => createHash('sha256').update(token).digest('hex')
 
 function migrate(db) {
   const { user_version: version } = db.prepare('PRAGMA user_version').get()
-  if (version > 1) throw new Error('Unsupported database schema')
-  if (version === 1) return
+  if (version > 2) throw new Error('Unsupported database schema')
+  if (version === 2) return
+  if (version === 1) {
+    db.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE profile_images (
+        owner TEXT PRIMARY KEY REFERENCES accounts(id),
+        data BLOB NOT NULL,
+        revision TEXT NOT NULL
+      );
+      PRAGMA user_version = 2;
+      COMMIT;`)
+    return
+  }
 
   db.exec(`
     BEGIN IMMEDIATE;
@@ -79,6 +90,7 @@ function migrate(db) {
     PRAGMA user_version = 1;
     COMMIT;
   `)
+  migrate(db)
 }
 
 export function openStore({ databasePath, passwords, clock }) {
@@ -159,7 +171,9 @@ export function openStore({ databasePath, passwords, clock }) {
     function profile(owner) {
       const account = accounts.find(({ id }) => id === owner)
       const { avatar } = db.prepare('SELECT avatar FROM accounts WHERE id = ?').get(owner)
-      return { ...account.profile, avatar }
+      const image = db.prepare('SELECT revision FROM profile_images WHERE owner = ?').get(owner)
+      return { ...account.profile, avatar: image ? 'custom' : avatar,
+        ...(image ? { avatarUrl: '/api/profile/avatar?v=' + image.revision } : {}) }
     }
 
     function requests(owner) {
@@ -318,7 +332,14 @@ export function openStore({ databasePath, passwords, clock }) {
         db.prepare('UPDATE notifications SET is_read = 1 WHERE owner = ? AND is_read = 0').run(owner)
       },
       setAvatar(owner, avatar) {
-        db.prepare('UPDATE accounts SET avatar = ? WHERE id = ?').run(avatar, owner)
+        transaction(() => {
+          db.prepare('DELETE FROM profile_images WHERE owner = ?').run(owner)
+          db.prepare('UPDATE accounts SET avatar = ? WHERE id = ?').run(avatar, owner)
+        })
+      },
+      avatarImage: (owner) => db.prepare('SELECT data FROM profile_images WHERE owner = ?').get(owner)?.data,
+      saveAvatarImage(owner, data) {
+        db.prepare('INSERT INTO profile_images (owner, data, revision) VALUES (?, ?, ?) ON CONFLICT(owner) DO UPDATE SET data = excluded.data, revision = excluded.revision').run(owner, data, digest(data))
       },
       addSupport,
     }

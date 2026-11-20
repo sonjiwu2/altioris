@@ -1,43 +1,74 @@
-import { brand, escape as e, icon, portrait } from './ui.js';
-import { exams, news, schedule } from './features/campus.js?v=20261120-2';
-import { grades, profile, ranking, teachers } from './features/academic.js';
-import { notifications, requests, support } from './features/services.js';
-import { settings, applyPreferences, updatePreference, preferences } from './features/settings.js';
+import { preparePhoto, disposePhotoPreview } from './features/photo.js';
+import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-5';
+import { exams, news, schedule } from './features/campus.js?v=20261120-5';
+import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-5';
+import { notifications, requests, support } from './features/services.js?v=20261120-5';
+import { settings, applyPreferences, setTextScale } from './features/settings.js?v=20261120-5';
 
 const app=document.querySelector('#app'), announcement=document.querySelector('#status');
 const navigation=[['/schedule','Расписание','calendar'],['/grades','Успеваемость','grades'],['/teachers','Преподаватели','people'],['/requests','Заявки','doc'],['/support','Чат поддержки','chat'],['/notifications','Уведомления','bell'],['/settings','Настройки','settings']];
 const pages=new Map([['/',schedule],['/schedule',schedule],['/schedule/exams',exams],['/grades',grades],['/grades/ranking',ranking],['/teachers',teachers],['/requests',requests],['/support',support],['/notifications',notifications],['/profile',profile],['/settings',settings]]);
 let snapshot,busy=false;
+let lastView;
+const detailPanels=new Map([
+ ['/schedule','.schedule-inspector'],['/schedule/exams','.schedule-inspector'],['/grades','.grade-inspector'],
+ ['/teachers','.teacher-details'],['/requests','.request-inspector'],['/notifications','.notification-detail'],
+]);
+const tabContent=new Map([
+ ['/schedule','.schedule-layout'],['/schedule/exams','.exam-layout'],
+ ['/grades','.academic-layout'],['/grades/ranking','.rank-heading,.rank-strip,.ranking-panel,.rank-meta'],
+]);
+const tabGroup=path=>path.startsWith('/schedule')?'schedule':path.startsWith('/grades')?'grades':null;
+
+function animateNavigation(previous,current){
+ const main=app.querySelector('#main');
+ if(!previous||previous.path!==current.path){
+  const group=previous&&tabGroup(previous.path);
+  const target=group&&group===tabGroup(current.path)?tabContent.get(current.path):null;
+  if(target)main.querySelectorAll(target).forEach(panel=>panel.classList.add('section-enter'));
+  else main.classList.add('section-enter');
+  return;
+ }
+ if(previous.selection!==current.selection){
+  const target=detailPanels.get(current.path);
+  if(target)main.querySelector(target)?.classList.add('detail-enter');
+ }
+}
 async function api(path,method='GET',body) {
- const response=await fetch(path,{method,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined}).catch(()=>{throw new Error('Нет связи с кабинетом. Проверьте подключение и попробуйте ещё раз.');});
+ const response=await fetch(path,{method,headers:body?{'Content-Type':body instanceof Blob?'image/png':'application/json'}:{},body:body instanceof Blob?body:body?JSON.stringify(body):undefined}).catch(()=>{throw new Error('Нет связи с кабинетом. Проверьте подключение и попробуйте ещё раз.');});
  const data=await response.json().catch(()=>({}));
  if(!response.ok){const error=new Error(typeof data.error==='string'?data.error:'Не удалось выполнить действие. Попробуйте ещё раз.');error.status=response.status;throw error;}
  return data;
 }
 function announce(message){announcement.textContent=message;}
 function signIn() {
+ lastView=undefined;
  document.documentElement.dataset.theme='light';
+ document.documentElement.style.removeProperty('--text-scale');
  document.title='Вход в кабинет · Altioris University';
  app.innerHTML='<main id="main" class="sign-in" tabindex="-1"><section class="sign-in-card">'+brand+'<div class="ornament" aria-hidden="true"><span>✦</span></div><h1>Вход в кабинет</h1><form data-mutation="login" class="login-form"><label for="username">Логин</label><div class="input-control">'+icon('person')+'<input id="username" name="login" placeholder="Введите логин" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80" required></div><label for="password">Пароль</label><div class="input-control password-control">'+icon('lock')+'<input id="password" type="password" name="password" placeholder="Введите пароль" autocomplete="current-password" maxlength="128" required><button class="icon-button" type="button" data-password aria-label="Показать пароль" aria-pressed="false">'+icon('eye')+'</button></div><p class="form-error" role="alert" hidden></p><button class="button login-submit">Войти</button></form><button class="text-link help-link" type="button" data-dialog="login-help">Не получается войти?</button></section><footer>Конкурсный прототип</footer></main><dialog id="login-help" aria-labelledby="login-help-title"><div class="section-heading"><h2 id="login-help-title">Не получается войти?</h2><button type="button" class="icon-button" data-close aria-label="Закрыть">'+icon('close')+'</button></div><p>Введите логин и постоянный пароль демонстрационного аккаунта. Если у вас нет доступа, обратитесь к организатору демонстрации.</p></dialog>';
 }
-function render(focus=false) {
+function render(focus=false,navigating=false) {
+ disposePhotoPreview();
  if(!snapshot){signIn();if(focus)app.querySelector('#username').focus();return;}
- const pref=applyPreferences(snapshot.student);
+ applyPreferences(snapshot.student);
  const {pathname,search}=location,params=new URLSearchParams(search);
- const visibleNotices=snapshot.notifications.filter(item=>item.type==='Новость'?pref.news:item.type==='Дедлайн'?pref.deadlines:item.type==='Изменение'?pref.schedule:true);
- const unread=visibleNotices.filter(item=>!item.read).length;
+ const unread=snapshot.notifications.filter(item=>!item.read).length;
  const active=href=>(href==='/schedule'&&pathname==='/')||pathname===href||pathname.startsWith(href+'/');
  const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+'<span>'+label+'</span>'+(href==='/notifications'&&unread?'<span class="nav-unread" aria-label="Есть новые уведомления"></span>':'')+'</a>').join('');
  const page=pages.get(pathname);
- const content=pathname.startsWith('/news/')?news(pathname):page?page({...snapshot,notifications:visibleNotices},params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
- app.innerHTML='<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">'+brand+'</a><button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">'+icon('menu')+'</button></header><aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">'+brand+'</a><nav class="main-nav" aria-label="Основное меню">'+nav+'</nav><a class="sidebar-profile" href="/profile"'+(pathname==='/profile'?' aria-current="page"':'')+'>'+portrait(snapshot.student)+'<span>'+e(snapshot.student.shortName)+'<small>'+e(snapshot.student.group)+'</small></span>'+icon('down')+'</a></aside><nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>'+nav+'<a href="/profile">'+icon('person')+'Мой профиль</a></nav><div class="workspace"><main id="main" class="page'+(pathname==='/'||pathname.startsWith('/schedule')?' manuscript':'')+'" tabindex="-1">'+content+'</main><footer class="page-footer">Конкурсный прототип</footer></div>';
+ const content=pathname.startsWith('/news/')?news(pathname):page?page(snapshot,params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
+ app.innerHTML='<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">'+brand+'</a><button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">'+icon('menu')+'</button></header><aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">'+brand+'</a><nav class="main-nav" aria-label="Основное меню">'+nav+'</nav><a class="sidebar-profile" href="/profile"'+(pathname==='/profile'?' aria-current="page"':'')+'>'+portrait(snapshot.student)+'<span>'+e(snapshot.student.shortName)+'<small>'+e(snapshot.student.group)+'</small></span>'+icon('down')+'</a></aside><nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>'+nav+'<a href="/profile">'+icon('person')+'Мой профиль</a></nav><div class="workspace"><main id="main" class="page" tabindex="-1">'+content+'</main><footer class="page-footer">Конкурсный прототип</footer></div>';
  document.title=(app.querySelector('h1')?.textContent||'Кабинет')+' · Altioris University';
+ const currentView={path:pathname==='/'?'/schedule':pathname,selection:params.get('lesson')??params.get('item')};
+ if(navigating||!lastView)animateNavigation(lastView,currentView);
+ lastView=currentView;
  const dialog=app.querySelector('[data-auto-open]');if(dialog)dialog.showModal();else if(focus)document.querySelector('#main').focus({preventScroll:true});
  const chat=app.querySelector('.chat-history');if(chat&&snapshot.support.length)chat.scrollTop=chat.scrollHeight;
 }
 function go(href){
  const next=new URL(href,location.href),same=location.pathname===next.pathname;
- history.pushState(null,'',next);render(!same);if(!same)window.scrollTo(0,0);
+ history.pushState(null,'',next);render(!same,true);if(!same)window.scrollTo(0,0);
  const selectedDetail=matchMedia('(max-width:680px)').matches&&(next.searchParams.has('item')||next.searchParams.has('lesson'))&&app.querySelector('.request-inspector,.grade-inspector,.teacher-details,.schedule-inspector,.notification-detail');
  if(selectedDetail){selectedDetail.tabIndex=-1;selectedDetail.focus({preventScroll:true});selectedDetail.scrollIntoView({block:'start'});}
  else if(same){const selected=[...app.querySelectorAll('main a[href]')].find(link=>link.href===next.href);(selected||app.querySelector('main'))?.focus({preventScroll:true});}
@@ -46,7 +77,7 @@ async function load(){
  try{snapshot=await api('/api/dashboard');render();}
  catch(error){if(error.status===401){snapshot=undefined;render();}else app.innerHTML='<main id="main" class="page standalone-error"><h1>Кабинет недоступен</h1><p>'+e(error.message)+'</p><button class="button" data-retry>Повторить</button></main>';}
 }
-const mutations={login:['/api/login','POST'],request:['/api/requests','POST'],avatar:['/api/profile','PATCH'],message:['/api/support','POST'],support:['/api/support','POST'],read:['/api/notifications','PATCH'],logout:['/api/logout','POST']};
+const mutations={login:['/api/login','POST'],request:['/api/requests','POST'],avatar:['/api/profile','PATCH'],photo:['/api/profile/avatar','PUT'],removePhoto:['/api/profile/avatar','DELETE'],message:['/api/support','POST'],support:['/api/support','POST'],read:['/api/notifications','PATCH'],logout:['/api/logout','POST']};
 async function save(name,body,control,errorBox){
  if(busy)return;busy=true;
  if(control){control.disabled=true;control.setAttribute('aria-busy','true');}
@@ -58,8 +89,8 @@ async function save(name,body,control,errorBox){
   if(name==='request'){const id=result.request?.id??result.id??snapshot.requests[0]?.id;history.replaceState(null,'',id?'/requests?item='+encodeURIComponent(id):'/requests');}
   render(['login','request','avatar'].includes(name));
   if(name==='message')app.querySelector('#chat-message')?.focus();
-  if(name==='avatar')app.querySelector('[data-dialog="avatar-dialog"]')?.focus();
-  const confirmation={request:'Заявка подана',avatar:'Фото профиля сохранено',read:'Уведомления обновлены',support:'Помощник ответил',message:'Помощник ответил'};
+  if(['avatar','photo','removePhoto'].includes(name))app.querySelector('[data-dialog="avatar-dialog"]')?.focus();
+  const confirmation={request:'Заявка подана',avatar:'Фото профиля сохранено',photo:'Фото профиля сохранено',removePhoto:'Исходное фото восстановлено',read:'Уведомления обновлены',support:'Помощник ответил',message:'Помощник ответил'};
   if(confirmation[name])announce(confirmation[name]);
  }catch(error){
   if(error.status===401&&name!=='login'){snapshot=undefined;render(true);announce('Сеанс завершён. Войдите снова.');}
@@ -71,19 +102,28 @@ app.addEventListener('submit',event=>{
  const form=event.target;if(!(form instanceof HTMLFormElement))return;event.preventDefault();
  const fields=new FormData(form),kind=form.dataset.mutation;
  if(!kind){const query=new URLSearchParams(fields);for(const [name,value] of query)if(!value)query.delete(name);go(new URL(form.action).pathname+(query.size?'?'+query:''));return;}
+ if(kind==='photo'){if(form.photoBlob)void save('photo',form.photoBlob,event.submitter,form.querySelector('.form-error'));return;}
  const body=Object.fromEntries(fields);if(kind==='message')body.action='message';
  void save(kind,body,event.submitter,form.querySelector('.form-error'));
 });
 app.addEventListener('click',event=>{
  const button=event.target.closest('button');
  if(button){
-  if(button.dataset.theme||button.dataset.scale){const key=button.dataset.theme?'theme':'scale',value=button.dataset.theme||button.dataset.scale;updatePreference(snapshot.student,key,key==='scale'?Number(value):value);render();app.querySelector('[data-'+key+'="'+CSS.escape(value)+'"]')?.focus({preventScroll:true});announce('Настройки сохранены');return;}
+  if(button.dataset.scale){
+   setTextScale(snapshot.student,Number(button.dataset.scale));
+   for(const option of app.querySelectorAll('[data-scale]')){
+    option.classList.toggle('selected',option===button);
+    option.setAttribute('aria-pressed',String(option===button));
+   }
+   announce('Размер текста сохранён');return;
+  }
   if(button.dataset.copy){navigator.clipboard.writeText(button.dataset.copy).then(()=>announce('Скопировано')).catch(()=>announce('Не удалось скопировать. Выделите текст вручную.'));return;}
   if(button.hasAttribute('data-password')){const input=app.querySelector('#password'),show=input.type==='password';input.type=show?'text':'password';button.setAttribute('aria-pressed',String(show));button.setAttribute('aria-label',show?'Скрыть пароль':'Показать пароль');}
   if(button.dataset.dialog)document.getElementById(button.dataset.dialog)?.showModal();
   if(button.hasAttribute('data-close'))button.closest('dialog')?.close();
   if(button.hasAttribute('data-retry'))void load();
   if(button.hasAttribute('data-menu')){const menu=document.querySelector('#mobile-nav');menu.hidden=!menu.hidden;button.setAttribute('aria-expanded',String(!menu.hidden));button.setAttribute('aria-label',menu.hidden?'Открыть меню':'Закрыть меню');}
+  if(button.hasAttribute('data-remove-photo'))void save('removePhoto',undefined,button,button.closest('dialog').querySelector('.form-error'));
   if(button.hasAttribute('data-logout'))void save('logout',undefined,button);
   if(button.hasAttribute('data-read-all'))void save('read',{all:true},button);
   if(button.dataset.read)void save('read',{id:button.dataset.read},button);
@@ -95,11 +135,28 @@ app.addEventListener('click',event=>{
  const url=new URL(link.href);
  if(url.origin===location.origin&&!url.pathname.startsWith('/api/')&&!link.hasAttribute('download')){event.preventDefault();go(link.href);}
 });
-app.addEventListener('change',event=>{const control=event.target.closest('[data-preference]');if(control&&snapshot){updatePreference(snapshot.student,control.dataset.preference,control.checked);announce('Настройки сохранены');}});
-app.addEventListener('keydown',event=>{if(event.key==='Escape'){const toggle=app.querySelector('[data-menu][aria-expanded="true"]');if(toggle){toggle.click();toggle.focus();}}});
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(snapshot&&preferences(snapshot.student).theme==='system')applyPreferences(snapshot.student);});
+function restorePhotoPreview(form){
+ form.querySelector('.photo-preview .portrait').outerHTML=portrait(snapshot.student);
+}
+app.addEventListener('close',event=>{
+ const form=event.target.querySelector?.('.photo-form');
+ if(!form||!snapshot||!form.isConnected)return;
+ disposePhotoPreview();
+ form.reset();
+ form.photoBlob=undefined;
+ form.querySelector('[data-photo-save]').disabled=true;
+ form.querySelector('.form-error').hidden=true;
+ restorePhotoPreview(form);
+},true);
+app.addEventListener('change',event=>{
+ if(!event.target.matches('[data-photo-file]'))return;
+ restorePhotoPreview(event.target.form);
+ void preparePhoto(event.target);
+});
+app.addEventListener('input',event=>{if(event.target.id==='chat-message'){event.target.style.height='auto';event.target.style.height=Math.min(event.target.scrollHeight,150)+'px';}});
+app.addEventListener('keydown',event=>{if(event.target.id==='chat-message'&&event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();event.target.form.requestSubmit();return;}if(event.key==='Escape'){const toggle=app.querySelector('[data-menu][aria-expanded="true"]');if(toggle){toggle.click();toggle.focus();}}});
 matchMedia('(max-width:680px)').addEventListener('change',()=>{if(snapshot&&(location.pathname==='/'||location.pathname==='/schedule'))render();});
-window.addEventListener('popstate',()=>render());
+window.addEventListener('popstate',()=>render(false,true));
 window.addEventListener('pageshow',event=>{if(event.persisted)void load();});
 void load();
 

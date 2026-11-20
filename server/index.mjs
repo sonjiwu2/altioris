@@ -12,6 +12,7 @@ import { configuredPasswords } from './demo-accounts.mjs'
 const publicDirectory = fileURLToPath(new URL('../public/', import.meta.url))
 const defaultDatabase = fileURLToPath(new URL('../runtime/altioris.sqlite', import.meta.url))
 const bodyLimit = 4096
+const avatarLimit = 2 * 1024 * 1024
 const signInInterval = 60_000
 const signInAttempts = 8
 const supportActions = new Set(['certificate', 'status', 'faq', 'specialist', 'message'])
@@ -103,6 +104,34 @@ function validateKeys(data, allowed) {
   if (Object.keys(data).some((key) => !allowed.includes(key))) throw badRequest()
 }
 
+async function readAvatar(req) {
+  if (req.headers['content-type'] !== 'image/png') {
+    req.resume()
+    throw new HttpError(415, 'Выберите изображение через форму загрузки.')
+  }
+  if (Number(req.headers['content-length']) > avatarLimit) {
+    req.resume()
+    throw new HttpError(413, 'Изображение слишком большое.')
+  }
+  const chunks = []
+  let length = 0
+  for await (const chunk of req) {
+    length += chunk.length
+    if (length <= avatarLimit) chunks.push(chunk)
+  }
+  if (length > avatarLimit) throw new HttpError(413, 'Изображение слишком большое.')
+  const data = Buffer.concat(chunks)
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+  if (data.length < 45 || !data.subarray(0, 8).equals(signature) ||
+      data.readUInt32BE(8) !== 13 || data.toString('ascii', 12, 16) !== 'IHDR' ||
+      !data.readUInt32BE(16) || !data.readUInt32BE(20) ||
+      data.readUInt32BE(16) > 1024 || data.readUInt32BE(20) > 1024 ||
+      data.toString('ascii', data.length - 8, data.length - 4) !== 'IEND') {
+    throw badRequest('Не удалось прочитать изображение. Выберите другой файл.')
+  }
+  return data
+}
+
 function allowedOrigin(req, origin) {
   if (req.headers['sec-fetch-site'] === 'cross-site') return false
   const supplied = req.headers.origin
@@ -128,7 +157,7 @@ function setHeaders(res) {
   res.setHeader('Cache-Control', 'no-store')
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'", "base-uri 'none'", "frame-ancestors 'none'", "object-src 'none'",
-    "img-src 'self' data:", "style-src 'self' 'unsafe-inline'", "form-action 'self'",
+    "img-src 'self' data: blob:", "style-src 'self' 'unsafe-inline'", "form-action 'self'",
   ].join('; '))
 }
 
@@ -289,6 +318,24 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
         if (!avatars.has(data.avatar)) throw badRequest('Выберите доступный аватар.')
         store.setAvatar(owner, data.avatar)
         json(res, 200, { student: store.profile(owner) })
+        return
+      }
+      if (pathname === '/api/profile/avatar' && method === 'PUT') {
+        store.saveAvatarImage(owner, await readAvatar(req))
+        json(res, 200, { student: store.profile(owner) })
+        return
+      }
+      if (pathname === '/api/profile/avatar' && method === 'DELETE') {
+        req.resume()
+        store.setAvatar(owner, 'portrait')
+        json(res, 200, { student: store.profile(owner) })
+        return
+      }
+      if (pathname === '/api/profile/avatar' && method === 'GET') {
+        const image = store.avatarImage(owner)
+        if (!image) throw new HttpError(404, 'Фото профиля не загружено.')
+        res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': image.length })
+        res.end(Buffer.from(image))
         return
       }
       if (method === 'POST' && pathname === '/api/support') {

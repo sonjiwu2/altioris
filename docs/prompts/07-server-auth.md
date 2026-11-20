@@ -15,3 +15,12 @@ Preserve 13 fixed runtime credentials, independent salted password hashes, opaqu
 ## Completion
 
 Deliver working code within the assigned scope, the exact checks performed, and any remaining visual or functional differences. Follow DESIGN.md and preserve account ownership and ignored runtime state.
+
+
+## Current interface refinement — 2026-11-20 (supersedes earlier typography exceptions)
+
+Use local upright Philosopher throughout the interface, including schedule, exams, navigation and wordmark. Headings/names/actions use Bold; reading text uses Regular. Body copy is approximately 22px and chat copy 24px at the 26px desktop rem scale; retain account text scaling and responsive wrapping. Keep generous control spacing. On narrow screens grade statuses reflow below course names.
+
+Support is one full-width conversation, without the right topics panel. Use the original SVG headset-person avatar in the header and assistant messages; do not repeat the university shield in chat. Keep honest automated-assistant copy, owned message history and inline quick actions. The composer supports Enter to submit and Shift+Enter for a new line.
+
+Profile photo editing uses a file picker, square preview and save/reset controls. Browser-readable image files up to 20 MB are center-cropped and encoded to a 640px PNG before upload. The authenticated server accepts at most 2 MiB PNG with bounded dimensions; SQLite schema v2 stores the image as an owned BLOB. GET/PUT/DELETE /api/profile/avatar use the current session owner, no caller-supplied owner, no public media directory. Preserve account credentials and all existing records during migration. Custom photo URLs use a content revision and no-store responses; the photo appears on the owner's profile, rail and ranking row.

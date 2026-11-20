@@ -2,84 +2,236 @@
 @font-face{font-family:Philosopher;src:url("/assets/fonts/Philosopher-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
 
 /* The rem scale also controls the account's 100/115/130% preference. */
-:root{--heading-font:Philosopher,Georgia,serif;font-family:"Golos Text",sans-serif;line-height:1.5;-webkit-text-stroke:0}
-body{font-size:.69rem}
+:root{--heading-font:Philosopher,Georgia,serif;--body-font:Philosopher,Georgia,serif;font-family:var(--body-font);line-height:1.5;-webkit-text-stroke:0}
+body{font-size:.8rem}
 h1,h2,h3{font-family:var(--heading-font);font-style:normal;font-weight:700;line-height:1.12;-webkit-text-stroke:0}
 h1{font-size:2.15rem;letter-spacing:-.015em;margin-bottom:.65rem;overflow-wrap:anywhere;hyphens:auto}
-h2{font-size:1.35rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1.45}
-.main-nav a,.mobile-nav a{font-family:"Golos Text",sans-serif;font-size:.65rem;font-weight:500;line-height:1.4;white-space:normal;gap:14px;min-height:56px;padding:10px 12px}
-.main-nav a>.icon{width:32px;height:32px}
+h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1.45}
+.main-nav a,.mobile-nav a{font-family:var(--body-font);font-size:.75rem;font-weight:700;line-height:1.35;white-space:normal;gap:14px;min-height:56px;padding:10px 12px}
+.main-nav a>.icon{width:34px;height:34px}
 .main-nav{gap:8px;margin-top:22px}
 .sidebar-profile>span:not(.portrait){font-family:var(--heading-font);font-size:.85rem;font-weight:700;line-height:1.15}
-.sidebar-profile small{font-family:"Golos Text",sans-serif;font-size:.5rem;font-weight:400}
+.sidebar-profile small{font-family:var(--body-font);font-size:.5rem;font-weight:400}
 .page-footer{font-size:.5rem}
-.page:not(.manuscript){line-height:1.5}
-.page:not(.manuscript) :is(p,dd,dt,input,select,textarea,.info-line,.setting-row,.teacher-section p){font-size:.69rem;line-height:1.5}
-.page:not(.manuscript) :is(.button,.tab,.text-link,.pills a,.term,.subject-chip,.teacher-department,.topic-link){font-family:"Golos Text",sans-serif;font-size:.65rem;line-height:1.4;font-weight:500}
-.page:not(.manuscript) :is(.badge,small,.timeline time,.support-disclosure,.settings-note){font-family:"Golos Text",sans-serif;font-size:.54rem;line-height:1.4}
-.page:not(.manuscript) :is(.teacher-list strong,.teacher-identity h2,.profile-identity h2,.settings-identity h3){font-family:var(--heading-font);font-weight:700;line-height:1.15}
-.page:not(.manuscript) :is(.grade-list h2,.grade-inspector h2,.teacher-identity h2,.profile-identity h2,.settings-panel h2,.topics h2,.profile-documents h2,.notification-detail h2){font-size:1.35rem}
-.page:not(.manuscript) :is(.grade-row>strong,.service-row strong,.notification-row strong,.file-row strong,.teacher-list strong){font-family:var(--heading-font);font-weight:700;font-size:1rem;line-height:1.15}
-.page:not(.manuscript) :is(.grade-result,.ranking-table td,.ranking-table th,.rank-strip dt,.timeline strong){font-size:.69rem;line-height:1.4}
-.page:not(.manuscript) .result-summary>strong{font-family:var(--heading-font);font-size:3.5rem}
-.page:not(.manuscript) .result-summary>em{font-size:.69rem;font-style:normal}
-.page:not(.manuscript) :is(.bubble,.chat-request-card){font-size:.69rem;line-height:1.55}
-.page:not(.manuscript) :is(.theme-option,.theme-label,.segmented button){font-size:.62rem;line-height:1.4}
-.page:not(.manuscript) .student-card-header h3{font-size:1.15rem}
-.page:not(.manuscript) .student-card-body>h3{font-size:1.35rem}
-.page:not(.manuscript) .sample-stamp{font-size:.7rem}
+.page{line-height:1.5}
+.page :is(p,dd,dt,input,select,textarea,.info-line,.setting-row,.teacher-section p){font-size:.8rem;line-height:1.5}
+.page :is(.button,.tab,.text-link,.pills a,.term,.subject-chip,.teacher-department,.topic-link){font-family:var(--body-font);font-size:.78rem;line-height:1.4;font-weight:700}
+.page :is(.badge,small,.timeline time,.support-disclosure,.settings-note){font-family:var(--body-font);font-size:.66rem;line-height:1.4}
+.page :is(.teacher-list strong,.teacher-identity h2,.profile-identity h2,.settings-identity h3){font-family:var(--heading-font);font-weight:700;line-height:1.15}
+.page :is(.grade-list h2,.grade-inspector h2,.teacher-identity h2,.profile-identity h2,.settings-panel h2,.topics h2,.profile-documents h2,.notification-detail h2){font-size:1.5rem}
+.page :is(.grade-row>strong,.service-row strong,.notification-row strong,.file-row strong,.teacher-list strong){font-family:var(--heading-font);font-weight:700;font-size:1rem;line-height:1.15}
+.page :is(.grade-result,.ranking-table td,.ranking-table th,.rank-strip dt,.timeline strong){font-size:.85rem;line-height:1.4}
+.page .result-summary>strong{font-family:var(--heading-font);font-size:3.5rem}
+.page .result-summary>em{font-size:.85rem;font-style:normal}
+.page :is(.bubble,.chat-request-card){font-size:.85rem;line-height:1.55}
+.page :is(.theme-option,.theme-label,.segmented button){font-size:.75rem;line-height:1.4}
+.page .student-card-header h3{font-size:1.15rem}
+.page .student-card-body>h3{font-size:1.5rem}
+.page .sample-stamp{font-size:.7rem}
 .sign-in h1{font-size:1.7rem;white-space:normal}
-.login-form label,.input-control input,.help-link{font-size:.69rem}
+.login-form label,.input-control input,.help-link{font-size:.85rem}
 .login-submit{font-family:var(--heading-font);font-size:1.2rem;font-weight:700}
-.form-error{font-size:.58rem}
+.form-error{font-size:.7rem}
 
-/* Handwriting is intentionally limited to the two timetable screens and logo. */
-.manuscript{font-family:"Marck Script",cursive;font-size:1rem;line-height:1.13;-webkit-text-stroke:.2px currentColor}
-.manuscript h1{font-family:"Great Vibes","Marck Script",cursive;font-size:3.32rem;font-weight:400;line-height:1.12;letter-spacing:.003em}
-.manuscript :is(h2,h3){font-family:"Marck Script",cursive;font-weight:400}
-.manuscript strong{font-weight:400}
 .exam-event{grid-template-columns:100px minmax(0,1fr)}
 @media(min-width:981px) and (max-width:1350px){.exam-event{grid-template-columns:80px minmax(0,1fr)}}
 @media(max-width:680px){
  h1{font-size:1.85rem}
  .main-nav a,.mobile-nav a{font-size:.78rem}
- .manuscript h1{font-size:2.45rem}
- .exam-event{grid-template-columns:66px minmax(0,1fr)}
- .page:not(.manuscript)>.section-heading{flex-wrap:wrap}
- .page:not(.manuscript) .teacher-identity h2{font-size:1.1rem}
- .page:not(.manuscript) .profile-identity h2{font-size:1.2rem}
+  .exam-event{grid-template-columns:66px minmax(0,1fr)}
+ .page>.section-heading{flex-wrap:wrap}
+ .page .teacher-identity h2{font-size:1.1rem}
+ .page .profile-identity h2{font-size:1.2rem}
  .sign-in h1{font-size:1.55rem}
 }
 
 /* Comfortable spacing at browser zoom 100%, without enlarging functional icons. */
 .page{padding:24px}
-.page:not(.manuscript)>h1{margin-bottom:24px}
-.page:not(.manuscript) :is(.split,.settings-layout,.settings-main,.settings-side,.profile-grid){gap:24px}
-.page:not(.manuscript) :is(.grade-list,.grade-inspector,.settings-panel,.teacher-details,.request-inspector,.notification-detail,.topics){padding:26px}
-.page:not(.manuscript) .grade-row{min-height:104px;column-gap:16px;padding-block:20px}
-.page:not(.manuscript) .grade-row>.icon{width:48px;height:48px}
-.page:not(.manuscript) :is(.button,.tab){gap:12px;padding-inline:20px}
-.page:not(.manuscript) .tabs{gap:14px;margin-bottom:24px}
-.page:not(.manuscript) .info-line{gap:18px;padding-block:20px}
-.page:not(.manuscript) .setting-row{gap:20px;padding-block:20px;min-height:78px}
-.page:not(.manuscript) .settings-main>.settings-panel:nth-child(2) .setting-row{min-height:78px;padding-block:20px}
-.page:not(.manuscript) .teacher-list .person-link{gap:18px;padding-block:20px}
-.page:not(.manuscript) .teacher-identity>div{min-width:0;overflow-wrap:anywhere}
-.page:not(.manuscript) .service-row{gap:20px;padding-block:24px}
-.page:not(.manuscript) .notification-row{gap:24px;padding-block:26px}
+.page>h1{margin-bottom:24px}
+.page :is(.split,.settings-layout,.settings-main,.settings-side,.profile-grid){gap:24px}
+.page :is(.grade-list,.grade-inspector,.settings-panel,.teacher-details,.request-inspector,.notification-detail,.topics){padding:26px}
+.page .grade-row{min-height:104px;column-gap:16px;padding-block:20px}
+.page .grade-row>.icon{width:48px;height:48px}
+.page :is(.button,.tab){gap:12px;padding-inline:20px}
+.page .tabs{gap:14px;margin-bottom:24px}
+.page .info-line{gap:18px;padding-block:20px}
+.page .setting-row{gap:20px;padding-block:20px;min-height:78px}
+.page .settings-main>.settings-panel:nth-child(2) .setting-row{min-height:78px;padding-block:20px}
+.page .teacher-list .person-link{gap:18px;padding-block:20px}
+.page .teacher-identity>div{min-width:0;overflow-wrap:anywhere}
+.page .service-row{gap:20px;padding-block:24px}
+.page .notification-row{gap:24px;padding-block:26px}
 @media(max-width:980px){
  .page{padding:22px}
- .page:not(.manuscript) :is(.academic-layout,.work-layout,.notifications-layout){grid-template-columns:1fr}
+ .page :is(.academic-layout,.work-layout,.notifications-layout){grid-template-columns:1fr}
 }
 @media(max-width:680px){
  .page{padding:20px 14px}
- .page:not(.manuscript) :is(.grade-list,.grade-inspector,.settings-panel,.teacher-details,.request-inspector,.notification-detail,.topics){padding:20px 16px}
- .page:not(.manuscript) .grade-row{grid-template-columns:36px minmax(0,1fr) 32px minmax(68px,.6fr);column-gap:9px;padding:18px 0;min-height:100px}
- .page:not(.manuscript) .grade-row>.icon{width:30px;height:30px}
- .page:not(.manuscript) .grade-row>strong{font-size:.86rem;overflow-wrap:anywhere}
- .page:not(.manuscript) .grade-result{font-size:.6rem}
- .page:not(.manuscript) .grade-list .section-heading{flex-wrap:wrap;gap:14px}
- .page:not(.manuscript) .setting-row{gap:14px}
- .page:not(.manuscript) .teacher-list .person-link{gap:12px}
- .page:not(.manuscript) .notification-row{gap:16px}
+ .page :is(.grade-list,.grade-inspector,.settings-panel,.teacher-details,.request-inspector,.notification-detail,.topics){padding:20px 16px}
+ .page .grade-row{grid-template-columns:36px minmax(0,1fr) 32px minmax(68px,.6fr);column-gap:9px;padding:18px 0;min-height:100px}
+ .page .grade-row>.icon{width:30px;height:30px}
+ .page .grade-row>strong{font-size:.86rem;overflow-wrap:anywhere}
+ .page .grade-result{font-size:.6rem}
+ .page .grade-list .section-heading{flex-wrap:wrap;gap:14px}
+ .page .setting-row{gap:14px}
+ .page .teacher-list .person-link{gap:12px}
+ .page .notification-row{gap:16px}
+}
+
+/* All interface text now uses the selected upright face. */
+.brand,.sign-in .brand{font-family:var(--body-font);font-weight:700;font-size:1.35rem;line-height:1.05;-webkit-text-stroke:0}
+.brand small{font-size:.75em}
+.sidebar-profile small,.page-footer{font-size:.62rem}
+.page :is(p,dd,dt,input,select,textarea){font-weight:400}
+.page :is(.bubble,.chat-request-card){font-size:.92rem;line-height:1.5}
+.page .support-layout{display:block;width:100%}
+.page:has(.support-layout){display:flex;flex-direction:column;min-height:0;flex:1}
+.page .support-layout{flex:1;min-height:0}
+.page .chat{height:calc(100dvh - 175px);min-height:520px;max-height:none;width:100%}
+.page .chat-header{padding:22px 28px;gap:20px}
+.page .chat-header>div{border:0;padding:0}
+.page .chat-header h2{font-size:1.4rem;margin-bottom:6px}
+.page .chat-header small{font-size:.68rem}
+.page .chat-history{padding:28px;gap:22px;min-height:0;overscroll-behavior:contain}
+.page .bubble{max-width:min(80%,900px);padding:18px 24px}
+.page .bubble p{font-size:inherit;white-space:pre-wrap;overflow-wrap:anywhere}
+.page .bubble time{font-size:.65rem;margin-top:10px}
+.page .message-row{gap:14px;align-items:flex-end}
+.page .assistant-icon.support-avatar{width:48px;height:48px;flex:0 0 48px;display:block;padding:0;margin:0}
+.page .assistant-icon.support-avatar svg{display:block;width:100%;height:100%}
+.page .chat-header .assistant-icon.support-avatar{width:64px;height:64px;flex-basis:64px}
+.page .quick-actions{display:flex;flex-wrap:wrap;gap:10px;margin-left:62px}
+.page .quick-actions button{flex:none;flex-direction:row;align-items:center;gap:10px;padding:12px 18px;border-radius:14px;font-size:.75rem;font-weight:700}
+.page .quick-actions .icon{width:26px;height:26px}
+.page .chat-form{margin:0 24px 24px;padding:8px 8px 8px 20px;gap:12px;border-radius:18px}
+.page .chat-form :is(input,textarea){font-size:.9rem;min-height:52px}
+.page .chat-form .button{width:56px;min-width:56px;height:52px;padding:10px}
+.photo-form{display:grid;gap:20px;margin-top:24px}
+.photo-preview{display:flex;align-items:center;gap:22px;font-weight:700}
+.photo-preview .portrait{width:132px;height:132px;border-radius:24px}
+.photo-picker{display:grid;gap:12px;font-weight:700}
+.photo-picker input{font-size:.75rem;padding:12px;border:1px solid var(--line)}
+.photo-picker input::file-selector-button{font:inherit;background:var(--sage);color:var(--ink);border:0;border-radius:8px;padding:10px;margin-right:12px;cursor:pointer}
+.photo-form #photo-help{font-size:.72rem;color:var(--muted);line-height:1.5}
+.photo-actions{display:flex;flex-wrap:wrap;gap:12px}
+#avatar-dialog{font-family:var(--body-font);font-size:.85rem;width:min(600px,calc(100% - 28px));max-height:calc(100dvh - 32px);overflow:auto}
+@media(min-width:1351px){:root{--sidebar:260px}}
+@media(max-width:980px){.mobile-header .brand{font-size:1.1rem}.mobile-header .brand small{font-size:.7em}}
+@media(max-width:680px){
+ .page .chat{height:calc(100dvh - 235px);min-height:460px}
+ .page .chat-header{padding:16px;gap:12px}
+ .page .chat-header h2{font-size:1.15rem}
+ .page .chat-header .assistant-icon.support-avatar{width:48px;height:48px;flex-basis:48px}
+ .page .chat-history{padding:16px 12px;gap:18px}
+ .page .assistant-icon.support-avatar{width:32px;height:32px;flex-basis:32px}
+ .page .message-row{gap:8px}
+ .page .bubble{max-width:calc(100% - 40px);padding:14px;font-size:.88rem}
+ .page .bubble.own{max-width:90%}
+ .page .quick-actions{margin-left:0;gap:8px}
+ .page .quick-actions button{font-size:.7rem;padding:10px 12px}
+ .page .chat-form{margin:0 10px 12px;padding:6px 6px 6px 12px}
+ .page .chat-form :is(input,textarea){font-size:.83rem}
+ .page .chat-form .button{width:46px;min-width:46px;height:46px}
+ .photo-preview{flex-direction:column;align-items:flex-start;gap:12px}
+ .photo-actions>.button{width:100%}
+}
+
+.page .chat-form textarea{resize:none;max-height:150px;border:0;background:transparent;border-radius:0;padding:10px 0;line-height:1.4;flex:1}
+.page .chat-form textarea:focus-visible{outline:none}
+.page .chat-form:focus-within{outline:2px solid var(--gold);outline-offset:2px}
+.lesson strong{overflow-wrap:anywhere;hyphens:auto}
+@media(max-width:680px){
+ .page .grade-row{grid-template-columns:32px minmax(0,1fr) 38px;gap:10px}
+ .page .grade-result{grid-column:2 / -1;font-size:.75rem}
+}
+
+
+
+/* Keep the weekly grid at the previous density and grow rows with text scaling. */
+.calendar-grid:not(.single-day){min-width:calc(740px * var(--text-scale));min-height:0}
+.calendar-grid:not(.single-day) .calendar-day{
+ grid-template-rows:calc(70px * var(--text-scale)) repeat(3,minmax(calc(164px * var(--text-scale)),auto));
+}
+.calendar-day>h2{font-size:1rem;line-height:1.12}
+.lesson{font-size:.73rem;line-height:1.15}
+.calendar-grid:not(.single-day) .lesson>strong{font-size:.79rem;line-height:1.14}
+.lesson time{font-size:.73rem;line-height:1.18;white-space:nowrap}
+.lesson .badge{font-size:.62rem;line-height:1.18}
+.page .schedule-inspector .info-line{padding-block:14px}
+@supports (grid-template-rows:subgrid){
+ .calendar-grid:not(.single-day){
+  grid-template-rows:calc(70px * var(--text-scale)) repeat(3,minmax(calc(164px * var(--text-scale)),auto));
+  row-gap:12px;
+ }
+ .calendar-grid:not(.single-day) .calendar-day{
+  grid-row:span 4;
+  grid-template-rows:subgrid;
+ }
+}
+@media(max-width:1350px){
+ .calendar-grid:not(.single-day) .calendar-day{
+  grid-template-rows:calc(64px * var(--text-scale)) repeat(3,minmax(calc(150px * var(--text-scale)),auto));
+ }
+ @supports (grid-template-rows:subgrid){
+  .calendar-grid:not(.single-day){
+   grid-template-rows:calc(64px * var(--text-scale)) repeat(3,minmax(calc(150px * var(--text-scale)),auto));
+  }
+  .calendar-grid:not(.single-day) .calendar-day{grid-template-rows:subgrid}
+ }
+}
+@media(max-width:680px){
+ .page .tabs{flex-wrap:wrap;gap:8px}
+ .page .tabs .tab{gap:8px;padding-inline:12px}
+ .page .notifications-toolbar{flex-wrap:wrap;gap:12px}
+}
+
+.page{animation:none}
+.section-enter{animation:section-enter 260ms var(--flow) both}
+.detail-enter{animation:detail-enter 260ms var(--flow) both}
+@keyframes section-enter{
+ from{opacity:.55;transform:translateY(9px)}
+ to{opacity:1;transform:translateY(0)}
+}
+@keyframes detail-enter{
+ from{opacity:.45;transform:translateX(14px)}
+ to{opacity:1;transform:translateX(0)}
+}
+@media(max-width:680px){
+ @keyframes detail-enter{
+  from{opacity:.45;transform:translateY(9px)}
+  to{opacity:1;transform:translateY(0)}
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .section-enter,.detail-enter{animation:none}
+}
+
+.settings-stack{display:grid;gap:20px;max-width:1080px}
+.page .settings-stack .settings-panel{padding:0;overflow:hidden}
+.appearance-panel>h2{
+ display:flex;align-items:center;gap:14px;padding:22px 26px;border-bottom:1px solid var(--line);
+}
+.settings-feature{
+ display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 26px;
+}
+.settings-feature+ .settings-feature{border-top:1px solid var(--line)}
+.settings-feature h3{font-size:1rem;margin:0}
+.page .settings-feature p,.page .session-copy p{font-size:.73rem;color:var(--muted);margin-top:6px}
+.theme-feature .theme-preview{width:clamp(120px,33%,230px);height:72px;flex-shrink:0}
+.scale-feature h3{display:flex;align-items:center;gap:14px}
+.scale-feature .segmented{margin:0;flex:0 0 auto}
+.scale-feature .segmented button{min-height:44px;padding:8px 16px}
+.page .settings-stack .access-panel{
+ display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:20px 26px;
+}
+.access-panel>.icon{width:52px;height:52px}
+.session-copy{min-width:0;flex:1}
+.session-copy h2{font-size:1.22rem}
+.page .access-panel .button-danger{width:auto}
+@media(max-width:680px){
+ .settings-stack{gap:16px}
+ .appearance-panel>h2,.settings-feature,.page .settings-stack .access-panel{padding:16px}
+ .scale-feature{align-items:stretch;flex-direction:column;gap:12px}
+ .scale-feature .segmented button{flex:1;padding-inline:10px}
+ .page .access-panel .button-danger{width:100%;margin-top:4px}
 }

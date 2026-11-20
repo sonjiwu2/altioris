@@ -63,6 +63,7 @@ const portraits={voronova:'teacher-voronova',sokolov:'teacher-safonov',krylov:'t
 const studentFaces={a:'vetrova',b:'zolotov',c:'orlova',d:'gromov',e:'belova',f:'serov',g:'lanskaya',h:'severin',i:'rudin',j:'lesina',k:'melnikov',l:'safonova',m:'volkov'};
 const studentNames={'Ветрова':'vetrova','Золотов':'zolotov','Орлова':'orlova','Громов':'gromov','Белова':'belova','Серов':'serov','Ланская':'lanskaya','Северин':'severin','Рудин':'rudin','Лесина':'lesina','Мельников':'melnikov','Сафонова':'safonova','Волков':'volkov'};
 export function portrait(person,className='') {
+ if(person.avatar==='custom'&&/^\/api\/profile\/avatar\?v=[a-f0-9]{64}$/.test(person.avatarUrl||''))return '<img class="portrait '+className+'" src="'+escape(person.avatarUrl)+'" alt="" width="160" height="160">';
  const login=studentFaces[person.id]||Object.entries(studentNames).find(([last])=>person.name?.includes(last))?.[1];
  const source=portraits[person.id]||(login?'student-'+login:null);
  const initials=person.initials||person.shortName?.split(' ').map(p=>p[0]).join('')||'?';

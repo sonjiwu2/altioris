@@ -15,3 +15,7 @@ Implement 160 ms button/selection feedback and a 260 ms opacity/transform page e
 ## Completion
 
 Deliver working code within the assigned scope, the exact checks performed, and any remaining visual or functional differences. Follow DESIGN.md and preserve account ownership and ignored runtime state.
+
+## Latest settings, layout and motion refinement
+
+Keep the light theme and upright Philosopher. Settings show a light preview, 100/115/130% text and the current session with sign-out. Keep the original colorful icons across the site, with the current session and support conversation using their newer icons. Remove the auxiliary links below the timetable and use the prior compact weekly row minimums (164px on wide desktop and 150px on narrower layouts at 100%). Related tabs animate their content. Selecting an item animates its details only, with no motion when the system requests reduced motion. Account text scale and keyboard focus remain intact.
