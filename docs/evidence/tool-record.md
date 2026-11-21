@@ -1,6 +1,6 @@
-# Verification record
+# Initial verification record
 
-Review date: 19 November 2026.
+Review date: 19 November 2026. This is the record for that early snapshot. See the [release verification](release-2026-11-21.md) for the current application.
 
 - Current archive: 11 approved PNGs at 1536 x 1024, verified by SHA-256.
 - Individual production artwork: 19 unique WebP images, comprising the campus, shield, 13 students and 4 teachers.

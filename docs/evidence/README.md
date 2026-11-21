@@ -1,3 +1,7 @@
-# Evidence
+# История проверок
 
-Use reference-decisions.md for the current visual contract and tool-record.md for observed verification. Keep private browser captures in runtime/visual-qa. Record the revision, viewport and account used. Do not publish credentials or use a screenshot as the functioning interface.
+- [Проверки выпуска от 21 ноября 2026](release-2026-11-21.md).
+- [Ранний отчёт от 19 ноября 2026](tool-record.md).
+- [Решения по референсам](reference-decisions.md) · [Типографика](typography-2026-11-20.md) · [Поддержка и фотографии](chat-and-photo-2026-11-20.md).
+
+Для нового отчёта запишите проверенные сценарии, версию, размеры области просмотра и ограничения проверки. Публикуемые снимки должны использовать вымышленные данные. Локальные диагностические материалы хранятся в `runtime/visual-qa/`.

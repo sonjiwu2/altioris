@@ -1,4 +1,6 @@
-# Reference decisions
+# Initial reference decisions
+
+This record describes the original reference interpretation. The [visual contract](../../DESIGN.md) defines the current interface.
 
 Altioris University is a Russian-language fictional digital dean's office. Its visual source is exactly the 11 PNGs in docs/references/manifest.json from Altioris_Approved_References.zip. Inspect the relevant PNG before changing a screen. Desktop source viewport is 1536 x 1024. Build real DOM, not screenshot backgrounds. The login background is standalone photographic artwork.
 
