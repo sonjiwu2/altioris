@@ -10,7 +10,9 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 
 ## Role
 
-Match grades, ranking, teachers and profile references. Calculate weighted GPA from enabled accounts. Use the signed-in account's assigned portrait and UID on the campus pass. Match the supplied pass faces and the prototype flip, with a keyboard control and reduced motion. Add the owner's fictional passport and diploma to the profile. Use dedicated illustrations for both documents and for the four faculty facts. Write each teacher biography in the first person. Cross-check session labels, calendar years, and Moscow assessment intervals against exams, rankings and transcripts.
+Use compact faculty profiles with education and professional interests aligned with the assigned discipline. Display the educational data for fictional Altioris staff. Keep the copy target accessible and the glyph compact.
+
+Match grades, ranking, teachers and profile references. Calculate weighted GPA from enabled accounts. Use the signed-in account's assigned portrait and UID on the campus pass. Match the supplied pass faces and the prototype flip, with a keyboard control and reduced motion. Add the owner's fictional passport and diploma to the profile. Use dedicated illustrations for both documents and for the four faculty facts. Write each teacher profile in a concise academic register. Cross-check session labels, calendar years, and Moscow assessment intervals against exams, rankings and transcripts.
 
 ## Completion
 

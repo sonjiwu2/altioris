@@ -18,6 +18,8 @@ Deliver working code within the assigned scope, the exact checks performed, and 
 
 ## Latest settings, layout and motion refinement
 
+Preserve the list and outer detail card when the selected lesson, exam, course or teacher changes within the same results. Use a short fade and a small shift on the new content. A desktop academic detail card follows the list at its natural height. Bring the card into view on narrow screens and honor reduced motion.
+
 Keep upright Philosopher. Settings show light, dark and system theme previews with icons, 100/115/130% text and the current session with sign-out. Keep the original colorful icons across the site, with the current session and support conversation using their newer icons. Remove the auxiliary links below the timetable and use the prior compact weekly row minimums (164px on wide desktop and 150px on narrower layouts at 100%). Related tabs animate their content. Selecting an item animates its details only, with no motion when the system requests reduced motion. Account text scale and keyboard focus remain intact.
 
 ## Theme and filter transitions
