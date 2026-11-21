@@ -3,13 +3,14 @@ import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { promisify } from 'node:util'
-import { accounts, requestTypes, sessionSeasons, teachers } from './fixtures.mjs'
-import { academicDateTime, academicNotices, academicTimeRange, moscowDay } from './academic-year.mjs'
+import { accounts, requestTypes, sessionSeasons } from './fixtures.mjs'
+import { academicNotices, moscowDay } from './academic-year.mjs'
 import { profileDocumentsFor } from './profile-documents.mjs'
 import { campusWithChanges, gradesWithChanges, rankingWithChanges } from './academic-events.mjs'
 import { openAcademicQueue } from './academic-queue.mjs'
 import { openRequestQueue } from './request-queue.mjs'
 import { studentPdf } from './pdf.mjs'
+import { answerSupport, supportActions } from './support-assistant.mjs'
 
 const derive = promisify(scrypt)
 export const sessionLifetime = 60 * 60 * 12
@@ -17,8 +18,17 @@ const digest = (token) => createHash('sha256').update(token).digest('hex')
 
 function migrate(db) {
   const { user_version: version } = db.prepare('PRAGMA user_version').get()
-  if (version > 6) throw new Error('Unsupported database schema')
-  if (version === 6) return
+  if (version > 7) throw new Error('Unsupported database schema')
+  if (version === 7) return
+  if (version === 6) {
+    db.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE IF NOT EXISTS support_context (
+        owner TEXT PRIMARY KEY REFERENCES accounts(id), state TEXT NOT NULL
+      );
+      PRAGMA user_version = 7;
+      COMMIT;`)
+    return
+  }
   if (version === 5) {
     db.exec(`BEGIN IMMEDIATE;
       CREATE TABLE IF NOT EXISTS request_jobs (
@@ -34,6 +44,7 @@ function migrate(db) {
       );
       PRAGMA user_version = 6;
       COMMIT;`)
+    migrate(db)
     return
   }
   if (version === 4) {
@@ -173,6 +184,14 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
     const selectNotifications = db.prepare(`SELECT id, title, type, body, created_at AS at, href, is_read AS read
       FROM notifications WHERE owner = ? ORDER BY julianday(created_at) DESC, rowid DESC`)
     const insertMessage = db.prepare('INSERT INTO support (owner, role, text, created_at, href) VALUES (?, ?, ?, ?, ?)')
+    const selectSupport = db.prepare(`
+      SELECT id, role, text, created_at AS at, href FROM (
+        SELECT id, role, text, created_at, href FROM support WHERE owner = ? ORDER BY id DESC LIMIT 100
+      ) ORDER BY id
+    `)
+    const readSupportContext = db.prepare('SELECT state FROM support_context WHERE owner=?')
+    const saveSupportContext = db.prepare('INSERT INTO support_context (owner,state) VALUES (?,?) ON CONFLICT(owner) DO UPDATE SET state=excluded.state')
+    const clearSupportContext = db.prepare('DELETE FROM support_context WHERE owner=?')
 
     function transaction(work) {
       db.exec('BEGIN IMMEDIATE')
@@ -281,78 +300,20 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
     function addSupport(owner, action, input) {
       academic.tick()
       requestQueue.tick()
-      const at = clock()
-      const labels = {
-        certificate: 'Заказать справку',
-        status: 'Проверить заявку',
-        faq: 'Найти ответ',
-        specialist: 'Написать специалисту',
-      }
-      const message = action === 'message' ? input : labels[action]
-      const query = String(input ?? '').toLocaleLowerCase('ru')
-      const namedTeacher = teachers.find((teacher) => query.includes(teacher.shortName.split(' ').at(-1).toLocaleLowerCase('ru').slice(0, -1)))
-      if (action === 'message') {
-        if (/статус|провер.*заяв|готов.*справ|заявк.*[0-9a-f]{3}/u.test(query)) action = 'status'
-        else if (/справк|документ|выписк/u.test(query)) action = 'certificate'
-        else if (/зач[её]тк/u.test(query)) action = 'gradebook'
-        else if (namedTeacher) action = 'teacher'
-        else if (/оценк|рейтинг|успеваем|gpa|средний балл/u.test(query)) action = 'grades'
-        else if (/расписан|заняти|экзамен|сесси|онлайн|подключ|пары|семинар|лекци/u.test(query)) action = 'schedule'
-        else if (/оператор|специалист|сотрудник/u.test(query)) action = 'specialist'
-        else if (/привет|здравств|добрый/u.test(query)) action = 'greeting'
-      }
-      let text
-      let href = null
-      if (action === 'certificate') {
-        const transcript = /выписк|зач[её]тк/u.test(query)
-        text = 'Откройте раздел «Заявки» и выберите «'+requestTypes.get(transcript?'transcript':'certificate')+'». Подготовка учебного PDF займёт около двух-трёх минут. По готовности кабинет пришлёт уведомление.'
-        href = '/requests?new='+(transcript?'transcript':'certificate')
-      } else if (action === 'status') {
-        const owned = requests(owner)
-        const request = owned.find((item) => query.includes(item.id.toLocaleLowerCase('ru'))) ??
-          (/справк/u.test(query) ? owned.find((item) => item.type === 'certificate') : null) ?? owned[0]
-        text = request ? `${request.title} · ${request.status}. Откройте карточку, чтобы увидеть историю${request.documentId ? ' и скачать PDF' : ''}.` : 'У вас пока нет заявок. Создайте первую в разделе «Заявки».'
-        href = request ? `/requests?item=${request.id}` : '/requests'
-      } else if (action === 'grades') {
-        const stats = rankingView(owner,at,academic.changes())
-        const format = (value) => value == null ? '—' : value.toFixed(2).replace('.', ',')
-        text = stats.rank===null ? 'Рейтинг появится после завершения первой сессии.' :
-          `${stats.label}. Ваш средний балл — ${format(stats.mean)}, GPA — ${format(stats.gpa)}. Место в рейтинге: ${stats.rank} из ${stats.total}. Подробные результаты доступны в разделе «Успеваемость».`
-        href = '/grades/ranking'
-      } else if (action === 'gradebook') {
-        text = 'В зачётке можно выбрать учебный год или семестр, посмотреть опубликованные результаты и зачётные единицы. Выписку в PDF можно заказать в разделе «Заявки».'
-        href = '/grades'
-      } else if (action === 'teacher') {
-        text = `${namedTeacher.name}. ${namedTeacher.subject}. Консультации: ${namedTeacher.consultation}. Кабинет: ${namedTeacher.office}. Учебная почта: ${namedTeacher.email}.`
-        href = `/teachers?item=${namedTeacher.id}`
-      } else if (action === 'schedule') {
-        if (/онлайн|подключ/u.test(query)) {
-          text = 'Выберите занятие в расписании: в его карточке указан формат. Онлайн-занятие отмечено значком ноутбука. В демонстрационном портале видеоконференции не подключены.'
-          const next = campusView(owner, at).lessons.find(lesson=>lesson.format==='online'&&Date.parse(lesson.start)>=Date.parse(at))
-          href = next ? '/schedule?lesson='+next.id : '/schedule'
-        } else if (/экзамен|сесси|зач[её]т|контрол/u.test(query)) {
-          const next = campusView(owner, at).exams.find(item=>Date.parse(item.start)>=Date.parse(at))
-          text = next ? `Ближайший контроль: ${next.title}, ${academicDateTime(next.start,next.end)}. ${next.room}. Остальные даты есть в разделе экзаменов.` : 'Назначенных экзаменов пока нет. Учебный офис опубликует их в расписании.'
-          href = next ? '/schedule/exams?item='+next.id : '/schedule/exams'
-        } else {
-          const day = moscowDay(at)
-          const lessons = campusView(owner, at).lessons.filter((item) => moscowDay(item.start) === day)
-          text = lessons.length ? 'Сегодня в расписании:\n' + lessons.map((item) => `${academicTimeRange(item.start,item.end)} · ${item.title} · ${item.room}`).join('\n') : 'Сегодня занятий нет. Даты других занятий можно посмотреть в расписании.'
-          href = '/schedule'
-        }
-      } else if (action === 'greeting') {
-        text = 'Здравствуйте! Помогу со справками, статусом заявки, расписанием, оценками и информацией о преподавателях. Напишите вопрос или выберите быстрое действие.'
-      } else if (action === 'faq') {
-        text = 'В «Заявках» можно открыть историю и скачать справки. Расписание экзаменов доступно в разделе «Расписание».'
-        href = '/schedule/exams'
-      } else if (action === 'specialist') {
-        text = 'В конкурсном прототипе специалист не получает сообщения. Здесь можно проверить статус заявки и найти информацию о документах.'
-      } else {
-        text = 'Я отвечаю на типовые вопросы. Выберите действие выше, чтобы проверить заявку, заказать справку или найти расписание.'
-      }
-      transaction(() => {
-        insertMessage.run(owner, 'user', message, at, null)
-        insertMessage.run(owner, 'assistant', text, at, href)
+      const at = new Date(clock()).toISOString()
+      return transaction(() => {
+        const changes=academic.changes()
+        const prior=readSupportContext.get(owner)
+        const result=answerSupport(action,input,{
+          student:profile(owner), at, campus:campusView(owner,at,changes), grades:gradeView(owner,at,changes),
+          requests:requests(owner), notifications:selectNotifications.all(owner),
+          ranking:()=>rankingView(owner,at,changes),
+        },prior?JSON.parse(prior.state):null)
+        insertMessage.run(owner,'user',action==='message'?input:supportActions.get(action),at,null)
+        insertMessage.run(owner,'assistant',result.text,at,result.href)
+        if(result.context)saveSupportContext.run(owner,JSON.stringify(result.context))
+        else if(!/^(?:спасибо|благодарю|спс|понял)[.!\s]*$/iu.test(String(input)))clearSupportContext.run(owner)
+        return selectSupport.all(owner)
       })
     }
 
@@ -418,16 +379,11 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
         const documents = db.prepare(`
           SELECT id, title, created_at AS createdAt FROM documents WHERE owner = ? ORDER BY julianday(created_at) DESC, rowid DESC
         `).all(owner)
-        const support = db.prepare(`
-          SELECT id, role, text, created_at AS at, href FROM (
-            SELECT id, role, text, created_at, href FROM support WHERE owner = ? ORDER BY id DESC LIMIT 100
-          ) ORDER BY id
-        `).all(owner)
         return {
           student: profile(owner), campus, grades, requestTypes:[...requestTypes],
           ranking: rankingView(owner,at,changes,grades),liveRevision:inboxRevision(owner),
           requests: requests(owner), documents, profileDocuments:profileDocumentsFor(account),
-          notifications:selectNotifications.all(owner).map(notice=>({...notice,read:Boolean(notice.read)})), support,
+          notifications:selectNotifications.all(owner).map(notice=>({...notice,read:Boolean(notice.read)})), support:selectSupport.all(owner),
         }
       },
       document(owner, id) {

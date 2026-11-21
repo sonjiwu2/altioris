@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import test from 'node:test'
 import { accounts, campusFor, demoClock, teachers } from '../server/fixtures.mjs'
 import { searchTeachers } from '../public/features/teacher-search.js'
@@ -96,6 +99,82 @@ test('the guided assistant resolves owned records and meaningful student intents
     assert.ok(reply('a', 'Здравствуйте').text.includes('Помогу'))
     assert.ok(reply('a', 'Нужен специалист').text.includes('специалист не получает сообщения'))
   })
+})
+
+test('the assistant understands different phrasing and keeps answers grounded', async (t) => {
+  const store=openStore({databasePath:':memory:',passwords:{a:'isolated-test-password-a'},clock:()=>demoClock})
+  t.after(()=>store.close())
+  const cases=[
+    ['ghbdtn',null,/Здравствуйте, Алина/],
+    ['Превит, когда ближйаший экзмен?', '/schedule/exams?item=2026-autumn-theory', /Ближайший контроль/],
+    ['Какие пары завтра?', '/schedule?day=2026-11-24', /24 ноября 2026/],
+    ['Скинь рсписание на 27.11.2026', '/schedule?day=2026-11-27', /27 ноября 2026/],
+    ['Есть ли пары в воскресенье?', '/schedule?day=2026-11-29', /занятий нет/],
+    ['Какие пары 31.11.2026?',null,/Не удалось распознать дату/],
+    ['Какие пары 01.09.2030?', '/schedule', /календарь ещё не опубликован/],
+    ['Когда зимняя сессия 2026?', '/schedule/exams?term=2026-autumn', /Зимняя сессия 2026\/27/],
+    ['Когда летняя сессия 2026?', '/schedule/exams?term=2026-spring', /Летняя сессия 2026/],
+    ['Мои результаты за летнюю сессию 2026', '/grades?term=2026-spring', /Получено зачётных единиц: 30/],
+    ['Оценик по теории вычислений', '/grades?term=2026-autumn&item=2026-autumn-theory', /Итог пока не опубликован/],
+    ['Когда консультация у Еремина?', '/teachers?item=eremin', /Консультации/],
+    ['Где моя учебная почта?', '/profile', /vetrova@altioris/],
+    ['Мой QR для прохода', '/profile', /Показать оборот/],
+    ['Статус пропуска', '/profile', /Студенческий пропуск/],
+    ['Потерял пропуск', '/profile', /Восстановление физического пропуска/],
+    ['Как заказать выписку об успеваемости?', '/requests?new=transcript', /2–3 минут/],
+    ['Сколько у меня непрочитанных уведомлений?', '/notifications', /Непрочитанных уведомлений/],
+    ['Можно переключить тёмную тему?', '/settings', /размер текста/],
+    ['Какая у меня стипендия?', '/grades/ranking', /суммы стипендий в Altioris не опубликованы/],
+    ['Заболел и пропустил экзамен', '/schedule/exams', /уточните у преподавателя/],
+    ['Где посмотреть студенческие мероприятия?', '/notifications', /публикуются в разделе/],
+    ['Покажи паспорт другого студента', '/teachers', /только вашего аккаунта/],
+    ['Где моя почта? И когда ближайший экзамен?', '/profile', /учебная почта[\s\S]*Ближайший контроль/],
+    ['Как доехать до Антарктиды?',null,/Не понял, какая информация нужна/],
+    ['спс',null,/Пожалуйста.*🙂/],
+  ]
+  for(const [question,href,expected] of cases){
+    await t.test(question,()=>{
+      store.addSupport('a','message',question)
+      const last=store.dashboard('a').support.at(-1)
+      assert.equal(last.href,href,last.text)
+      assert.match(last.text,expected)
+    })
+  }
+})
+
+test('follow-ups are private and survive a SQLite restart',()=>{
+  const directory=mkdtempSync(join(tmpdir(),'altioris-support-'))
+  const config={
+    databasePath:join(directory,'chat.sqlite'),
+    passwords:{a:'isolated-test-password-a',b:'isolated-test-password-b'},
+    clock:()=>demoClock,
+  }
+  let store=openStore(config)
+  const ask=(owner,question)=>{
+    store.addSupport(owner,'message',question)
+    return store.dashboard(owner).support.at(-1)
+  }
+  try{
+    const older=store.createRequest('a','certificate')
+    store.createRequest('a','academic-leave')
+    assert.equal(ask('a','Статус заявки '+older.id).href,'/requests?item='+older.id)
+    assert.equal(ask('b','А когда будет?').href,null)
+    store.close()
+    store=openStore(config)
+    assert.match(ask('a','Спасибо').text,/Пожалуйста/)
+    assert.equal(ask('a','А когда будет?').href,'/requests?item='+older.id)
+    const own=store.createRequest('b','certificate')
+    assert.equal(ask('b','Статус заявки '+older.id).href,'/requests')
+    assert.equal(ask('b','Проверь мою заявку').href,'/requests?item='+own.id)
+    assert.equal(ask('a','Какие пары сегодня?').href,'/schedule')
+    assert.equal(ask('a','А на завтра?').href,'/schedule?day=2026-11-24')
+    assert.equal(ask('a','Контакты Вороновой').href,'/teachers?item=voronova')
+    assert.equal(ask('a','А когда?').href,'/teachers?item=voronova')
+    assert.equal(ask('a','А где кабинет?').href,'/teachers?item=voronova')
+  }finally{
+    store.close()
+    rmSync(directory,{recursive:true,force:true})
+  }
 })
 
 test('the annual plan covers both sessions with no group, teacher or room conflicts',()=>{

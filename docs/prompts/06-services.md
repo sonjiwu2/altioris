@@ -12,6 +12,8 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 
 Match requests, support and notifications. Render actual request history, ownership-checked PDF links, useful deterministic chat intents, warm/lavender bubbles and inline request cards. Never imply a live operator is connected.
 
+Support answers everyday Russian phrasing, common typos and short follow-ups from owned records and the campus catalog. Ask for clarification when a course is ambiguous. Group messages by Moscow day, provide keyboard-accessible arrows to both ends of history and mark outgoing questions once the assistant has replied.
+
 Publish campus, academic and document-ready notifications server-side even with no connected browser. Show the sender, message paragraphs, receipt time in Moscow and the relevant link. Request jobs persist, issue a distinct PDF by type and record each stage. Only completed issuance triggers a request notification. Show the latest session with grades published by issuance in the transcript. End the request details with the document actions.
 
 ## Completion

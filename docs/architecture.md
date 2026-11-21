@@ -13,7 +13,7 @@ Node.js 24+ serves buildless HTML, CSS, browser ES modules, local fonts and artw
 | GET /api/notifications/stream | Authenticated live inbox revision |
 | PATCH /api/notifications | Owned read state |
 | PATCH /api/profile | Owned avatar selection |
-| POST /api/support | Deterministic intent processing and owned conversation |
+| POST /api/support | Resolves a question against owned campus data and returns the saved conversation |
 | GET /api/calendar/exams?term=… | Authenticated ICS export for existing clients |
 
 The browser uses URL query parameters for list selection, date, filters and display modes. public/features/settings.js stores theme and text scale and honors existing legacy reduced-motion preferences in localStorage under the student's stable number. Authentication stays in HttpOnly SameSite cookies.
@@ -31,3 +31,5 @@ The server processes academic events and request jobs on a timer without browser
 ## Profile images
 
 SQLite schema version 2 adds profile_images(owner primary key, data BLOB, revision TEXT) without rebuilding accounts or resetting records. The authenticated GET/PUT/DELETE /api/profile/avatar endpoint reads/writes only the current owner. PUT accepts normalized PNG up to 2 MiB and dimensions 1–1024; the browser converts supported image files up to 20 MB into a centered 640px square PNG. Content revisions refresh all owned photo views; private image responses use no-store. The profile returns initials whenever the student has no upload, including existing databases with the old portrait flag. DELETE and either legacy PATCH choice reset the owned avatar to initials.
+
+SQLite schema version 7 adds `support_context` keyed by account. Each support turn persists the question, grounded response and conversational context in one transaction. The dashboard and the support endpoint return the latest 100 owned messages in conversation order. [Assistant behavior and sources](support.md)

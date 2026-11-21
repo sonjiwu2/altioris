@@ -1,7 +1,7 @@
-import { escape as e, badge, calendarDate, detailedDate, empty, icon, safeLink, when } from '../ui.js?v=20261120-15';
+import { escape as e, badge, calendarDate, detailedDate, empty, icon, safeLink } from '../ui.js?v=20261120-15';
 import { detailIcon } from './detail-icons.js?v=20261121-1';
 import { noticeSoundEnabled } from './live-notices.js';
-import { requestNumber } from './request-view.js?v=20261121-2';
+export { support } from './support-view.js?v=20261121-3';
 export { requests } from './request-view.js?v=20261121-2';
 const noticeTypes={
  'Документы':['inbox-document-ready','Учебный офис'],
@@ -53,19 +53,3 @@ export function notifications({notifications:items,student},params){
    ${rows||empty(only?'Все уведомления прочитаны.':'Новых уведомлений пока нет.')}</section>
    ${selected?`<aside class="panel notification-detail" aria-label="Текст уведомления">${messageDetails(selected)}</aside>`:''}</div>`;
 }
-const assistant='<span class="assistant-icon support-avatar" aria-hidden="true">'+icon('assistant')+'</span>';
-const topics=[['certificate','doc','Заказать справку'],['status','clipboard','Проверить заявку'],['faq','search','Найти ответ']];
-function conversationMessage(item,data){
- const own=item.role==='student'||item.role==='user',href=safeLink(item.href);
- const id=href?new URL(href,'http://localhost').searchParams.get('item'):null;
- const request=data.requests.find(x=>x.id===id);
- const rich=request?'<div class="chat-request-card">'+icon(request.documentId?'check':'clipboard')+'<span>Заявка № '+e(requestNumber(request.id))+' · '+e(request.status)+'</span><a class="button button-green" href="'+href+'">Открыть заявку</a></div>':href?'<a class="text-link" href="'+href+'">'+(href.startsWith('/requests')?'Открыть заявки':href.startsWith('/grades')?'К успеваемости':href.startsWith('/teachers')?'К преподавателю':'Открыть раздел')+'</a>':'';
- const bubble='<div class="bubble'+(own?' own':'')+'"><p>'+e(item.text)+'</p>'+rich+'<time datetime="'+e(item.at)+'">'+when(item.at)+'</time></div>';
- return own?bubble:'<div class="message-row">'+assistant+bubble+'</div>';
-}
-export function support(data,params){
- const teacher=data.campus.teachers.find(x=>x.id===params.get('teacher')),request=data.requests.find(x=>x.id===params.get('request'));
- const draft=teacher?'Вопрос о преподавателе '+teacher.shortName+': ':request?'Статус заявки '+request.id:params.get('topic')==='online'?'Как подключиться к онлайн-занятию?':'';
- return '<h1>Чат поддержки</h1><div class="support-layout"><section class="panel chat"><header class="chat-header">'+assistant+'<div><h2>Помощник Altioris</h2><small>Автоматический помощник · отвечает по данным вашего кабинета</small></div></header><div class="chat-history" role="log" aria-label="История сообщений" tabindex="0"><div class="message-row">'+assistant+'<div class="bubble"><p>Чем помочь?</p></div></div><div class="quick-actions">'+topics.map(([action,glyph,title])=>'<button type="button" data-support="'+action+'">'+icon(glyph)+title+'</button>').join('')+'</div>'+data.support.map(item=>conversationMessage(item,data)).join('')+'</div><form class="chat-form" data-mutation="message"><label class="sr-only" for="chat-message">Ваш вопрос</label><textarea id="chat-message" name="text" rows="1" maxlength="500" required placeholder="Написать сообщение" autocomplete="off">'+e(draft)+'</textarea><button class="button" aria-label="Отправить вопрос">'+icon('send')+'</button><p class="form-error" role="alert" hidden></p></form></section></div>';
-}
-

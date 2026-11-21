@@ -3,7 +3,7 @@ import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-15';
 import { exams, onlineRoom, schedule } from './features/campus.js?v=20261120-16';
 import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-16';
 import { turnCampusPass } from './features/campus-pass.js?v=20261120-14';
-import { notifications, requests, support } from './features/services.js?v=20261121-2';
+import { notifications, requests, support } from './features/services.js?v=20261121-3';
 import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
 import { armNoticeSound, resetLiveNotice, showLiveNotice, toggleNoticeSound } from './features/live-notices.js';
 
@@ -112,6 +112,9 @@ function render(focus=false,navigating=false) {
  if(!snapshot){signIn();if(focus)app.querySelector('#username').focus();return;}
  applyPreferences(snapshot.student);
  const {pathname,search}=location,params=new URLSearchParams(search);
+ const previousChat=app.querySelector('.chat-history');
+ const chatPosition=previousChat?.scrollTop??0;
+ const atChatEnd=!previousChat||previousChat.scrollHeight-previousChat.clientHeight-chatPosition<32;
  const scroller=app.querySelector('.calendar-scroll,.teacher-list,.notification-inbox');
  const scrollLeft=scroller?.scrollLeft??0,scrollTop=scroller?.scrollTop??0;
  const active=href=>(href==='/schedule'&&pathname==='/')||pathname===href||pathname.startsWith(href+'/');
@@ -151,7 +154,8 @@ function render(focus=false,navigating=false) {
  if(navigating||!lastView)animateNavigation(lastView,currentView);
  lastView=currentView;
  const dialog=app.querySelector('[data-auto-open]');if(dialog)dialog.showModal();else if(focus)document.querySelector('#main').focus({preventScroll:true});
- const chat=app.querySelector('.chat-history');if(chat&&snapshot.support.length)chat.scrollTop=chat.scrollHeight;
+ const chat=app.querySelector('.chat-history');
+ if(chat)chat.scrollTop=atChatEnd?chat.scrollHeight:chatPosition;
 }
 function go(href,restoreFocus,replace=false){
  const next=new URL(href,location.href),path=viewPath(next.pathname);
@@ -226,10 +230,20 @@ async function save(name,body,control,errorBox){
  try{
   const [path,method]=mutations[name],result=await api(path,method,body);
   if(name==='logout'){snapshot=undefined;history.replaceState(null,'','/');render(true);return;}
-  snapshot=await api('/api/dashboard');
+  if(Array.isArray(result.support))snapshot={...snapshot,support:result.support};
+  else snapshot=await api('/api/dashboard');
+  const chatDraft=name==='support'?app.querySelector('#chat-message')?.value:null;
   if(name==='request'){const id=result.request?.id??result.id??snapshot.requests[0]?.id;history.replaceState(null,'',id?'/requests?item='+encodeURIComponent(id):'/requests');}
   render(['login','request','avatar'].includes(name));
-  if(name==='message')app.querySelector('#chat-message')?.focus();
+  if(name==='message'||name==='support'){
+   const chat=app.querySelector('.chat-history');
+   if(chat)chat.scrollTop=chat.scrollHeight;
+   const composer=app.querySelector('#chat-message');
+   if(composer){
+    if(chatDraft!=null)composer.value=chatDraft;
+    composer.focus({preventScroll:true});
+   }
+  }
   if(['avatar','photo','removePhoto'].includes(name))app.querySelector('[data-dialog="avatar-dialog"]')?.focus();
   const confirmation={request:'Заявка подана',avatar:'Фото профиля сохранено',photo:'Фото профиля сохранено',removePhoto:'В профиле отображаются инициалы',read:'Уведомления обновлены',support:'Помощник ответил',message:'Помощник ответил'};
   if(confirmation[name])announce(confirmation[name]);
@@ -344,6 +358,11 @@ app.addEventListener('click',event=>{
   if(button.hasAttribute('data-logout'))void save('logout',undefined,button);
   if(button.hasAttribute('data-read-all'))void save('read',{all:true},button);
   if(button.dataset.read)void save('read',{id:button.dataset.read},button);
+  if(button.dataset.chatJump){
+   const chat=app.querySelector('.chat-history');
+   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+   chat.scrollTo({top:button.dataset.chatJump==='start'?0:chat.scrollHeight,behavior:reduced?'instant':'smooth'});
+  }
   if(button.dataset.support)void save('support',{action:button.dataset.support},button);
   return;
  }

@@ -18,7 +18,7 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 - The server publishes campus bulletins and academic notifications on schedule, including while students are signed out. Read state persists and links open the relevant item. Schedule changes validate overlaps before publishing.
 - Settings support light, dark and system themes, a 100/115/130% text control, current session and sign-out. Theme and text scale survive reload and stay separate for each account. Animations honor the operating system preference.
 - Profile shows the signed-in student's details, initials or an uploaded avatar, a two-sided sample campus pass and two owner-only PDFs for the fictional passport and school diploma. The rail profile link stays separate from the main navigation.
-- Support responds to status, certificate, grade/ranking, teacher, schedule/online and greeting intents. Human support availability is stated accurately.
+- Support resolves common phrasing and short follow-ups against owned records and campus references. History includes Moscow date dividers, navigation to both ends and read status when an assistant reply follows. Human support availability is stated accurately.
 - All 11 reference routes remain useful at 360 CSS px, with accessible forms, focus, navigation and controls.
 
 Visual parity is reviewed against matched viewport and state; synthetic content and working responsive behavior can require documented differences.

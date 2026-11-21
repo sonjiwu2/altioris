@@ -11,6 +11,7 @@ import { profileDocumentsFor } from './profile-documents.mjs'
 import { createNotificationStream } from './notification-stream.mjs'
 import { openStore, sessionLifetime } from './store.mjs'
 import { configuredPasswords } from './demo-accounts.mjs'
+import { supportActions } from './support-assistant.mjs'
 
 const publicDirectory = fileURLToPath(new URL('../public/', import.meta.url))
 const defaultDatabase = fileURLToPath(new URL('../runtime/altioris.sqlite', import.meta.url))
@@ -18,7 +19,6 @@ const bodyLimit = 4096
 const avatarLimit = 2 * 1024 * 1024
 const signInInterval = 60_000
 const signInAttempts = 8
-const supportActions = new Set(['certificate', 'status', 'faq', 'specialist', 'message'])
 const avatars = new Set(['portrait', 'initials'])
 const identifier = /^[\w-]{1,64}$/
 const tokenShape = /^[A-Za-z0-9_-]{43}$/
@@ -363,8 +363,8 @@ export function createApplication(config, { staticDirectory = publicDirectory } 
           throw badRequest('Напишите вопрос длиной до 500 символов.')
         }
         if (data.action !== 'message' && data.text !== undefined && typeof data.text !== 'string') throw badRequest()
-        store.addSupport(owner, data.action, text)
-        json(res, 200, { ok: true })
+        const support = store.addSupport(owner, data.action, text)
+        json(res, 200, { ok: true, support })
         return
       }
       if (method === 'GET' && pathname.startsWith('/api/documents/')) {

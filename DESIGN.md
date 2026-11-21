@@ -50,6 +50,8 @@ Use local upright Philosopher throughout the interface, including schedule, exam
 
 Support is one full-width conversation, without the right topics panel. Use the dedicated illustrated Altioris assistant avatar in the conversation header and assistant messages. Keep honest automated-assistant copy, owned message history and inline quick actions. The composer supports Enter to submit and Shift+Enter for a new line.
 
+Use Moscow date dividers and compact first and last message controls. Show a double check on a sent question after the assistant responds. On arrival, greet by first name when the history is empty.
+
 Profile photo editing uses a file picker, square preview and save/reset controls. Browser-readable image files up to 20 MB are center-cropped and encoded to a 640px PNG before upload. The authenticated server accepts at most 2 MiB PNG with bounded dimensions; SQLite schema v2 stores the image as an owned BLOB. GET/PUT/DELETE /api/profile/avatar use the current session owner, no caller-supplied owner, no public media directory. Preserve account credentials and all existing records during migration. Use initials for students without an upload. Custom photo URLs use a content revision and no-store responses and appear on the owner's profile, rail and ranking row.
 
 ## Latest settings, layout and motion refinement
