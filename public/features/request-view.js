@@ -13,7 +13,13 @@ const glyph=type=>detailIcon((presentation[type]??presentation.certificate)[0]);
 const statusBadge=item=>badge(item.status,item.documentId?'sage':item.status==='В обработке'?'lavender':'peach');
 export const requestNumber=id=>id.slice(0,8).toUpperCase();
 const clock=new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-const stamp=value=>calendarDate.format(new Date(value))+' · '+clock.format(new Date(value));
+const compactDate=new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric'});
+function requestDate(value,showTime=false){
+ const date=new Date(value);
+ const time=showTime?' · '+clock.format(date):'';
+ return '<time datetime="'+e(value)+'"><span class="request-date-full">'+calendarDate.format(date)+time+
+  '</span><span class="request-date-compact">'+compactDate.format(date)+time+'</span></time>';
+}
 
 function requestForm(types,selected){
  const options=types.map(([type,title],index)=>{
@@ -34,7 +40,7 @@ function requestDetails(item){
  const history=[...item.history].reverse().map((step,index,events)=>{
   const latest=index===events.length-1;
   return '<li'+(latest?' aria-current="step"':'')+'><span class="request-stage-dot" aria-hidden="true"></span>'+
-   '<strong>'+e(step.label)+'</strong><time datetime="'+e(step.at)+'">'+stamp(step.at)+'</time></li>';
+   '<strong>'+e(step.label)+'</strong>'+requestDate(step.at,true)+'</li>';
  }).join('');
  const file=item.documentId?'/api/documents/'+encodeURIComponent(item.documentId):null;
  const deliverable=file?'<section class="request-result"><div>'+icon('pdf')+
@@ -64,8 +70,8 @@ export function requests({requests:items,requestTypes:types},params){
  const tabs=[['','Все заявки'],['open','В работе'],['done','Завершённые']].map(([value,label])=>
   '<a href="'+href('filter',value)+'"'+(filter===value?' aria-current="page"':'')+'>'+label+'</a>').join('');
  const rows=visible.map(item=>'<a class="service-row '+(item.id===selected?.id?'active':'')+'" href="'+href('item',item.id)+'"'+
-  (item.id===selected?.id?' aria-current="true"':'')+'>'+glyph(item.type)+'<span><strong>'+e(item.title)+
-  '</strong><small>'+calendarDate.format(new Date(item.createdAt))+'</small></span>'+statusBadge(item)+'</a>').join('');
+  (item.id===selected?.id?' aria-current="true"':'')+'>'+glyph(item.type)+'<span class="request-row-copy"><strong>'+e(item.title)+
+  '</strong><small>'+requestDate(item.createdAt)+'</small></span>'+statusBadge(item)+'</a>').join('');
  return '<div class="section-heading"><h1>Заявки</h1><button type="button" class="button" data-dialog="request-dialog">'+
   icon('plus')+'Новая заявка</button></div><div class="split work-layout"><section class="panel list-panel" aria-label="Список заявок">'+
   '<nav class="pills" aria-label="Состояние заявки">'+tabs+'</nav>'+

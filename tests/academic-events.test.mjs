@@ -277,7 +277,9 @@ test('authenticated streaming sends the live revision and never reveals another 
    assert.equal(chunk.done,false)
    text+=Buffer.from(chunk.value).toString()
   }}
-  assert.equal(await receive(),'0:0:0:0')
+  const baseline=await (await request('/api/dashboard',a)).json()
+  assert.deepEqual(baseline.notifications,[])
+  assert.equal(await receive(),baseline.liveRevision)
   const secondWriter=openStore(config)
   try{secondWriter.enqueueAcademicEvent(scheduledMove)}finally{secondWriter.close()}
   now=scheduledMove.at

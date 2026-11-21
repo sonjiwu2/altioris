@@ -61,16 +61,29 @@ function history(data){
  }).join('');
 }
 
+function messages(data){
+ const firstName=data.student.shortName.split(' ')[0];
+ return history(data)||`<div class="message-row">${avatar}<div class="bubble chat-welcome">
+  <p><strong>Здравствуйте, ${e(firstName)}!</strong></p>
+  <p>Чем вам помочь?</p>
+  </div></div>`;
+}
+
+export function updateConversation(root,data){
+ const log=root.querySelector('.chat-history');
+ if(!log)return;
+ const position=log.scrollTop;
+ const atEnd=log.scrollHeight-log.clientHeight-position<32;
+ log.innerHTML=messages(data);
+ log.scrollTop=atEnd?log.scrollHeight:position;
+ root.querySelector('.chat-jumps').hidden=data.support.length===0;
+}
+
 export function support(data,params){
  const teacher=data.campus.teachers.find(item=>item.id===params.get('teacher'));
  const request=data.requests.find(item=>item.id===params.get('request'));
  const draft=teacher?'Вопрос о преподавателе '+teacher.shortName+': ':request?'Статус заявки '+request.id:
   params.get('topic')==='online'?'Как подключиться к онлайн-занятию?':'';
- const firstName=data.student.shortName.split(' ')[0];
- const welcome=`<div class="message-row">${avatar}<div class="bubble chat-welcome">
-  <p><strong>Здравствуйте, ${e(firstName)}!</strong></p>
-  <p>Чем вам помочь?</p>
-  </div></div>`;
  return `<h1>Чат поддержки</h1><div class="support-layout"><section class="panel chat" aria-label="Помощник Altioris">
   <header class="chat-header">${avatar}<div class="chat-identity"><h2>Помощник Altioris</h2>
    <small>Автоматический помощник</small></div>
@@ -79,7 +92,7 @@ export function support(data,params){
     <button class="icon-button" type="button" data-chat-jump="end" aria-controls="chat-history" aria-label="К последним сообщениям" title="К последним сообщениям">${icon('down')}</button>
    </nav>
   </header>
-  <div class="chat-history" id="chat-history" role="log" aria-label="История сообщений" tabindex="0">${history(data)||welcome}</div>
+  <div class="chat-history" id="chat-history" role="log" aria-label="История сообщений" tabindex="0">${messages(data)}</div>
   <div class="chat-shortcuts" role="group" aria-label="Быстрые вопросы">
    <button type="button" data-dialog="support-questions">${icon('search')}Что можно спросить</button>
    ${shortcuts.map(([action,glyph,title])=>

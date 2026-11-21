@@ -22,7 +22,7 @@ Ranking sorts by unrounded credit-weighted GPA, then the displayed student name.
 
 Visual tokens and screen composition are specified in DESIGN.md. Runtime image assets never contain a complete screen or interactive text.
 
-The server processes academic events and request jobs on a timer without browser traffic. Schema 5 removed earlier request alerts. Schema 6 adds the durable request queue and PDF snapshots. The completion transaction stores the PDF, updates history and publishes one document-ready notice. The authenticated inbox stream also advances its revision for request history updates. [Delivery and local controls](academic-events.md).
+The server processes academic events and request jobs on a timer without browser traffic. Schema 5 removed earlier request alerts. Schema 6 adds the durable request queue and PDF snapshots. The completion transaction stores the PDF, updates history and publishes one document-ready notice. The authenticated inbox stream advances its revision for changes to request history, notifications and the latest support message. The chat view updates independently of the composer so other sessions can deliver history updates without discarding a draft. [Delivery and local controls](academic-events.md).
 
 ## Documents
 

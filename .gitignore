@@ -9,6 +9,7 @@
 /scripts/*
 !/scripts/setup-demo.mjs
 !/scripts/start-local.mjs
+!/scripts/start-lan-preview.mjs
 !/scripts/import-references.py
 !/scripts/install-skills.mjs
 !/scripts/queue-academic-event.mjs

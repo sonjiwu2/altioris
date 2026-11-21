@@ -234,6 +234,7 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
     const noticeVersion=db.prepare('SELECT count(*) AS total, coalesce(sum(is_read),0) AS read, coalesce(max(rowid),0) AS newest FROM notifications WHERE owner=?')
     const existingNotice=db.prepare('SELECT 1 FROM notifications WHERE owner=? AND id=?')
     const historyVersion=db.prepare('SELECT coalesce(max(event_no),0) AS version FROM request_history WHERE owner=?')
+    const supportVersion=db.prepare('SELECT id FROM support WHERE owner=? ORDER BY id DESC LIMIT 1')
     const requestQueue=openRequestQueue(db,{clock,transaction,history:insertHistory,notify:insertAcademicNotice,issueDocument(job,at){
       const account=accounts.find(account=>account.id===job.owner)
       const document={id:randomUUID(),type:job.type,title:job.title,createdAt:at,requestId:job.id,requestedAt:job.createdAt}
@@ -244,7 +245,7 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
     }})
     function inboxRevision(owner){
       const {total,read,newest}=noticeVersion.get(owner)
-      return total+':'+read+':'+newest+':'+historyVersion.get(owner).version
+      return total+':'+read+':'+newest+':'+historyVersion.get(owner).version+':'+(supportVersion.get(owner)?.id??0)
     }
 
     const dummySalt = randomBytes(16)

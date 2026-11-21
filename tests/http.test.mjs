@@ -106,6 +106,45 @@ async function dashboard(app, token) {
   return response.json()
 }
 
+test('independent sessions of one student share requests and chats with owned revisions', async () => {
+  const env = credentials()
+  const app = await launch(readConfig({...env, ALTIORIS_DB:':memory:', ALTIORIS_CLOCK:'demo'}))
+  try {
+    const desktop = await login(app, env, 'vetrova')
+    const phone = await login(app, env, 'vetrova')
+    const other = await login(app, env, 'zolotov')
+    assert.notEqual(phone.token, desktop.token)
+    const before = await dashboard(app, desktop.token)
+    const otherBefore = await dashboard(app, other.token)
+    const posted = await app.request('/api/requests', { method:'POST', token:phone.token, body:{ type:'certificate' } })
+    assert.ok(posted.ok)
+    const requestId = (await posted.json()).request.id
+    const desktopRequests = await dashboard(app, desktop.token)
+    assert.equal(desktopRequests.requests[0].id, requestId)
+    assert.notEqual(desktopRequests.liveRevision, before.liveRevision)
+    const response = await app.request('/api/support', {
+      method:'POST', token:desktop.token, body:{ action:'message', text:'Статус заявки '+requestId },
+    })
+    assert.equal(response.status, 200)
+    const phoneChat = await dashboard(app, phone.token)
+    assert.equal(phoneChat.support.at(-1).href, '/requests?item='+requestId)
+    assert.notEqual(phoneChat.liveRevision, desktopRequests.liveRevision)
+    const reply = await app.request('/api/support', {
+      method:'POST', token:phone.token, body:{ action:'message', text:'А когда будет?' },
+    })
+    assert.equal(reply.status, 200)
+    const desktopChat = await dashboard(app, desktop.token)
+    assert.equal(desktopChat.support.at(-2).text, 'А когда будет?')
+    assert.equal(desktopChat.support.at(-1).href, '/requests?item='+requestId)
+    const otherAfter = await dashboard(app, other.token)
+    assert.deepEqual(otherAfter.support, [])
+    assert.deepEqual(otherAfter.requests, [])
+    assert.equal(otherAfter.liveRevision, otherBefore.liveRevision)
+  } finally {
+    await app.close()
+  }
+})
+
 test('all demo students can open only their own two profile PDFs', async () => {
   const env = Object.fromEntries(accounts.map(account=>[account.passwordEnv,newPassword()]))
   const ids = new Set()

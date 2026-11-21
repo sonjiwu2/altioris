@@ -1,12 +1,12 @@
 import { preparePhoto, disposePhotoPreview } from './features/photo.js';
-import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-15';
+import { brand, escape as e, icon, portrait } from './ui.js?v=20261121-11';
 import { exams, onlineRoom, schedule } from './features/campus.js?v=20261121-8';
 import { grades, profile, ranking, teachers } from './features/academic.js?v=20261121-5';
 import { turnCampusPass } from './features/campus-pass.js?v=20261120-14';
-import { notifications, requests, support } from './features/services.js?v=20261121-5';
+import { notifications, requests, support, updateConversation } from './features/services.js?v=20261121-11';
 import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
 import { armNoticeSound, resetLiveNotice, showLiveNotice, toggleNoticeSound } from './features/live-notices.js';
-import { copyText, outsidePhoneOverlay, phoneLayout, phoneOverlays, showPhoneDetail, showPhoneDrawer } from './features/phone-ui.js?v=20261121-9';
+import { copyText, outsidePhoneOverlay, phoneLayout, phoneOverlays, showPhoneDetail, showPhoneDrawer } from './features/phone-ui.js?v=20261121-11';
 
 const app=document.querySelector('#app'), announcement=document.querySelector('#status');
 const navigation=[['/schedule','Расписание','nav-schedule'],['/grades','Успеваемость','nav-grades'],['/teachers','Преподаватели','nav-faculty'],['/requests','Заявки','nav-requests'],['/support','Чат поддержки','nav-chat'],['/notifications','Уведомления','nav-alerts'],['/settings','Настройки','nav-settings']];
@@ -163,7 +163,7 @@ function signIn() {
  document.documentElement.dataset.theme='light';
  document.documentElement.style.removeProperty('--text-scale');
  document.title='Вход в кабинет · Altioris University';
- app.innerHTML='<main id="main" class="sign-in" tabindex="-1"><section class="sign-in-card">'+brand+'<div class="ornament" aria-hidden="true"><span>✦</span></div><h1>Вход в кабинет</h1><form data-mutation="login" class="login-form"><label for="username">Логин</label><div class="input-control">'+icon('nav-profile')+'<input id="username" name="login" placeholder="Введите логин" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80" required></div><label for="password">Пароль</label><div class="input-control password-control">'+icon('lock')+'<input id="password" type="password" name="password" placeholder="Введите пароль" autocomplete="current-password" maxlength="128" required><button class="icon-button" type="button" data-password aria-label="Показать пароль" aria-pressed="false">'+icon('eye')+'</button></div><p class="form-error" role="alert" hidden></p><button class="button login-submit">Войти</button></form><button class="text-link help-link" type="button" data-dialog="login-help">Не получается войти?</button></section><footer>Конкурсный прототип</footer></main><dialog id="login-help" aria-labelledby="login-help-title"><div class="section-heading"><h2 id="login-help-title">Не получается войти?</h2><button type="button" class="icon-button" data-close aria-label="Закрыть">'+icon('close')+'</button></div><p>Введите логин и постоянный пароль демонстрационного аккаунта. Если у вас нет доступа, обратитесь к организатору демонстрации.</p></dialog>';
+ app.innerHTML='<main id="main" class="sign-in" tabindex="-1"><section class="sign-in-card">'+brand+'<div class="ornament" aria-hidden="true"><span>✦</span></div><h1>Вход в кабинет</h1><form data-mutation="login" class="login-form"><label for="username">Логин</label><div class="input-control">'+icon('nav-profile')+'<input id="username" name="login" placeholder="Введите логин" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80" required></div><label for="password">Пароль</label><div class="input-control password-control">'+icon('lock')+'<input id="password" type="password" name="password" placeholder="Введите пароль" autocomplete="current-password" maxlength="128" required><button class="icon-button" type="button" data-password aria-controls="password" aria-label="Показать пароль" aria-pressed="false">'+icon('eye')+'</button></div><p class="form-error" role="alert" hidden></p><button class="button login-submit">Войти</button></form><button class="text-link help-link" type="button" data-dialog="login-help">Не получается войти?</button></section><footer>Конкурсный прототип</footer></main><dialog id="login-help" aria-labelledby="login-help-title"><div class="section-heading"><h2 id="login-help-title">Не получается войти?</h2><button type="button" class="icon-button" data-close aria-label="Закрыть">'+icon('close')+'</button></div><p>Введите логин и постоянный пароль демонстрационного аккаунта. Если у вас нет доступа, обратитесь к организатору демонстрации.</p></dialog>';
 }
 function render(focus=false,navigating=false) {
  disposePhotoPreview();
@@ -290,14 +290,23 @@ async function refreshNotices(force=false){
   const fresh=updated.notifications.filter(item=>!item.read&&!known.has(item.id));
   snapshot=updated;
   const path=viewPath(location.pathname);
-  const liveView=path==='/notifications'||(['/requests','/support'].includes(path)&&JSON.stringify(updated.requests)!==JSON.stringify(prior.requests))||
+  const requestsChanged=JSON.stringify(updated.requests)!==JSON.stringify(prior.requests);
+  const chatChanged=updated.support.at(-1)?.id!==prior.support.at(-1)?.id;
+  const liveView=path==='/notifications'||(path==='/requests'&&requestsChanged)||
    (path.startsWith('/schedule')&&JSON.stringify(updated.campus.lessons)!==JSON.stringify(prior.campus.lessons))||
    (path.startsWith('/grades')&&JSON.stringify(updated.grades)!==JSON.stringify(prior.grades))||
    (path==='/grades/ranking'&&JSON.stringify(updated.ranking)!==JSON.stringify(prior.ranking));
-  if(liveView){
+  if(path==='/support'&&(chatChanged||requestsChanged)){
+   const focused=document.activeElement?.closest('.chat-history a[href]')?.href;
+   updateConversation(app,updated);
+   if(focused)[...app.querySelectorAll('.chat-history a[href]')].find(link=>link.href===focused)?.focus({preventScroll:true});
+   updateInboxIndicators();
+  }else if(liveView){
    const focused=document.activeElement;
    const href=focused?.closest('a[href]')?.href;
-   if(focused?.matches('input,select,textarea')||document.querySelector('dialog[open]')){
+   const dialog=document.querySelector('dialog[open]');
+   const liveRequest=path==='/requests'&&dialog?.id==='phone-detail';
+   if(focused?.matches('input,select,textarea')||dialog&&!liveRequest){
     deferredInboxView=location.href;
     updateInboxIndicators();
    }
@@ -320,6 +329,15 @@ async function load(){
  catch(error){if(error.status===401){snapshot=undefined;render();}else app.innerHTML='<main id="main" class="page standalone-error"><h1>Кабинет недоступен</h1><p>'+e(error.message)+'</p><button class="button" data-retry>Повторить</button></main>';}
 }
 const mutations={login:['/api/login','POST'],request:['/api/requests','POST'],avatar:['/api/profile','PATCH'],photo:['/api/profile/avatar','PUT'],removePhoto:['/api/profile/avatar','DELETE'],message:['/api/support','POST'],support:['/api/support','POST'],read:['/api/notifications','PATCH'],logout:['/api/logout','POST']};
+function newSubmissionId(){
+ if(typeof crypto.randomUUID==='function')return crypto.randomUUID();
+ // getRandomValues works for the local HTTP version on a phone.
+ const bytes=crypto.getRandomValues(new Uint8Array(16));
+ bytes[6]=(bytes[6]&0x0f)|0x40;
+ bytes[8]=(bytes[8]&0x3f)|0x80;
+ const hex=Array.from(bytes,byte=>byte.toString(16).padStart(2,'0')).join('');
+ return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
+}
 async function save(name,body,control,errorBox){
  if(busy)return;busy=true;
  if(control){control.disabled=true;control.setAttribute('aria-busy','true');}
@@ -405,7 +423,7 @@ app.addEventListener('submit',event=>{
  if(kind==='request'){
   if(form.dataset.submissionType!==body.type){
    form.dataset.submissionType=body.type;
-   form.dataset.submissionId=crypto.randomUUID();
+   form.dataset.submissionId=newSubmissionId();
   }
   body.submissionId=form.dataset.submissionId;
  }
@@ -462,7 +480,14 @@ app.addEventListener('click',event=>{
    composer.focus({preventScroll:true});
    return;
   }
-  if(button.hasAttribute('data-password')){const input=app.querySelector('#password'),show=input.type==='password';input.type=show?'text':'password';button.setAttribute('aria-pressed',String(show));button.setAttribute('aria-label',show?'Скрыть пароль':'Показать пароль');}
+  if(button.hasAttribute('data-password')){
+   const input=app.querySelector('#password'),visible=input.type==='password';
+   const {selectionStart,selectionEnd,selectionDirection}=input;
+   input.type=visible?'text':'password';
+   input.setSelectionRange(selectionStart,selectionEnd,selectionDirection);
+   button.setAttribute('aria-pressed',String(visible));
+   button.setAttribute('aria-label',visible?'Скрыть пароль':'Показать пароль');
+  }
   if(button.dataset.dialog)document.getElementById(button.dataset.dialog)?.showModal();
   if(button.hasAttribute('data-close'))button.closest('dialog')?.close();
   if(button.hasAttribute('data-phone-dismiss')){dismissPhoneOverlay(button.closest('dialog'));return;}

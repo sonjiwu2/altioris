@@ -4,7 +4,7 @@ const controls = {
  down:'<path d="m6.5 9.5 5.5 5 5.5-5"/>',
  close:'<path d="m6.5 6.5 11 11m0-11-11 11"/>',
  menu:'<path d="M4.5 7h15m-15 5h15m-15 5h15"/>',
- eye:'<path d="M3 12c4.5-7 13.5-7 18 0-4.5 7-13.5 7-18 0Z"/><circle cx="12" cy="12" r="2.5"/>',
+ eye:'<g class="password-eye-open"><path d="M3 12c4.5-7 13.5-7 18 0-4.5 7-13.5 7-18 0Z"/><circle cx="12" cy="12" r="2.5"/></g><g class="password-eye-closed"><path d="M3 10.5c4.5 5.6 13.5 5.6 18 0M7.5 14l-1.5 2M12 15v2.5m4.5-3.5 1.5 2"/></g>',
  plus:'<path d="M12 5v14M5 12h14"/>',
  copy:'<rect x="8" y="3.5" width="12" height="13" rx="2"/><path d="M15 20.5H6a2 2 0 0 1-2-2V8.5"/>',
  out:'<path d="M13 4h7v7m0-7-9 9m9 1v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4"/>',

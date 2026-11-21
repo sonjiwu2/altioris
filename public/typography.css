@@ -259,6 +259,17 @@ h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1
  border-radius:20px;color:#fff6e8;font:700 12px/1 var(--body-font);flex-shrink:0;
 }
 .nav-unread[data-inbox-count][hidden],.notice-toast[hidden]{display:none}
+.request-date-compact{display:none}
+.password-control .icon-eye{width:22px;height:22px}
+.password-control .icon-eye g{
+ transform-box:view-box;
+ transform-origin:center;
+ transition:opacity 150ms ease,transform 190ms var(--flow);
+}
+.password-eye-open{opacity:0;transform:scaleY(.22)}
+.password-eye-closed{opacity:1;transform:scaleY(1)}
+[data-password][aria-pressed="true"] .password-eye-open{opacity:1;transform:scaleY(1)}
+[data-password][aria-pressed="true"] .password-eye-closed{opacity:0;transform:scaleY(.22)}
 .current-mark{display:block;margin-top:5px;color:var(--muted)}
 .page .notifications-toolbar,.inbox-toolbar-actions,.inbox-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .page .notifications-toolbar .button{min-height:44px;padding-inline:14px}

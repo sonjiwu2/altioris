@@ -109,7 +109,23 @@
   border: 1px solid var(--line);
  }
  .phone-drawer .portrait { width: 36px; height: 36px; flex: 0 0 36px; }
- .phone-drawer .nav-unread { position: static; margin-inline-start: auto; }
+ .phone-drawer .nav-unread[data-inbox-count]:not([hidden]) {
+  position: static;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  min-width: 22px;
+  width: auto;
+  height: 22px;
+  margin-inline-start: auto;
+  padding-inline: 5px;
+  border-radius: 999px;
+  background: #a63220;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+ }
  dialog.phone-sheet {
   inset: auto 0 0;
   margin: 0 auto;
@@ -199,7 +215,27 @@
  .page .teacher-filters { grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
  .page .teacher-filters .search-field { grid-column: 1 / -1; min-height: 48px; }
  .page .teacher-filters .department-filter { min-width: 0; }
- .page .teacher-filters select { width: 100%; min-height: 48px; }
+ .page .teacher-filters .department-filter { position: relative; }
+ .page .teacher-filters select {
+  appearance: none;
+  width: 100%;
+  min-height: 48px;
+  padding-inline-end: 36px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+ }
+ .page .teacher-filters .department-filter::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset-inline-end: 17px;
+  bottom: 21px;
+  width: 8px;
+  height: 8px;
+  border: solid var(--muted);
+  border-width: 0 1.5px 1.5px 0;
+  rotate: 45deg;
+ }
  .page .teacher-list { display: block; max-height: none; min-height: 0; overflow: visible; padding: 4px 10px; scroll-snap-type: none; }
  .page .teacher-list .person-link {
   display: grid;
@@ -249,6 +285,63 @@
  .page .access-panel .session-copy h2 { font-size: 1.15rem; }
  .page .access-panel .session-copy p { font-size: .78rem; }
  .page .access-panel .button { min-height: 48px; font-size: .82rem; }
+
+ .page .work-layout .service-row {
+  display: grid;
+  grid-template-columns: 32px minmax(82px,1fr) minmax(0,max-content);
+  gap: 6px 8px;
+  align-items: center;
+  min-height: 82px;
+  padding: 12px 8px;
+ }
+ .page .work-layout .service-row > .detail-icon {
+  grid-row: 1 / 3;
+  width: 32px;
+  height: 32px;
+ }
+ .page .work-layout .request-row-copy { display: contents; }
+ .page .work-layout .request-row-copy strong {
+  grid-column: 2 / -1;
+  grid-row: 1;
+  min-width: 0;
+  font-size: .91rem;
+  line-height: 1.18;
+  overflow-wrap: break-word;
+  hyphens: auto;
+ }
+ .page .work-layout .request-row-copy small {
+  grid-column: 2;
+  grid-row: 2;
+  margin: 0;
+  font-size: .65rem;
+ }
+ .page .work-layout .service-row > .badge {
+  grid-column: 3;
+  grid-row: 2;
+  justify-self: end;
+  margin: 0;
+  padding: 4px 5px;
+  max-width: 100%;
+  font-size: .59rem;
+  text-align: center;
+  white-space: normal;
+ }
+ .phone-sheet-content .request-title {
+  display: grid;
+  grid-template-columns: 34px minmax(0,1fr);
+  gap: 5px 10px;
+ }
+ .phone-sheet-content .request-title > .detail-icon { width: 34px; height: 34px; }
+ .phone-sheet-content .request-title > .badge { grid-column: 2; justify-self: start; }
+ .phone-sheet-content .request-history-title { margin: 14px 0 10px; }
+ .phone-sheet-content .request-history li { align-items: start; }
+ .phone-sheet-content .request-history strong { font-size: .92rem; }
+ :is(.work-layout,.phone-sheet) .request-date-full { display: none; }
+ :is(.work-layout,.phone-sheet) .request-date-compact {
+  display: inline;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+ }
 }
 
 @media (prefers-reduced-motion: reduce) {
