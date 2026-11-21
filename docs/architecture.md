@@ -18,6 +18,8 @@ Node.js 24+ serves buildless HTML, CSS, browser ES modules, local fonts and artw
 
 The browser uses URL query parameters for list selection, date, filters and display modes. public/features/settings.js stores theme and text scale and honors existing legacy reduced-motion preferences in localStorage under the student's stable number. Authentication stays in HttpOnly SameSite cookies.
 
+With `ALTIORIS_AUTH_SOURCE=sqlite`, a deployed process authenticates against the existing salted hashes for all 13 fixed accounts. It rejects plaintext account configuration in this mode. Local development still seeds credentials from private runtime configuration.
+
 Ranking sorts by unrounded credit-weighted GPA, then the displayed student name. Mean and GPA omit nonnumeric results. Instruction and assessment times use Europe/Moscow. The clock is live by default and can be fixed with ALTIORIS_CLOCK=demo. The local launcher binds to 127.0.0.1, uses runtime/altioris.sqlite and can choose a free port.
 
 Visual tokens and screen composition are specified in DESIGN.md. Runtime image assets never contain a complete screen or interactive text.

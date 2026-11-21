@@ -13,6 +13,8 @@
 !/scripts/import-references.py
 !/scripts/install-skills.mjs
 !/scripts/queue-academic-event.mjs
+!/scripts/update-vps-auth.ps1
+!/scripts/update-vps-auth.sh
 /evidence/
 /screenshots/
 /references/

@@ -39,11 +39,23 @@ class HttpError extends Error {
 }
 
 export function readConfig(env = process.env) {
-  const passwords = configuredPasswords(env)
-  if (Object.values(passwords).some((value) => !value || value.length < 12 || value.length > 128)) {
-    throw new Error('Set independent ALTIORIS_PASSWORD_A and ALTIORIS_PASSWORD_B values of 12–128 characters.')
+  const authSource = env.ALTIORIS_AUTH_SOURCE ?? 'configuration'
+  if (!['configuration', 'sqlite'].includes(authSource)) {
+    throw new Error('ALTIORIS_AUTH_SOURCE must be configuration or sqlite.')
   }
-  if (new Set(Object.values(passwords)).size !== Object.keys(passwords).length) throw new Error('Demo accounts require different passwords.')
+  let passwords = null
+  if (authSource === 'sqlite') {
+    if (env.ALTIORIS_ACCOUNTS_FILE || accounts.some(({ passwordEnv }) => env[passwordEnv] !== undefined)) {
+      throw new Error('Remove password configuration before starting with SQLite authentication.')
+    }
+  } else {
+    passwords = configuredPasswords(env)
+    const values = Object.values(passwords)
+    if (values.some((value) => !value || value.length < 12 || value.length > 128)) {
+      throw new Error('Set independent ALTIORIS_PASSWORD_A and ALTIORIS_PASSWORD_B values of 12–128 characters.')
+    }
+    if (new Set(values).size !== values.length) throw new Error('Demo accounts require different passwords.')
+  }
   const secure = env.NODE_ENV === 'production'
   let origin = null
   if (env.ALTIORIS_ORIGIN) {

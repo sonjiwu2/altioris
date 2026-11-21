@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID, scrypt, scryptSync, timingSafeEqual } from 'node:crypto'
-import { mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { promisify } from 'node:util'
@@ -165,10 +165,13 @@ function migrate(db) {
 }
 
 export function openStore({ databasePath, passwords, clock, simulation = false }) {
+  if (passwords === null && !existsSync(databasePath)) {
+    throw new Error('SQLite authentication requires an existing database with all demo accounts.')
+  }
   if (databasePath !== ':memory:') mkdirSync(dirname(databasePath), { recursive: true, mode: 0o700 })
   const db = new DatabaseSync(databasePath)
-  db.exec('PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;')
   try {
+    db.exec('PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;')
     migrate(db)
 
     const selectAccount = db.prepare('SELECT id, salt, password_hash FROM accounts WHERE login = ?')
@@ -205,28 +208,39 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
       }
     }
 
-    transaction(() => {
-      for (const account of accounts) {
-        const password = passwords[account.id]
-        if (password === undefined) {
-          removeSessions.run(account.id)
-          continue
-        }
-        const prior = selectAccount.get(account.login)
-        if (prior && timingSafeEqual(scryptSync(password, prior.salt, 64), prior.password_hash)) continue
-
-        const salt = randomBytes(16)
-        const hash = scryptSync(password, salt, 64)
-        if (prior) {
-          updatePassword.run(salt, hash, account.id)
-          removeSessions.run(account.id)
-        } else {
-          insertAccount.run(account.id, account.login, salt, hash)
+    if (passwords === null) {
+      for (const { id, login } of accounts) {
+        const stored = selectAccount.get(login)
+        if (stored?.id !== id || !(stored.salt instanceof Uint8Array) || stored.salt.length !== 16 ||
+            !(stored.password_hash instanceof Uint8Array) || stored.password_hash.length !== 64) {
+          throw new Error('SQLite authentication requires a valid password hash for every fixed demo account.')
         }
       }
-    })
+    } else {
+      transaction(() => {
+        for (const account of accounts) {
+          const password = passwords[account.id]
+          if (password === undefined) {
+            removeSessions.run(account.id)
+            continue
+          }
+          const prior = selectAccount.get(account.login)
+          if (prior && timingSafeEqual(scryptSync(password, prior.salt, 64), prior.password_hash)) continue
 
-    const cohort=accounts.filter(({id})=>passwords[id]!==undefined)
+          const salt = randomBytes(16)
+          const hash = scryptSync(password, salt, 64)
+          if (prior) {
+            updatePassword.run(salt, hash, account.id)
+            removeSessions.run(account.id)
+          } else {
+            insertAccount.run(account.id, account.login, salt, hash)
+          }
+        }
+      })
+    }
+
+    const cohort = passwords === null ? accounts : accounts.filter(({ id }) => passwords[id] !== undefined)
+    const enabledIds = new Set(cohort.map(({ id }) => id))
     const academic=openAcademicQueue(db,{clock,cohort,transaction,recordNotice:(...args)=>insertAcademicNotice.run(...args),simulation})
     const campusView=(owner,at=clock(),changes=academic.changes())=>campusWithChanges(owner,at,changes)
     const gradeView=(owner,at=clock(),changes=academic.changes())=>gradesWithChanges(accounts.find(account=>account.id===owner),at,changes)
@@ -360,7 +374,7 @@ export function openStore({ databasePath, passwords, clock, simulation = false }
       async authenticate(login, password) {
         const account = selectAccount.get(login)
         const attempt = await derive(password, account?.salt ?? dummySalt, 64)
-        return timingSafeEqual(attempt, account?.password_hash ?? dummyHash) && account && passwords[account.id] !== undefined ? account.id : null
+        return timingSafeEqual(attempt, account?.password_hash ?? dummyHash) && account && enabledIds.has(account.id) ? account.id : null
       },
       issueSession(owner) {
         const raw = randomBytes(32).toString('base64url')

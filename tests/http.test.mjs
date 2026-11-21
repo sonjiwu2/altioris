@@ -403,6 +403,52 @@ test('private records, workspace actions and sessions are isolated and survive a
   }
 })
 
+test('a seeded production database starts without plaintext configuration and keeps all accounts and records', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'altioris-sqlite-auth-'))
+  const databasePath = join(directory, 'campus.sqlite')
+  const origin = 'https://demo.altioris.example'
+  const env = { NODE_ENV: 'production', ALTIORIS_ORIGIN: origin, ALTIORIS_DB: databasePath, ALTIORIS_AUTH_SOURCE: 'sqlite' }
+  const config = readConfig(env)
+  const passwords = Object.fromEntries(accounts.map(({ id }) => [id, newPassword()]))
+  try {
+    assert.throws(() => readConfig({ ...env, ALTIORIS_ACCOUNTS_FILE: 'unused.json' }), /Remove password configuration/)
+    assert.throws(() => readConfig({ ...env, ALTIORIS_PASSWORD_A: passwords.a }), /Remove password configuration/)
+    assert.throws(() => openStore(config), /existing database/)
+
+    const partial = openStore({ ...config, passwords: { a: passwords.a } })
+    partial.close()
+    assert.throws(() => openStore(config), /every fixed demo account/)
+
+    const seeded = openStore({ ...config, passwords })
+    const token = seeded.issueSession('a')
+    const request = seeded.createRequest('a', 'certificate')
+    seeded.close()
+
+    const reopened = openStore(config)
+    try {
+      for (const { id, login } of accounts) {
+        assert.equal(await reopened.authenticate(login, passwords[id]), id)
+      }
+      assert.equal(await reopened.authenticate(accounts[0].login, passwords.b), null)
+    } finally {
+      reopened.close()
+    }
+
+    const app = await launch(config)
+    try {
+      const dashboardAfterRestart = await dashboard(app, '__Host-altioris_session=' + token)
+      assert.equal(dashboardAfterRestart.requests.some(({ id }) => id === request.id), true)
+      const b = await login(app, { ALTIORIS_PASSWORD_B: passwords.b }, accounts[1].login, origin)
+      assert.match(b.cookie, /; Secure$/)
+      assert.equal((await dashboard(app, b.token)).requests.some(({ id }) => id === request.id), false)
+    } finally {
+      await app.close()
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true })
+  }
+})
+
 test('the API validates small requests, canonical write origin, secure cookies and sign-in limits', async () => {
   const origin = 'https://demo.altioris.example'
   const env = { ...credentials(), ALTIORIS_DB: ':memory:', NODE_ENV: 'production', ALTIORIS_ORIGIN: origin }
