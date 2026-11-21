@@ -60,6 +60,11 @@ h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1
 .page .teacher-list .person-link{gap:18px;padding-block:20px}
 .page .teacher-list{min-width:0;min-height:0;max-height:min(74vh,850px);overflow:auto;align-self:start}
 .page .teacher-details{align-self:start;min-height:0}
+@media(min-width:981px){
+ .page .directory:has(>.teacher-details)>.teacher-list{
+  align-self:stretch;max-height:none;contain:size;
+ }
+}
 .page .teacher-identity>div{min-width:0;overflow-wrap:anywhere}
 .teacher-seal{
  --seal-ink:#58477b;--seal-paper:#e1daed;
@@ -132,7 +137,9 @@ h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1
 .photo-actions{display:flex;flex-wrap:wrap;gap:12px}
 #avatar-dialog{font-family:var(--body-font);font-size:.85rem;width:min(600px,calc(100% - 28px));max-height:calc(100dvh - 32px);overflow:auto}
 @media(min-width:981px){
- :root{--sidebar:clamp(204px,14.5vw,224px)}
+ :root{--sidebar:clamp(244px,17vw,260px)}
+ :root[data-text-scale="115"]{--sidebar:274px}
+ :root[data-text-scale="130"]{--sidebar:294px}
  .sidebar{padding:16px 10px 14px}
  .sidebar .brand-link{flex:none;padding-bottom:14px}
  .sidebar .brand{font-size:1.32rem}
@@ -255,10 +262,10 @@ h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1
 .detail-icon{filter:drop-shadow(0 1px 1px #30211133)}
 .page .teacher-facts .detail-icon{width:42px;height:42px}
 .nav-notification-label{
- display:flex;flex:1;min-width:0;align-items:center;flex-wrap:wrap;gap:4px 7px;
+ display:flex;flex:1;min-width:0;align-items:center;gap:7px;
 }
 .nav-notification-label>span:first-child{
- min-width:0;overflow-wrap:anywhere;
+ white-space:nowrap;
 }
 .nav-notification-label .nav-unread[data-inbox-count]:not([hidden]){
  min-width:22px;width:auto;height:22px;padding-inline:5px;display:inline-grid;place-items:center;
