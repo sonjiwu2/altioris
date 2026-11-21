@@ -1,6 +1,10 @@
-# Implementation prompts
+# Prompts and development requests
 
-Read AGENTS.md and DESIGN.md first. The approved baseline has 11 screens at 1536 x 1024. Execute roles sequentially unless parallel work is requested.
+[Development prompts](development/README.md) collects edited English translations of the user's product-development requests in chronological order.
+
+## Reusable implementation prompts
+
+Read the [contributor instructions](../../AGENTS.md) and [visual contract](../../DESIGN.md) first. The approved baseline has 11 screens at 1536 × 1024. Execute roles sequentially unless parallel work is requested.
 
 - [Implementation coordinator](00-coordinator.md)
 - [Project methods and dependencies](01-skill-research.md)
@@ -27,4 +31,4 @@ Read AGENTS.md and DESIGN.md first. The approved baseline has 11 screens at 1536
 - [Individual image generation](22-imagen-assets.md)
 - [Final visual pass](23-frontend-polish-and-verification.md)
 
-[Master project prompt](MASTER_PROMPT_EN.md) — shared project context.
+[Master project prompt](MASTER_PROMPT_EN.md) provides the shared project context.
