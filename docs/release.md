@@ -1,5 +1,15 @@
-# Local release
+# Выпуск Altioris
 
-Run npm run demo:setup, node --test, python scripts/import-references.py and npm run dev. Use the URL printed by the local launcher. Credentials remain in runtime/ACCOUNTS.txt and do not rotate.
+[Открыть публичное демо](https://31-77-222-138.sslip.io/) · [Исходный код на GitHub](https://github.com/sonjiwu2/altioris) · [История изменений](../CHANGELOG.md).
 
-Commit verified source changes, inspect staged paths and keep runtime/private diagnostics ignored. Code and public project instructions are delivered together in main. Public publication and rewriting shared remote history require their own concrete delivery step.
+## Проверить изменения
+
+1. Запустите `npm test`, `python scripts/import-references.py` и `node scripts/install-skills.mjs`. Те же команды выполняет GitHub Actions.
+2. Поднимите локальный экземпляр по [README](../README.md#быстрый-старт). Проверьте изменённые сценарии на десктопе и телефоне. Для заявки проверьте историю этапов, появление PDF и уведомление. Для поддержки проверьте ответ и сохранение истории.
+3. Проверьте состав файлов коммита. Пароли, файлы SQLite, сессии и журналы остаются в `runtime/`. Скриншоты для GitHub снимайте на отдельных вымышленных данных.
+
+## Опубликовать
+
+1. Отправьте проверенные исходники и инструкции в GitHub. Убедитесь, что нужный коммит находится в `main`, и проверьте результат [Checks](https://github.com/sonjiwu2/altioris/actions/workflows/checks.yml).
+2. Если менялся запущенный сервис, примените обновление VPS по [инструкции развёртывания](deployment.md). Сохраните рабочую SQLite и доступ всех существующих аккаунтов.
+3. Откройте HTTPS-адрес и выполните изменённые сценарии под тестовым аккаунтом. Для изменений в клиенте сравните версию файлов, которые отдаёт сервер, с проверенной сборкой.
