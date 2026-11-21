@@ -286,10 +286,11 @@
  .page .access-panel .session-copy p { font-size: .78rem; }
  .page .access-panel .button { min-height: 48px; font-size: .82rem; }
 
+ .page .work-layout .list-panel { container-type: inline-size; }
  .page .work-layout .service-row {
   display: grid;
-  grid-template-columns: 32px minmax(82px,1fr) minmax(0,max-content);
-  gap: 6px 8px;
+  grid-template-columns: 32px max-content minmax(0,1fr);
+  gap: 8px 12px;
   align-items: center;
   min-height: 82px;
   padding: 12px 8px;
@@ -325,6 +326,16 @@
   font-size: .59rem;
   text-align: center;
   white-space: normal;
+  overflow-wrap: break-word;
+ }
+ @container (max-width: 12rem) {
+  .page .work-layout .service-row { grid-template-columns: 32px minmax(0,1fr); }
+  .page .work-layout .service-row > .detail-icon { grid-row: 1 / 4; align-self: start; }
+  .page .work-layout .service-row > .badge {
+   grid-column: 2;
+   grid-row: 3;
+   justify-self: start;
+  }
  }
  .phone-sheet-content .request-title {
   display: grid;
