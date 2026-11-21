@@ -1,11 +1,12 @@
 import { preparePhoto, disposePhotoPreview } from './features/photo.js';
 import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-15';
-import { exams, onlineRoom, schedule } from './features/campus.js?v=20261121-5';
+import { exams, onlineRoom, schedule } from './features/campus.js?v=20261121-8';
 import { grades, profile, ranking, teachers } from './features/academic.js?v=20261121-5';
 import { turnCampusPass } from './features/campus-pass.js?v=20261120-14';
 import { notifications, requests, support } from './features/services.js?v=20261121-5';
 import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
 import { armNoticeSound, resetLiveNotice, showLiveNotice, toggleNoticeSound } from './features/live-notices.js';
+import { copyText, outsidePhoneOverlay, phoneLayout, phoneOverlays, showPhoneDetail, showPhoneDrawer } from './features/phone-ui.js?v=20261121-9';
 
 const app=document.querySelector('#app'), announcement=document.querySelector('#status');
 const navigation=[['/schedule','Расписание','nav-schedule'],['/grades','Успеваемость','nav-grades'],['/teachers','Преподаватели','nav-faculty'],['/requests','Заявки','nav-requests'],['/support','Чат поддержки','nav-chat'],['/notifications','Уведомления','nav-alerts'],['/settings','Настройки','nav-settings']];
@@ -60,6 +61,13 @@ const detailPanels=new Map([
  ['/schedule','.schedule-inspector'],['/schedule/exams','.schedule-inspector'],['/grades','.grade-inspector'],
  ['/teachers','.teacher-details'],['/requests','.request-inspector'],['/notifications','.notification-detail'],
 ]);
+const phoneDetailLabels=new Map([
+ ['/schedule','Занятие'],['/schedule/exams','Экзамен или зачёт'],['/grades','Дисциплина'],
+ ['/teachers','Преподаватель'],['/requests','Заявка'],['/notifications','Уведомление'],
+]);
+const detailParam=path=>path==='/schedule'?'lesson':'item';
+let phoneDetailReturn;
+let phoneTriggerHref;
 const tabContent=new Map([
  ['/schedule','.schedule-layout'],['/schedule/exams','.exam-layout'],
  ['/grades','.academic-layout'],['/grades/ranking','.rank-heading,.rank-history,.rank-strip,.ranking-panel,.rank-meta'],
@@ -165,6 +173,9 @@ function render(focus=false,navigating=false) {
  if(!snapshot){signIn();if(focus)app.querySelector('#username').focus();return;}
  applyPreferences(snapshot.student);
  const {pathname,search}=location,params=new URLSearchParams(search);
+ const phone=phoneLayout.matches;
+ const oldPageScroll=window.scrollY, oldPath=lastView?.path;
+ const oldSheetScroll=app.querySelector('#phone-detail[open] .phone-sheet-content')?.scrollTop;
  const previousChat=app.querySelector('.chat-history');
  const chatPosition=previousChat?.scrollTop??0;
  const atChatEnd=!previousChat||previousChat.scrollHeight-previousChat.clientHeight-chatPosition<32;
@@ -174,54 +185,86 @@ function render(focus=false,navigating=false) {
  const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+'<span>'+label+'</span>'+(href==='/notifications'?'<span class="nav-unread" data-inbox-count hidden></span>':'')+'</a>').join('');
  const student=snapshot.student;
  const currentProfile=pathname==='/profile'?' aria-current="page"':'';
+ const mobileProfile=`<a class="mobile-profile" href="/profile"${currentProfile}>${portrait(student)}<span>Мой профиль</span></a>`;
+ const brandLink=`<a href="/schedule" aria-label="Altioris University">${brand}</a>`;
+ const menuButton=`<button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="${phone?'phone-drawer':'mobile-nav'}" aria-label="Открыть меню">${icon('menu')}</button>`;
  const page=pages.get(pathname);
  const content=page?page(snapshot,params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
  const path=viewPath(pathname);
- if(navigating&&!hadDeferredView&&updateSelectedDetails(content,path,params))return;
- app.innerHTML=`<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">${brand}</a>
-  <button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">${icon('menu')}</button></header>
+ if(!phone&&navigating&&!hadDeferredView&&updateSelectedDetails(content,path,params))return;
+ app.innerHTML=`<header class="mobile-header">${phone?menuButton+brandLink:brandLink+menuButton}</header>
   <aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">${brand}</a>
    <nav class="main-nav" aria-label="Основное меню">${nav}</nav>
    <div class="sidebar-account"><a class="sidebar-profile" href="/profile" aria-label="Мой профиль · ${e(student.shortName)}"${currentProfile}>
     ${portrait(student)}<span>${e(student.shortName)}<small>${e(student.group)}</small></span></a></div>
   </aside>
-  <nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>${nav}<a class="mobile-profile" href="/profile"${currentProfile}>${portrait(student)}<span>Мой профиль</span></a></nav>
-  <div class="workspace"><main id="main" class="page" tabindex="-1">${content}</main><footer class="page-footer">Конкурсный прототип</footer></div>`;
+  ${phone?'':`<nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>${nav}${mobileProfile}</nav>`}
+  <div class="workspace"><main id="main" class="page" tabindex="-1">${content}</main><footer class="page-footer">Конкурсный прототип</footer></div>
+  ${phone?phoneOverlays(nav,mobileProfile):''}`;
  updateInboxIndicators();
  const activeItem=app.querySelector('main a[aria-current="true"]');
  const currentView=readView(app.querySelector('#main'),path,params);
  if(lastView?.path===path&&lastView.scope===currentView.scope&&(scrollLeft||scrollTop)){
   const nextScroller=app.querySelector('.calendar-scroll,.teacher-list,.notification-inbox');
   if(nextScroller)nextScroller.scrollTo(scrollLeft,scrollTop);
- }else if(path==='/teachers'&&activeItem){
+ }else if(!phone&&path==='/teachers'&&activeItem){
   const list=activeItem.parentElement;
   const bounds=list.getBoundingClientRect(),item=activeItem.getBoundingClientRect();
   list.scrollTo(Math.max(0,item.right-bounds.right),Math.max(0,item.bottom-bounds.bottom));
  }
  if(navigating||!lastView)animateNavigation(lastView,currentView);
  lastView=currentView;
- const dialog=app.querySelector('[data-auto-open]');if(dialog)dialog.showModal();else if(focus)document.querySelector('#main').focus({preventScroll:true});
+ const dialog=app.querySelector('[data-auto-open]');
+ if(phone&&oldPath===path)window.scrollTo({top:oldPageScroll,behavior:'instant'});
+ if(dialog)dialog.showModal();
+ else if(phone&&history.state?.phoneDrawer)showPhoneDrawer();
+ else if(phone&&phoneDetailLabels.has(path)&&params.get(detailParam(path))&&currentView.selection===params.get(detailParam(path))){
+  const panel=app.querySelector(detailPanels.get(path));
+  phoneDetailReturn=history.state?.phoneDetailFrom??null;
+  phoneTriggerHref=activeItem?.href;
+  showPhoneDetail(panel,phoneDetailLabels.get(path));
+  if(!navigating&&oldSheetScroll)app.querySelector('.phone-sheet-content').scrollTop=oldSheetScroll;
+ }else if(focus)document.querySelector('#main').focus({preventScroll:true});
  const chat=app.querySelector('.chat-history');
  if(chat)chat.scrollTop=atChatEnd?chat.scrollHeight:chatPosition;
 }
 function go(href,restoreFocus,replace=false){
  const next=new URL(href,location.href),path=viewPath(next.pathname);
  const same=viewPath(location.pathname)===path;
- const selectionChanged=next.searchParams.get('item')!==new URLSearchParams(location.search).get('item')||
-  next.searchParams.get('lesson')!==new URLSearchParams(location.search).get('lesson');
- history[replace?'replaceState':'pushState'](null,'',next);render(!same,true);if(!same)window.scrollTo({top:0,behavior:'instant'});
- const detailSelector=detailPanels.get(path);
- const selectedDetail=detailSelector&&selectionChanged&&matchMedia('(max-width:680px)').matches&&(next.searchParams.has('item')||next.searchParams.has('lesson'))&&app.querySelector(detailSelector);
+ const drawer=phoneLayout.matches&&app.querySelector('#phone-drawer[open]');
+ if(drawer&&next.href===location.href){history.back();return;}
+ const state=phoneLayout.matches&&same&&phoneDetailLabels.has(path)&&next.searchParams.has(detailParam(path))&&next.href!==location.href
+  ?{phoneDetailFrom:location.href}:null;
+ history[replace||drawer?'replaceState':'pushState'](state,'',next);
+ if(!same&&phoneLayout.matches)window.scrollTo({top:0,behavior:'instant'});
+ render(!same,true);
+ if(!same&&!phoneLayout.matches)window.scrollTo({top:0,behavior:'instant'});
+ if(app.querySelector('.phone-sheet[open]'))return;
  if(restoreFocus){app.querySelector(restoreFocus)?.focus({preventScroll:true});}
- else if(selectedDetail){
-  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.dataset.motion==='reduce';
-  selectedDetail.tabIndex=-1;
-  selectedDetail.focus({preventScroll:true});
-  selectedDetail.scrollIntoView({block:'start',behavior:reduced?'instant':'smooth'});
- }
  else if(same){const selected=[...app.querySelectorAll('main a[href]')].find(link=>link.href===next.href);(selected||app.querySelector('main'))?.focus({preventScroll:true});}
  if(!same&&path==='/notifications')void refreshNotices(true);
  if(path==='/grades/ranking')void refreshPublishedRanking();
+}
+
+function closePhoneDetail(){
+ app.querySelector('#phone-detail[open]')?.close();
+ const trigger=[...app.querySelectorAll('main a[href]')].find(link=>link.href===phoneTriggerHref);
+ trigger?.focus({preventScroll:true});
+ phoneDetailReturn=null;
+ phoneTriggerHref=null;
+}
+
+function dismissPhoneOverlay(dialog){
+ if(dialog.dataset.closing)return;
+ if(dialog.id==='phone-drawer'||phoneDetailReturn){
+  dialog.dataset.closing='true';
+  history.back();
+  return;
+ }
+ const next=new URL(location.href);
+ next.searchParams.delete(detailParam(viewPath(next.pathname)));
+ history.replaceState(null,'',next);
+ closePhoneDetail();
 }
 async function refreshPublishedRanking(){
  const prior=snapshot,next=prior?.ranking.nextSeason;
@@ -369,6 +412,7 @@ app.addEventListener('submit',event=>{
  void save(kind,body,event.submitter,form.querySelector('.form-error'));
 });
 app.addEventListener('click',event=>{
+ if(outsidePhoneOverlay(event)){dismissPhoneOverlay(event.target);return;}
  const button=event.target.closest('button');
  if(button?.hasAttribute('data-pass-turn')||(!button&&event.target.closest('[data-pass-stage]'))){
   turnCampusPass(event.target.closest('.campus-pass-panel'));
@@ -403,7 +447,7 @@ app.addEventListener('click',event=>{
    announce('Размер текста сохранён');return;
   }
   if(button.dataset.copy){
-   navigator.clipboard.writeText(button.dataset.copy).then(()=>{
+   copyText(button).then(()=>{
     announce('Скопировано');
     button.dataset.copied='true';
     setTimeout(()=>delete button.dataset.copied,1200);
@@ -421,8 +465,19 @@ app.addEventListener('click',event=>{
   if(button.hasAttribute('data-password')){const input=app.querySelector('#password'),show=input.type==='password';input.type=show?'text':'password';button.setAttribute('aria-pressed',String(show));button.setAttribute('aria-label',show?'Скрыть пароль':'Показать пароль');}
   if(button.dataset.dialog)document.getElementById(button.dataset.dialog)?.showModal();
   if(button.hasAttribute('data-close'))button.closest('dialog')?.close();
+  if(button.hasAttribute('data-phone-dismiss')){dismissPhoneOverlay(button.closest('dialog'));return;}
   if(button.hasAttribute('data-retry'))void load();
-  if(button.hasAttribute('data-menu')){const menu=document.querySelector('#mobile-nav');menu.hidden=!menu.hidden;button.setAttribute('aria-expanded',String(!menu.hidden));button.setAttribute('aria-label',menu.hidden?'Открыть меню':'Закрыть меню');}
+  if(button.hasAttribute('data-menu')){
+   if(phoneLayout.matches){
+    history.pushState({phoneDrawer:true},'',location.href);
+    showPhoneDrawer();
+   }else{
+    const menu=document.querySelector('#mobile-nav');
+    menu.hidden=!menu.hidden;
+    button.setAttribute('aria-expanded',String(!menu.hidden));
+    button.setAttribute('aria-label',menu.hidden?'Открыть меню':'Закрыть меню');
+   }
+  }
   if(button.hasAttribute('data-remove-photo'))void save('removePhoto',undefined,button,button.closest('dialog').querySelector('.form-error'));
   if(button.hasAttribute('data-logout'))void save('logout',undefined,button);
   if(button.hasAttribute('data-read-all'))void save('read',{all:true},button);
@@ -461,6 +516,11 @@ app.addEventListener('close',event=>{
  form.querySelector('.form-error').hidden=true;
  restorePhotoPreview(form);
 },true);
+app.addEventListener('cancel',event=>{
+ if(!event.target.matches('.phone-overlay'))return;
+ event.preventDefault();
+ dismissPhoneOverlay(event.target);
+},true);
 app.addEventListener('change',event=>{
  if(event.target.form?.matches('[data-quick-filter]')){
   submitQuickFilter(event.target.form);
@@ -477,8 +537,8 @@ app.addEventListener('change',event=>{
 app.addEventListener('input',event=>{if(event.target.id==='chat-message'){event.target.style.height='auto';event.target.style.height=Math.min(event.target.scrollHeight,150)+'px';}});
 app.addEventListener('input',scheduleTeacherSearch);
 app.addEventListener('compositionend',scheduleTeacherSearch);
-app.addEventListener('keydown',event=>{if(event.target.id==='chat-message'&&event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();event.target.form.requestSubmit();return;}if(event.key==='Escape'){const toggle=app.querySelector('[data-menu][aria-expanded="true"]');if(toggle){toggle.click();toggle.focus();}}});
-matchMedia('(max-width:680px)').addEventListener('change',()=>{if(snapshot&&(location.pathname==='/'||location.pathname==='/schedule'))render();});
+app.addEventListener('keydown',event=>{if(event.target.id==='chat-message'&&event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();event.target.form.requestSubmit();return;}if(!phoneLayout.matches&&event.key==='Escape'){const toggle=app.querySelector('[data-menu][aria-expanded="true"]');if(toggle){toggle.click();toggle.focus();}}});
+phoneLayout.addEventListener('change',()=>{if(snapshot)render();});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(snapshot)syncSystemTheme(snapshot.student);});
 for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=>armNoticeSound(snapshot?.student));
 for(const event of ['focusout','close'])document.addEventListener(event,()=>{
@@ -492,7 +552,22 @@ toast.addEventListener('click',event=>{
  const link=event.target.closest('a');
  if(link&&snapshot){event.preventDefault();toast.hidden=true;go(link.href);}
 });
-window.addEventListener('popstate',()=>{render(false,true);void refreshPublishedRanking();});
+window.addEventListener('popstate',()=>{
+ const drawer=app.querySelector('#phone-drawer[open]');
+ if(drawer&&!history.state?.phoneDrawer&&drawer.dataset.source===location.href){
+  drawer.close();
+  const button=app.querySelector('[data-menu]');
+  button.setAttribute('aria-expanded','false');
+  button.focus({preventScroll:true});
+  return;
+ }
+ if(app.querySelector('#phone-detail[open]')&&phoneDetailReturn===location.href){
+  closePhoneDetail();
+  return;
+ }
+ render(false,true);
+ void refreshPublishedRanking();
+});
 document.addEventListener('visibilitychange',()=>{
  if(!document.hidden){void refreshNotices(true);void refreshPublishedRanking();}
 });

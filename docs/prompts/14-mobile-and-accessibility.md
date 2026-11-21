@@ -6,11 +6,11 @@ Use a collegiate cream/navy/gold system: paper #fcf6ef, ink #07234c, navy #05245
 
 The desktop shell has a 240 px left rail, vertical shield and Altioris University wordmark, seven icon/text links, and student identity anchored below. Navigation: Расписание, Успеваемость, Преподаватели, Заявки, Чат поддержки, Уведомления, Настройки. The gear for settings is an explicit product requirement. The root route opens the schedule. Profile lives at /profile. Use distinct colorful authored SVG icons with consistent contour weight. Preserve the same portrait for the same identity; never assign one face to different people.
 
-At 980 px and below, use a compact mobile header and collapsible navigation. At 680 px and below, reflow details below lists and default the timetable to a day. Verify 360 x 800, 768 x 1024, 1280 x 1024 and 1536 x 1024. Preserve keyboard access, focus, loading, errors, persistent settings, reduced motion and actual account isolation. UI values come from the authenticated snapshot; screenshot example values are not fixtures.
+At 980 px and below, use a compact mobile header and collapsible navigation. At 680 px and below, use a left navigation drawer, open selected details in a lower modal sheet, and show the timetable by day. Verify 360 x 800, 768 x 1024, 1280 x 1024 and 1536 x 1024. Preserve keyboard access, focus, loading, errors, persistent settings, reduced motion and actual account isolation. UI values come from the authenticated snapshot; screenshot example values are not fixtures.
 
 ## Role
 
-Reflow the rail into a mobile menu, use a day timetable and stack inspectors. Verify 360 x 800 and 200% text, readable script, labels, touch targets, keyboard dialogs and no incidental page overflow.
+Reflow the rail into a mobile menu, use a day timetable and open inspectors in lower sheets. Verify 360 x 800 and 200% text, readable script, labels, touch targets, keyboard dialogs and no incidental page overflow.
 
 ## Completion
 

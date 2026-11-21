@@ -40,9 +40,11 @@ function lessonCard(lesson,selected,row){
 function lessonDetails(selected,teachers){
  if(!selected)return empty('Выберите дату с занятиями.');
  const online=selected.format==='online';
+ const teacher=teachers.find(person=>person.id===selected.teacherId);
  return badge('Выбранное занятие','sage')+'<h2>'+e(selected.title)+'</h2>'+
   line('clock','Время<strong>'+assessmentDateTime(selected.start,selected.end)+'</strong>')+
-  teacherLine(teachers.find(teacher=>teacher.id===selected.teacherId))+
+  (teacher?teacherLine(teacher):'<div class="info-line phone-only">'+icon('nav-faculty')+
+   '<span>Преподаватель<strong>Не указан в расписании</strong></span></div>')+
   line('people','Вид занятия<strong>'+e(selected.type)+'</strong>')+
   line(online?'computer':'pin','Формат<strong>'+(online?'Онлайн':'Очно · '+e(selected.room))+'</strong>')+
   line('doc','Тема<strong class="lesson-description">'+e(selected.topic)+'</strong>')+

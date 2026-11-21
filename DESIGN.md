@@ -6,7 +6,7 @@ Use a collegiate cream/navy/gold system: paper #fcf6ef, ink #07234c, navy #05245
 
 The desktop shell has a 204–224 px left rail, vertical shield and Altioris University wordmark, seven icon/text links, and student identity anchored below. Navigation: Расписание, Успеваемость, Преподаватели, Заявки, Чат поддержки, Уведомления, Настройки. The gear for settings is an explicit product requirement. The root route opens the schedule. Profile lives at /profile. Use the paper-sticker illustration system for navigation, settings, course and ranking imagery. Use clean monochrome symbols on compact action controls. Preserve the same portrait for the same identity; never assign one face to different people.
 
-At 980 px and below, use a compact mobile header and collapsible navigation. At 680 px and below, reflow details below lists and default the timetable to a day. Verify 360 x 800, 768 x 1024, 1280 x 1024 and 1536 x 1024. Preserve keyboard access, focus, loading, errors, persistent settings, reduced motion and actual account isolation. UI values come from the authenticated snapshot; screenshot example values are not fixtures.
+At 980 px and below, use a compact mobile header and collapsible navigation. At 680 px and below, use a left navigation drawer, open selected details in a lower modal sheet, and show the timetable by day. Verify 360 x 800, 768 x 1024, 1280 x 1024 and 1536 x 1024. Preserve keyboard access, focus, loading, errors, persistent settings, reduced motion and actual account isolation. UI values come from the authenticated snapshot; screenshot example values are not fixtures.
 
 ## Screen map
 
@@ -52,7 +52,11 @@ Support is one full-width conversation, without the right topics panel. Use the 
 
 Use Moscow date dividers and compact first and last message controls. Show a double check on a sent question after the assistant responds. When the history is empty, greet the student by first name and ask «Чем вам помочь?»
 
-Academic detail panels fit their contents and remain in view on wide screens while the list scrolls. Keep rows and the outer panel mounted when a selection changes within the same list. Animate the incoming detail content with a short fade and a shift of at most 6px. On narrow screens, bring the focused detail into view and honor reduced motion.
+Academic detail panels fit their contents and remain in view on wide screens while the list scrolls. Keep rows and the outer panel mounted when a selection changes within the same list. Animate the incoming detail content with a short fade and a shift of at most 6px. On phones, focus the selected detail sheet and honor reduced motion.
+
+## Phone interface
+
+At 680px and below, open primary navigation from the left and show selected lessons, exams, grades, faculty profiles, requests and notifications in a lower sheet. Keep the current list and its scroll position on dismissal. Use native dialogs for keyboard focus and Back behavior. Faculty results are a vertical list. Settings use full-width theme options with small swatches and a separate text-size control. Use [Android navigation guidance](https://developer.android.com/design/ui/mobile/guides/layout-and-content/layout-and-nav-patterns) and [adaptive target sizing](https://developer.android.com/docs/quality-guidelines/adaptive-app-quality/tier-2) as references for the phone treatment.
 
 Profile photo editing uses a file picker, square preview and save/reset controls. Browser-readable image files up to 20 MB are center-cropped and encoded to a 640px PNG before upload. The authenticated server accepts at most 2 MiB PNG with bounded dimensions; SQLite schema v2 stores the image as an owned BLOB. GET/PUT/DELETE /api/profile/avatar use the current session owner, no caller-supplied owner, no public media directory. Preserve account credentials and all existing records during migration. Use initials for students without an upload. Custom photo URLs use a content revision and no-store responses and appear on the owner's profile, rail and ranking row.
 

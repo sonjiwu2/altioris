@@ -1,0 +1,257 @@
+.phone-only { display: none !important; }
+
+@media (max-width: 680px) {
+ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+ html:has(.phone-overlay[open]) { overflow: hidden; }
+
+ .mobile-header {
+  position: sticky;
+  z-index: 8;
+  top: 0;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 6px max(14px, env(safe-area-inset-right)) 6px max(12px, env(safe-area-inset-left));
+  background: var(--paper);
+ }
+ .mobile-header .menu-toggle {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+ }
+ .mobile-header .menu-toggle .icon { width: 23px; height: 23px; }
+ .mobile-header .brand { font-size: .94rem; }
+ .mobile-header .brand img { height: 38px; width: auto; }
+ .page > h1 { font-size: 1.76rem; margin-bottom: 18px; line-height: 1.06; }
+ .page .tabs { margin-bottom: 16px; gap: 6px; }
+ .page .tabs .tab { min-height: 48px; padding: 8px 11px; font-size: .87rem; gap: 6px; }
+ .page .tabs .tab .icon { width: 25px; height: 25px; }
+
+ dialog.phone-overlay {
+  position: fixed;
+  color: var(--ink);
+  background: var(--surface);
+  max-width: none;
+  overscroll-behavior: contain;
+  padding: 0;
+  box-shadow: 0 20px 64px #08172b38;
+  transition: translate 240ms var(--flow), opacity 180ms ease, display 240ms allow-discrete, overlay 240ms allow-discrete;
+ }
+ dialog.phone-overlay::backdrop {
+  background: #08142571;
+  transition: background-color 210ms ease, display 240ms allow-discrete, overlay 240ms allow-discrete;
+ }
+ dialog.phone-overlay:not([open])::backdrop { background-color: transparent; }
+ .phone-overlay[open] { display: flex; flex-direction: column; }
+ .phone-overlay-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding: 8px 12px 8px 18px;
+  border-bottom: 1px solid var(--line);
+ }
+ .phone-overlay-heading h2 { font-size: 1rem; line-height: 1.18; }
+ .phone-overlay-heading .icon-button {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 12px;
+  background: var(--paper);
+ }
+ .phone-overlay-heading .icon { width: 19px; height: 19px; }
+ dialog.phone-drawer {
+  inset: 0 auto 0 0;
+  margin: 0;
+  width: min(320px, calc(100vw - 46px));
+  height: 100dvh;
+  max-height: none;
+  padding-block: env(safe-area-inset-top) env(safe-area-inset-bottom);
+  border-width: 0 1px 0 0;
+  border-radius: 0 18px 18px 0;
+  translate: -100% 0;
+  overflow: auto;
+ }
+ dialog.phone-drawer[open] { translate: 0 0; }
+ .phone-drawer-links {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+ }
+ .phone-drawer :is(nav a,.mobile-profile) {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  position: relative;
+  min-height: 50px;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 11px;
+  font-weight: 700;
+  font-size: .85rem;
+  overflow-wrap: normal;
+ }
+ .phone-drawer a[aria-current] {
+  background: var(--paper);
+  box-shadow: inset 3px 0 var(--gold);
+ }
+ .phone-drawer a:active { background: var(--paper); }
+ .phone-drawer nav .icon { flex: 0 0 29px; width: 29px; height: 29px; }
+ .phone-drawer .mobile-profile {
+  margin: auto 10px 10px;
+  border: 1px solid var(--line);
+ }
+ .phone-drawer .portrait { width: 36px; height: 36px; flex: 0 0 36px; }
+ .phone-drawer .nav-unread { position: static; margin-inline-start: auto; }
+ dialog.phone-sheet {
+  inset: auto 0 0;
+  margin: 0 auto;
+  width: 100%;
+  max-height: min(86dvh, 720px);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-width: 1px 0 0;
+  border-radius: 20px 20px 0 0;
+  translate: 0 100%;
+  opacity: 0;
+  overflow: hidden;
+ }
+ dialog.phone-sheet[open] { translate: 0 0; opacity: 1; }
+ @starting-style {
+  dialog.phone-drawer[open] { translate: -100% 0; }
+  dialog.phone-sheet[open] { translate: 0 100%; opacity: 0; }
+  dialog.phone-overlay[open]::backdrop { background-color: transparent; }
+ }
+ .phone-sheet-content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+ }
+ .phone-sheet-content > .panel {
+  display: block;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  padding: 12px 18px 20px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+ }
+ .phone-sheet-content .detail-content { animation: none; }
+ .phone-sheet-content .academic-inspector .detail-content > :is(.badge,.eyebrow) { display: none; }
+ .phone-sheet-content :is(.detail-content, .notification-detail, .request-inspector) h2 {
+  font-size: 1.3rem;
+  line-height: 1.16;
+  hyphens: auto;
+  overflow-wrap: break-word;
+ }
+ .phone-sheet-content .info-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-block: 10px;
+  min-width: 0;
+  font-size: .84rem;
+ }
+ .phone-sheet-content .info-line :is(.icon,.detail-icon) { width: 27px; height: 27px; flex: 0 0 27px; }
+ .phone-sheet-content .info-line .portrait { width: 44px; height: 44px; flex: 0 0 44px; }
+ .phone-sheet-content .info-line > span { min-width: 0; }
+ .phone-sheet-content .info-line .text-link { min-height: 44px; align-items: center; }
+ .phone-sheet-content .phone-only { display: flex !important; }
+ .phone-sheet-content .teacher-facts { grid-template-columns: minmax(0,1fr); }
+ .phone-sheet-content .teacher-identity { gap: 12px; }
+ .phone-sheet-content .teacher-identity > .portrait { width: 68px; height: 78px; }
+ .phone-sheet-content .teacher-section { padding-block: 14px; }
+ .phone-sheet-content .teacher-section h3 { font-size: 1.05rem; }
+ .phone-sheet .copy-control {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  padding: 0;
+  border-radius: 10px;
+ }
+ .phone-sheet .copy-control > .icon { width: 20px; height: 20px; }
+
+ .page .split > :is(.academic-inspector,.teacher-details,.request-inspector,.notification-detail) { display: none; }
+ .page :is(.schedule-layout,.exam-layout,.academic-layout,.directory,.work-layout,.notifications-layout) { min-height: 0; }
+ .page :is(.calendar,.exam-panel,.grade-list,.teacher-list,.notification-inbox,.work-layout>.panel) { min-height: 0; }
+ .page .calendar-tools { padding: 9px 12px; gap: 8px; }
+ .page .calendar-tools .week-title { font-size: 1rem; text-align: center; }
+ .page .calendar-tools .icon-button { min-width: 48px; min-height: 48px; }
+ .page .calendar-grid.single-day { min-width: 0; }
+ .page .single-day .calendar-day { display: flex; flex-direction: column; min-height: 0; gap: 8px; padding: 0 12px 12px; }
+ .page .single-day .calendar-day > h2 { display: none; }
+ .page .single-day .lesson { min-height: 102px; padding: 10px; }
+ .page .single-day .lesson > strong { font-size: 1rem; }
+ .page :is(.exam-panel,.grade-list) { padding: 14px 12px; }
+ .page :is(.exam-panel,.grade-list) .section-heading { align-items: stretch; gap: 10px; }
+ .page :is(.exam-panel,.grade-list) .section-heading h2 { font-size: 1.27rem; }
+ .page .exam-event h3 { overflow-wrap: break-word; hyphens: auto; }
+ .page .teacher-filters { grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+ .page .teacher-filters .search-field { grid-column: 1 / -1; min-height: 48px; }
+ .page .teacher-filters .department-filter { min-width: 0; }
+ .page .teacher-filters select { width: 100%; min-height: 48px; }
+ .page .teacher-list { display: block; max-height: none; min-height: 0; overflow: visible; padding: 4px 10px; scroll-snap-type: none; }
+ .page .teacher-list .person-link {
+  display: grid;
+  grid-template-columns: 48px minmax(0,1fr) 9px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 70px;
+  padding: 10px 4px;
+  border-radius: 0;
+  white-space: normal;
+ }
+ .page .teacher-list .person-link::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-top: 1.5px solid var(--muted);
+  border-right: 1.5px solid var(--muted);
+  rotate: 45deg;
+ }
+ .page .teacher-list .person-link > .portrait { width: 48px; height: 50px; margin: 0; border-radius: 9px; }
+ .page .teacher-list .person-link strong { font-size: .94rem; }
+ .page .teacher-list .person-link small { font-size: .72rem; line-height: 1.25; margin-top: 4px; }
+
+ .page .settings-stack { gap: 12px; }
+ .page .appearance-panel > h2 { font-size: 1.19rem; padding: 13px 14px; }
+ .page .settings-feature { padding: 13px 14px; }
+ .page .settings-feature h3 { font-size: .92rem; }
+ .page .theme-choices { grid-template-columns: 1fr; gap: 6px; }
+ .page .theme-choice {
+  display: grid;
+  grid-template-columns: 50px minmax(0,1fr);
+  align-items: center;
+  gap: 11px;
+  min-height: 54px;
+  padding: 6px 10px;
+  border-radius: 10px;
+ }
+ .page .theme-choice .theme-preview { width: 50px; height: 32px; border-radius: 6px; }
+ .page .theme-preview > i::after { display: none; }
+ .page .theme-preview > span { padding: 5px 5px 5px 0; gap: 2px; }
+ .page .theme-choice-label { flex-wrap: nowrap; gap: 8px; font-size: .82rem; }
+ .page .theme-choice-label > span:first-of-type { overflow-wrap: normal; }
+ .page .theme-choice-label .icon { display: none; }
+ .page .scale-feature .segmented button { min-height: 48px; font-size: .85rem; }
+ .page .settings-stack .access-panel { padding: 12px 14px; gap: 8px 10px; }
+ .page .access-panel .session-copy h2 { font-size: 1.15rem; }
+ .page .access-panel .session-copy p { font-size: .78rem; }
+ .page .access-panel .button { min-height: 48px; font-size: .82rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+ dialog.phone-overlay::backdrop { transition: none; }
+}
+[data-motion="reduce"] dialog.phone-overlay::backdrop { transition: none; }
