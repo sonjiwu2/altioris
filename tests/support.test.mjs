@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import test from 'node:test'
 import { accounts, campusFor, demoClock, teachers } from '../server/fixtures.mjs'
 import { searchTeachers } from '../public/features/teacher-search.js'
+import { supportQuestions } from '../public/features/support-view.js'
 import { academicDateTime, academicGrades } from '../server/academic-year.mjs'
 import { calendar } from '../server/exports.mjs'
 import { openStore } from '../server/store.mjs'
@@ -70,8 +71,8 @@ test('the guided assistant resolves owned records and meaningful student intents
     const result = reply('a', 'Когда консультации у Вороновой?')
     const teacher = store.dashboard('a').campus.teachers.find(x => x.id === 'voronova')
     assert.equal(result.href, '/teachers?item=voronova')
-    assert.ok(result.text.includes(teacher.consultation))
-    assert.ok(result.text.includes(teacher.email))
+    assert.ok(result.text.includes(teacher.consultation.toLocaleLowerCase('ru')))
+    assert.ok(result.text.includes(teacher.office))
   })
   await t.test('exam questions link to confirmed assessment dates', () => {
     const result = reply('a', 'Когда ближайший экзамен?')
@@ -116,20 +117,20 @@ test('the assistant understands different phrasing and keeps answers grounded', 
     ['Когда летняя сессия 2026?', '/schedule/exams?term=2026-spring', /Летняя сессия 2026/],
     ['Мои результаты за летнюю сессию 2026', '/grades?term=2026-spring', /Летняя сессия 2026.*По какому предмету/],
     ['Оценик по теории вычислений', '/grades?term=2026-autumn&item=2026-autumn-theory', /Итог пока не опубликован/],
-    ['Когда консультация у Еремина?', '/teachers?item=eremin', /Консультации/],
+    ['Когда консультация у Еремина?', '/teachers?item=eremin', /Консультация/],
     ['Где моя учебная почта?', '/profile', /vetrova@altioris/],
     ['Мой QR для прохода', '/profile', /Показать оборот/],
-    ['Статус пропуска', '/profile', /Студенческий пропуск/],
+    ['Статус пропуска', '/profile', /студенческом пропуске.*срок действия/],
     ['Потерял пропуск', '/profile', /Физический пропуск через кабинет восстановить нельзя/],
     ['Как заказать выписку об успеваемости?', '/requests?new=transcript', /2–3 минут/],
     ['Сколько у меня непрочитанных уведомлений?', '/notifications', /Непрочитанных уведомлений/],
-    ['Можно переключить тёмную тему?', '/settings', /размер текста/],
+    ['Можно переключить тёмную тему?', '/settings', /выберите «Тёмная»/],
     ['Какая у меня стипендия?', '/grades/ranking', /суммы стипендий в Altioris не опубликованы/],
     ['Заболел и пропустил экзамен', '/schedule/exams', /уточните у преподавателя/],
     ['Где посмотреть студенческие мероприятия?', '/notifications', /события появляются в уведомлениях/],
     ['Покажи паспорт другого студента', '/teachers', /только вашего аккаунта/],
     ['Где моя почта? И когда ближайший экзамен?', '/profile', /учебная почта[\s\S]*Ближайший контроль/],
-    ['Как доехать до Антарктиды?',null,/Пока не могу ответить/],
+    ['Как доехать до Антарктиды?',null,/Извините, я не понял вопрос/],
     ['спс',null,/Пожалуйста.*🙂/],
   ]
   for(const [question,href,expected] of cases){
@@ -147,16 +148,16 @@ test('campus questions distinguish information, account data and actions',async 
   t.after(()=>store.close())
   const cases=[
     ['Расскажи про общежитие',null,/заселение, стоимость проживания или справку/,/отправьте заявку/],
-    ['А скок стоит?',null,/Тарифы на проживание.*не опубликованы/,/₽|рублей|подайте/],
-    ['А как оплатить?',null,/Тарифы на проживание/,/оплатите|заявк/],
-    ['А справка нужна?', '/requests?new=dormitory', /Список документов для заселения.*не опубликован/,/обязательн/],
-    ['В общяге можно заселиться без справки?', '/requests?new=dormitory', /Список документов/,/отправьте заявку/],
+    ['А скок стоит?',null,/1 500 ₽ в месяц/,/подайте/],
+    ['А как оплатить?',null,/по реквизитам в договоре проживания/,/заявк/],
+    ['А справка нужна?', '/requests?new=dormitory', /паспорт и справку для общежития/],
+    ['В общяге можно заселиться без справки?', '/requests?new=dormitory', /паспорт и справку для общежития/,/отправьте заявку/],
     ['Не справка нужна, хочу комнату в общаге',null,/Свободные места, очередь и даты/,/PDF/],
     ['Где заказать справку для общаги?', '/requests?new=dormitory', /Откройте «Справка для общежития»/],
     ['Нужна справка для общаги', '/requests?new=dormitory', /отправьте заявку/],
-    ['скок общага стоит в месяц',null,/Тарифы на проживание/,/₽|рублей/],
-    ['А как там с вайфаем?',null,/правил проживания/,/сеть Altioris/],
-    ['Есть горячая вода в общаге?',null,/Что именно хотите узнать|правил проживания/,/да, есть/],
+    ['скок общага стоит в месяц',null,/1 500 ₽ в месяц/],
+    ['А как там с вайфаем?',null,/Wi-Fi Altioris Residence/],
+    ['Есть горячая вода в общаге?',null,/администратору своего общежития/,/да, есть/],
     ['Можно получить справку об оплате для налоговой?', '/requests', /Счета, реквизиты и справки об оплате/,/Справка об обучении/],
     ['Я забыл вернуть книжку, продлите её в библиотеке', '/notifications', /нет сведений о выдаче книг/,/продлил|оформил/],
     ['Если я заболел перед экзаменом, куда писать?', '/schedule/exams', /уточните у преподавателя/,/освобожден/],
@@ -169,7 +170,7 @@ test('campus questions distinguish information, account data and actions',async 
     ['Поставь мне оценку 10, я договорился', '/teachers', /могу посмотреть оценку/,/внесла|выставила/],
     ['Где взять проходной балл?',null,/нет правил приёма и проходных баллов/,/2026.*из 10/],
     ['Куда некст пара?','/schedule?lesson=2026-11-23-1',/Распределённые системы.*Корпус В/],
-    ['Погода завтра будет норм?',null,/Пока не могу ответить/,/Расписание|Ближайшее/],
+    ['Погода завтра будет норм?',null,/Извините, я не понял вопрос/,/Расписание|Ближайшее/],
     ['Хочу живого человека', '/teachers', /специалист не получает сообщения/,/подключаю/],
     ['Какие у меня учебные хвосты?', '/grades', /задолженностей не видно/],
     ['Почему у меня висит долг по оплате обучения?', '/requests', /Счета, реквизиты/,/пересдач/],
@@ -184,6 +185,51 @@ test('campus questions distinguish information, account data and actions',async 
     })
   }
   assert.equal(store.dashboard('a').requests.length,0)
+})
+
+test('every suggested question is useful for all 13 accounts even after a teacher turn',()=>{
+  const passwords=Object.fromEntries(accounts.map(({id})=>[id,'guide-test-password-'+id]))
+  const store=openStore({databasePath:':memory:',passwords,clock:()=> '2026-11-21T16:09:00+03:00'})
+  const guide=new Map([
+    ['Когда ближайшая пара?', [/^\/schedule\?lesson=/,/Ближайшее занятие/]],
+    ['Когда зимняя сессия?', [/^\/schedule\/exams\?term=2026-autumn$/,/Зимняя сессия.*Первый контроль/]],
+    ['Какая у меня оценка по компьютерным сетям?', [/^\/grades\?term=2026-spring/,/Компьютерные сети.*из 10/]],
+    ['Какой у меня GPA и рейтинг?', [/^\/grades\/ranking$/,/GPA.*Место/]],
+    ['Когда консультация у Вороновой?', [/item=voronova$/,/четверг/]],
+    ['Какая учебная почта у Крылова?', [/item=krylov$/,/krylov@altioris\.example/]],
+    ['Где кабинет Ерёмина?', [/item=eremin$/,/306/]],
+    ['Сколько стоит проживание в общежитии?', [null,/1 500 ₽ в месяц/]],
+    ['Какие документы нужны для заселения в общежитие?', [/new=dormitory$/,/паспорт и справку/]],
+    ['Где заказать справку для общежития?', [/new=dormitory$/,/Откройте «Справка для общежития»/]],
+    ['Как заказать справку об обучении?', [/new=certificate$/,/Откройте «Справка об обучении»/]],
+    ['Проверь мою заявку', [/^\/requests(?:\?item=|$)/,/Новая заявка|Отправлена/]],
+    ['Какая у меня учебная почта?', [/^\/profile$/,/Ваша учебная почта.*@altioris\.example/]],
+    ['Где мой QR-код пропуска?', [/^\/profile$/,/Показать оборот.*QR-код/]],
+    ['Как переключить тёмную тему?', [/^\/settings$/,/выберите «Тёмная»/]],
+  ])
+  const questions=supportQuestions.flatMap(([,items])=>items)
+  assert.deepEqual(questions,[...guide.keys()])
+  try{
+    for(const [index,{id}] of accounts.entries()){
+      if(index%2)store.createRequest(id,'dormitory')
+      const ask=question=>store.addSupport(id,'message',question).at(-1)
+      for(const question of questions){
+        const [target,expected]=guide.get(question)
+        const answer=ask(question)
+        assert.match(answer.text,expected,question+' · '+answer.text)
+        if(target)assert.match(answer.href,target,question)
+        else assert.equal(answer.href,null,question)
+      }
+      for(const question of ['Где мой QR-код пропуска?','Как переключить тёмную тему?','Как дела?','Где купить ноутбук?','???']){
+        ask('Где кабинет Ерёмина?')
+        const answer=ask(question)
+        assert.doesNotMatch(answer.text,/Ерёмин|eremin/u,question)
+        if(!guide.has(question))assert.match(answer.text,/Извините, я не понял вопрос/)
+      }
+      ask('Где кабинет Ерёмина?')
+      assert.match(ask('А где кабинет?').text,/306/)
+    }
+  }finally{store.close()}
 })
 
 test('follow-ups are private and survive a SQLite restart',()=>{

@@ -8,7 +8,7 @@ export const supportActions=new Map([
  ['specialist','Написать специалисту'],['schedule','Пары сегодня'],['exams','Ближайший экзамен'],['grades','Мои оценки'],
 ])
 const help='Могу найти пары по дате, экзамен по предмету, оценку, консультацию преподавателя, пропуск или статус заявки. Напишите, например, «Какие пары завтра?»'
-const unknown='Пока не могу ответить на этот вопрос. Если он про учёбу или жизнь в вузе, уточните, пожалуйста, что именно хотите узнать.'
+const unknown='Извините, я не понял вопрос. Напишите, пожалуйста, что хотите узнать об учёбе или кабинете.'
 const greeting=/^(?:привет|здравствуй|здравствуйте|добр(?:ый день|ый вечер|ое утро|ого времени суток)|салют)(?: |$)/u
 const personal=/чужи[ехй]|одногруппни[кц]|другого студент|другой аккаунт|однокурсни[кц]/u
 const numberPattern=/\b[0-9a-f]{8}(?:-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?\b/u
@@ -23,6 +23,7 @@ const classWords=/расписан|заняти|лекци|семинар|ауд
 const examWords=/экзамен|сесси|зачет(?:ы|у|а|ов)?(?: |$)|контрол/u
 const gradeWords=/оценк|балл|зачетк|зачетн.*единиц|кредит|успеваем|мои результат|покажи.*результат/u
 const askTeacher=/преподават|препод|консультац|профессор|доцент|почта|почту|кабинет|контакт/u
+const teacherFollowUp=/^(?:(?:а|и|тогда) )?(?:когда(?: будет)?|где|во сколько|(?:когда|во сколько) (?:будет )?консультаци[яию]|где (?:его |ее )?кабинет|(?:какая |а )?(?:у (?:него|нее) )?(?:учебная )?почта|как (?:с ним |с ней )?связаться|куда написать)$/u
 
 function documentType(query,housingContext){
   if(/(?:^| )не (?:нужна |нужен )?справк/u.test(query))return null
@@ -44,7 +45,7 @@ function status(raw,type,data,prior){
   }
   const item=numbered[0]??(type?owned.find(item=>item.type===type):
     owned.find(item=>item.id===prior?.requestId)??owned[0])
-  if(!item)return reply(type?'Заявки этого вида у вас пока нет. Её можно подать в разделе «Заявки».':'У вас пока нет заявок. Здесь можно открыть форму новой заявки.','/requests'+(type?'?new='+type:''))
+  if(!item)return reply(type?'Заявки этого вида у вас пока нет. Её можно подать в разделе «Заявки».':'У вас пока нет заявок. Откройте раздел «Заявки» и нажмите «Новая заявка».','/requests'+(type?'?new='+type:''))
   const explanation=item.documentId?'PDF уже можно открыть или скачать.':
     item.status==='Ошибка подготовки'?'При подготовке не удалось сформировать документ. Можно отправить новую заявку.':
      'Документ обычно готовится 2–3 минуты с момента подачи. Когда PDF появится, кабинет пришлёт уведомление.'
@@ -186,12 +187,12 @@ function grades(query,data,prior){
 
 function schoolReply(raw,query,data,prior,forced) {
  const {student,campus}=data
+ if(!query||/^(?:как дела|как ты|как поживаешь|что нового)$/u.test(query))return reply(unknown)
  const follow=prior&&query.split(' ').length<=8&&/^(?:а |и |тогда |а также )?(?:когда|где|во сколько|на |по |за |тогда|готов|скол|как |покажи|подробнее|завтра|послезавтра|сегодня|летн|зимн|стоимост|цен|справк|вай|нужн|есть )/u.test(query)
  const faqContext=follow&&prior.intent==='faq'?prior.topic:null
  const type=documentType(query,faqContext==='housing')
  const campusAnswer=campusHelp(query,faqContext)
  const day=dateInQuestion(raw,query,data.at)
- const teachers=findTeachers(campus.teachers,query,askTeacher.test(query))
  if(personal.test(query)&&/оценк|заявк|адрес|документ|успеваем|паспорт|фамили|почт|пропуск/u.test(query)){
   return reply('Могу показать учебные данные только вашего аккаунта. Контакты преподавателей опубликованы в каталоге.','/teachers')
  }
@@ -213,6 +214,17 @@ function schoolReply(raw,query,data,prior,forced) {
   return documentOrder(type??'certificate')
  }
  if(campusAnswer)return campusAnswer
+ if(/пропуск|студенческ.*билет|(?:^| )qr(?: |$)|паспорт|аттестат|аватар|фото|мой.*профил|(?:моя|у меня).*групп/u.test(query)){
+  if(/групп/u.test(query))return reply('Ваша группа — '+student.group+'.','/profile')
+  if(/паспорт|аттестат/u.test(query))return reply('Паспорт и аттестат доступны в блоке «Мои документы» на странице профиля.','/profile')
+  if(/аватар|фото/u.test(query))return reply('В профиле нажмите «Добавить фото» или «Изменить фото». Там можно загрузить изображение или вернуться к инициалам.','/profile')
+  return reply('Откройте «Мой профиль» и нажмите «Показать оборот» на студенческом пропуске. Там находятся QR-код и срок действия.','/profile')
+ }
+ if(/тем[ауеы] |темн.*тем|светл.*тем|шрифт|размер.*текст|масштаб|настройк/u.test(query+' ')){
+  const theme=/темн.*тем/u.test(query)
+  return reply(theme?'Откройте «Настройки» → «Интерфейс» и выберите «Тёмная». Тема сохранится в этом браузере для вашего аккаунта.':
+   'Тему и размер текста можно изменить в разделе «Настройки». Выбор сохраняется в этом браузере для вашего аккаунта.','/settings')
+ }
  if(/(?:заказ|подать|оформ).*заяв|заказ.*документ/u.test(query)){
   return reply('Какой документ или обращение вам нужно? В «Заявках» есть справка об обучении, выписка, справка для общежития и другие формы.','/requests')
  }
@@ -220,7 +232,7 @@ function schoolReply(raw,query,data,prior,forced) {
   const stats=data.ranking()
   const summary=stats.rank===null?'Пока ни одна сессия не опубликована в рейтинге.':
    stats.label+'. Ваш средний балл — '+pretty(stats.mean)+', GPA — '+pretty(stats.gpa)+'. Место: '+stats.rank+' из '+stats.total+'.'
-  const next=stats.nextSeason?' Следующая публикация — '+schoolDate.format(new Date(stats.nextSeason.publishedAt))+'.':''
+  const next=stats.nextSeason?' Следующая публикация — '+schoolDate.format(new Date(stats.nextSeason.publishedAt)).replace(/\.$/u,'')+'.':''
   return reply(summary+next,'/grades/ranking',{intent:'grades'})
  }
  if(gradeWords.test(query)||/пересдач|незачет|(?:^| )хвост|(?:^| )долги?(?: |$)|учебн.*долг/u.test(query)||forced==='grades')return grades(query,data,follow?prior:null)
@@ -231,25 +243,24 @@ function schoolReply(raw,query,data,prior,forced) {
  if(classWords.test(query)||onlineClass||forced==='schedule'){
   return schedule(query,day,data,follow?prior:null)
  }
- if(teachers.length||askTeacher.test(query)||follow&&prior.intent==='teacher'){
+ const teacherFollow=prior?.intent==='teacher'&&teacherFollowUp.test(query)
+ const asksForTeacher=askTeacher.test(query)
+ const teachers=findTeachers(campus.teachers,query,asksForTeacher)
+ if(teachers.length||asksForTeacher||teacherFollow){
   if(teachers.length>1)return reply('Нашёл несколько преподавателей: '+teachers.map(item=>item.shortName).join(', ')+'. Уточните фамилию.','/teachers')
-  const person=teachers[0]??campus.teachers.find(item=>follow&&item.id===prior.teacherId)
+  const person=teachers[0]??campus.teachers.find(item=>teacherFollow&&item.id===prior.teacherId)
   if(!person)return reply('Уточните фамилию преподавателя. В каталоге есть предметы, кабинеты и консультации.','/teachers')
-  return reply(person.name+' · '+person.subject+'. Консультации: '+person.consultation+'. Кабинет: '+person.office+
-    '. Учебная почта: '+person.email+'.','/teachers?item='+person.id,{intent:'teacher',teacherId:person.id})
- }
- if(/пропуск|студенческ.*билет|qr|паспорт|аттестат|аватар|фото|мой.*профил|(?:моя|у меня).*групп/u.test(query)){
-  if(/групп/u.test(query))return reply('Ваша группа — '+student.group+'.','/profile')
-  if(/паспорт|аттестат/u.test(query))return reply('Паспорт и аттестат доступны в блоке «Мои документы» на странице профиля.','/profile')
-  if(/аватар|фото/u.test(query))return reply('В профиле нажмите «Добавить фото» или «Изменить фото». Там можно загрузить изображение или вернуться к инициалам.','/profile')
-  return reply('Студенческий пропуск находится в профиле. Нажмите «Показать оборот», чтобы увидеть QR-код и срок действия.','/profile')
+  const text=/почт/u.test(query)?person.shortName+' · учебная почта — '+person.email+'.':
+   /кабинет|^(?:а |и )?где$/u.test(query)?person.shortName+' · '+person.office+'.':
+   /когда|во сколько|консультац/u.test(query)?person.shortName+'. Консультация — '+person.consultation.toLocaleLowerCase('ru')+'. '+person.office+'.':
+    person.name+' · '+person.subject+'. Консультации: '+person.consultation+'. Кабинет: '+person.office+'. Учебная почта: '+person.email+'.'
+  return reply(text,'/teachers?item='+person.id,{intent:'teacher',teacherId:person.id})
  }
  if(/уведомлен|непрочитан|зву[кч]/u.test(query)){
   const unread=data.notifications.filter(item=>!item.read).length
   return reply((unread?'Непрочитанных уведомлений: '+unread+'. ':'Непрочитанных уведомлений пока нет. ')+
     'В ленте можно включить звук и открыть сообщение целиком. Новые уведомления сохраняются в кабинете.','/notifications')
  }
- if(/тем[ауеы] |темн.*тем|светл.*тем|шрифт|размер.*текст|масштаб|настройк/u.test(query+' '))return reply('Тему и размер текста можно изменить в «Настройках». Выбор сохраняется в этом браузере для вашего аккаунта.','/settings')
  if(forced==='faq'||/что.*умеешь|кто ты|помощь|помоги|что можно/u.test(query))return reply(help)
  if(follow){
   if(prior.intent==='status'&&/когда.*(?:буд|готов)|статус|готов|скол.*жда|а когда|^(?:когда|сколько)$/u.test(query))return status(raw,prior.requestType,data,prior)
@@ -269,7 +280,7 @@ export function answerSupport(action,input,data,prior) {
  const hello=greeting.test(cleaned)
  const opening=hello?'Здравствуйте, '+data.student.shortName.split(' ')[0]+'! ':''
  if(hello&&!cleaned.replace(greeting,'').trim())return reply(opening+'Чем вам помочь?')
- const parts=action==='message'?raw.split(/(?:[?;]\s+|\n+|\s+(?:и|а)\s+(?=(?:когда|где|какие|сколько|во сколько)\s))/iu).filter(part=>part.trim()).slice(0,3):[raw]
+ const parts=action==='message'?String(raw??'').split(/(?:[?;]\s+|\n+|\s+(?:и|а)\s+(?=(?:когда|где|какие|сколько|во сколько)\s))/iu).filter(part=>part.trim()).slice(0,3):[raw]
  const answers=[]
  let context=prior
  for(const part of parts){
@@ -278,6 +289,6 @@ export function answerSupport(action,input,data,prior) {
    answers.push(answer)
    if(answer.context)context=answer.context
  }
- return reply(opening+answers.map(answer=>answer.text).join('\n\n'),answers.find(answer=>answer.href)?.href??null,
+ return reply(opening+(answers.map(answer=>answer.text).join('\n\n')||unknown),answers.find(answer=>answer.href)?.href??null,
    [...answers].reverse().find(answer=>answer.context)?.context??null)
 }

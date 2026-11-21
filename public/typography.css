@@ -254,9 +254,15 @@ h2{font-size:1.5rem}h3{font-size:1rem}strong{font-weight:700}small{line-height:1
 
 .detail-icon{filter:drop-shadow(0 1px 1px #30211133)}
 .page .teacher-facts .detail-icon{width:42px;height:42px}
-.main-nav .nav-unread[data-inbox-count],.mobile-nav .nav-unread[data-inbox-count]{
- min-width:22px;width:auto;height:22px;padding-inline:5px;display:grid;place-items:center;
- border-radius:20px;color:#fff6e8;font:700 12px/1 var(--body-font);flex-shrink:0;
+.nav-notification-label{
+ display:flex;flex:1;min-width:0;align-items:center;flex-wrap:wrap;gap:4px 7px;
+}
+.nav-notification-label>span:first-child{
+ min-width:0;overflow-wrap:anywhere;
+}
+.nav-notification-label .nav-unread[data-inbox-count]:not([hidden]){
+ min-width:22px;width:auto;height:22px;padding-inline:5px;display:inline-grid;place-items:center;
+ margin:0;border-radius:999px;color:#fff6e8;font:700 12px/1 var(--body-font);flex:none;
 }
 .nav-unread[data-inbox-count][hidden],.notice-toast[hidden]{display:none}
 .request-date-compact{display:none}

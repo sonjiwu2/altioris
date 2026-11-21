@@ -109,23 +109,6 @@
   border: 1px solid var(--line);
  }
  .phone-drawer .portrait { width: 36px; height: 36px; flex: 0 0 36px; }
- .phone-drawer .nav-unread[data-inbox-count]:not([hidden]) {
-  position: static;
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  min-width: 22px;
-  width: auto;
-  height: 22px;
-  margin-inline-start: auto;
-  padding-inline: 5px;
-  border-radius: 999px;
-  background: #a63220;
-  color: #fff;
-  font-size: 12px;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
- }
  dialog.phone-sheet {
   inset: auto 0 0;
   margin: 0 auto;

@@ -3,7 +3,7 @@ import { brand, escape as e, icon, portrait } from './ui.js?v=20261121-11';
 import { exams, onlineRoom, schedule } from './features/campus.js?v=20261121-8';
 import { grades, profile, ranking, teachers } from './features/academic.js?v=20261121-5';
 import { turnCampusPass } from './features/campus-pass.js?v=20261120-14';
-import { notifications, requests, support, updateConversation } from './features/services.js?v=20261121-11';
+import { notifications, requests, support, updateConversation } from './features/services.js?v=20261121-12';
 import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
 import { armNoticeSound, resetLiveNotice, showLiveNotice, toggleNoticeSound } from './features/live-notices.js';
 import { copyText, outsidePhoneOverlay, phoneLayout, phoneOverlays, showPhoneDetail, showPhoneDrawer } from './features/phone-ui.js?v=20261121-12';
@@ -193,7 +193,11 @@ function render(focus=false,navigating=false) {
  const scroller=app.querySelector('.calendar-scroll,.teacher-list,.notification-inbox');
  const scrollLeft=scroller?.scrollLeft??0,scrollTop=scroller?.scrollTop??0;
  const active=href=>(href==='/schedule'&&pathname==='/')||pathname===href||pathname.startsWith(href+'/');
- const nav=navigation.map(([href,label,glyph])=>'<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+'<span>'+label+'</span>'+(href==='/notifications'?'<span class="nav-unread" data-inbox-count hidden></span>':'')+'</a>').join('');
+ const nav=navigation.map(([href,label,glyph])=>{
+  const text='<span>'+label+'</span>';
+  const title=href==='/notifications'?'<span class="nav-notification-label">'+text+'<span class="nav-unread" data-inbox-count hidden></span></span>':text;
+  return '<a href="'+href+'"'+(active(href)?' aria-current="page"':'')+'>'+icon(glyph)+title+'</a>';
+ }).join('');
  const student=snapshot.student;
  const currentProfile=pathname==='/profile'?' aria-current="page"':'';
  const mobileProfile=`<a class="mobile-profile" href="/profile"${currentProfile}>${portrait(student)}<span>Мой профиль</span></a>`;
