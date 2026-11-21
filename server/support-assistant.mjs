@@ -237,7 +237,7 @@ export function answerSupport(action,input,data,prior) {
  const cleaned=supportQuery(raw)
  const hello=greeting.test(cleaned)
  const opening=hello?'Здравствуйте, '+data.student.shortName.split(' ')[0]+'! ':''
- if(hello&&!cleaned.replace(greeting,'').trim())return reply(opening+'Помогу с расписанием, зачёткой, заявками и консультациями. С чего начнём?')
+ if(hello&&!cleaned.replace(greeting,'').trim())return reply(opening+'Чем вам помочь?')
  const parts=action==='message'?raw.split(/(?:[?;]\s+|\n+|\s+(?:и|а)\s+(?=(?:когда|где|какие|сколько|во сколько)\s))/iu).filter(part=>part.trim()).slice(0,3):[raw]
  const answers=parts.map(part=>{
    const query=supportQuery(part).replace(greeting,'').trim()

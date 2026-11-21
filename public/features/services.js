@@ -1,7 +1,7 @@
 import { escape as e, badge, calendarDate, detailedDate, empty, icon, safeLink } from '../ui.js?v=20261120-15';
 import { detailIcon } from './detail-icons.js?v=20261121-1';
 import { noticeSoundEnabled } from './live-notices.js';
-export { support } from './support-view.js?v=20261121-3';
+export { support } from './support-view.js?v=20261121-4';
 export { requests } from './request-view.js?v=20261121-2';
 const noticeTypes={
  'Документы':['inbox-document-ready','Учебный офис'],

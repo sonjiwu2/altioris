@@ -49,12 +49,12 @@ export function support(data,params){
   params.get('topic')==='online'?'Как подключиться к онлайн-занятию?':'';
  const firstName=data.student.shortName.split(' ')[0];
  const welcome=`<div class="message-row">${avatar}<div class="bubble chat-welcome">
-  <p><strong>Здравствуйте, ${e(firstName)}! 🎓</strong></p>
-  <p>Спросите, какие пары завтра, когда консультация или готова ли справка. Можно писать своими словами.</p>
+  <p><strong>Здравствуйте, ${e(firstName)}!</strong></p>
+  <p>Чем вам помочь?</p>
   </div></div>`;
  return `<h1>Чат поддержки</h1><div class="support-layout"><section class="panel chat" aria-label="Помощник Altioris">
   <header class="chat-header">${avatar}<div class="chat-identity"><h2>Помощник Altioris</h2>
-   <small>Автоматический помощник · отвечает по данным вашего кабинета</small></div>
+   <small>Автоматический помощник</small></div>
    <nav class="chat-jumps" aria-label="Навигация по переписке"${data.support.length?'':' hidden'}>
     <button class="icon-button" type="button" data-chat-jump="start" aria-controls="chat-history" aria-label="К началу переписки" title="К началу переписки">${icon('down')}</button>
     <button class="icon-button" type="button" data-chat-jump="end" aria-controls="chat-history" aria-label="К последним сообщениям" title="К последним сообщениям">${icon('down')}</button>

@@ -96,7 +96,7 @@ test('the guided assistant resolves owned records and meaningful student intents
     assert.equal(result.href, '/requests?new=certificate')
   })
   await t.test('greetings and operator questions remain honest about the service', () => {
-    assert.ok(reply('a', 'Здравствуйте').text.includes('Помогу'))
+    assert.equal(reply('a', 'Здравствуйте').text, 'Здравствуйте, Алина! Чем вам помочь?')
     assert.ok(reply('a', 'Нужен специалист').text.includes('специалист не получает сообщения'))
   })
 })
