@@ -10,7 +10,7 @@ At 980 px and below, use a compact mobile header and collapsible navigation. At 
 
 ## Role
 
-Reflow the rail into a mobile menu, use a day timetable and open inspectors in lower sheets. Verify 360 x 800 and 200% text, readable script, labels, touch targets, keyboard dialogs and no incidental page overflow.
+Reflow the rail into a mobile menu, use a day timetable and open inspectors in lower sheets. Close the native dialog and release page scroll immediately on dismissal, even if browser history traversal does not complete. Keep the open request dialog and its close control mounted while the request status updates. Verify 360 x 800 and 200% text, readable script, labels, touch targets, keyboard dialogs and no incidental page overflow.
 
 ## Completion
 

@@ -6,12 +6,12 @@ import { turnCampusPass } from './features/campus-pass.js?v=20261120-14';
 import { notifications, requests, support, updateConversation } from './features/services.js?v=20261121-11';
 import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
 import { armNoticeSound, resetLiveNotice, showLiveNotice, toggleNoticeSound } from './features/live-notices.js';
-import { copyText, outsidePhoneOverlay, phoneLayout, phoneOverlays, showPhoneDetail, showPhoneDrawer } from './features/phone-ui.js?v=20261121-11';
+import { copyText, outsidePhoneOverlay, phoneLayout, phoneOverlays, showPhoneDetail, showPhoneDrawer } from './features/phone-ui.js?v=20261121-12';
 
 const app=document.querySelector('#app'), announcement=document.querySelector('#status');
 const navigation=[['/schedule','Расписание','nav-schedule'],['/grades','Успеваемость','nav-grades'],['/teachers','Преподаватели','nav-faculty'],['/requests','Заявки','nav-requests'],['/support','Чат поддержки','nav-chat'],['/notifications','Уведомления','nav-alerts'],['/settings','Настройки','nav-settings']];
 const pages=new Map([['/',schedule],['/schedule',schedule],['/schedule/exams',exams],['/schedule/online',onlineRoom],['/grades',grades],['/grades/ranking',ranking],['/teachers',teachers],['/requests',requests],['/support',support],['/notifications',notifications],['/profile',profile],['/settings',settings]]);
-let snapshot,busy=false;
+let snapshot,busy=false,loading=false;
 let lastView;
 let teacherSearchTimer;
 let noticeStream,streamOwner,pendingRevision,refreshingInbox=false,deferredInboxView;
@@ -68,6 +68,8 @@ const phoneDetailLabels=new Map([
 const detailParam=path=>path==='/schedule'?'lesson':'item';
 let phoneDetailReturn;
 let phoneTriggerHref;
+let closingHistoryTarget;
+let phoneClosePress;
 const tabContent=new Map([
  ['/schedule','.schedule-layout'],['/schedule/exams','.exam-layout'],
  ['/grades','.academic-layout'],['/grades/ranking','.rank-heading,.rank-history,.rank-strip,.ranking-panel,.rank-meta'],
@@ -152,10 +154,18 @@ function animateNavigation(previous,current){
  }
 }
 async function api(path,method='GET',body) {
- const response=await fetch(path,{method,headers:body?{'Content-Type':body instanceof Blob?'image/png':'application/json'}:{},body:body instanceof Blob?body:body?JSON.stringify(body):undefined}).catch(()=>{throw new Error('Нет связи с кабинетом. Проверьте подключение и попробуйте ещё раз.');});
- const data=await response.json().catch(()=>({}));
- if(!response.ok){const error=new Error(typeof data.error==='string'?data.error:'Не удалось выполнить действие. Попробуйте ещё раз.');error.status=response.status;throw error;}
- return data;
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),15000);
+ try{
+  const response=await fetch(path,{method,signal:controller.signal,headers:body?{'Content-Type':body instanceof Blob?'image/png':'application/json'}:{},body:body instanceof Blob?body:body?JSON.stringify(body):undefined});
+  const data=await response.json().catch(error=>{if(controller.signal.aborted)throw error;return {};});
+  if(!response.ok){const error=new Error(typeof data.error==='string'?data.error:'Не удалось выполнить действие. Попробуйте ещё раз.');error.status=response.status;throw error;}
+  return data;
+ }catch(error){
+  if(controller.signal.aborted)throw new Error('Кабинет не успел ответить. Попробуйте ещё раз.');
+  if(error instanceof TypeError)throw new Error('Нет связи с кабинетом. Проверьте подключение и попробуйте ещё раз.');
+  throw error;
+ }finally{clearTimeout(timeout);}
 }
 function announce(message){announcement.textContent=message;}
 function signIn() {
@@ -175,7 +185,8 @@ function render(focus=false,navigating=false) {
  const {pathname,search}=location,params=new URLSearchParams(search);
  const phone=phoneLayout.matches;
  const oldPageScroll=window.scrollY, oldPath=lastView?.path;
- const oldSheetScroll=app.querySelector('#phone-detail[open] .phone-sheet-content')?.scrollTop;
+ const previousOverlay=app.querySelector('.phone-overlay[open]');
+ const oldSheetScroll=previousOverlay?.querySelector('.phone-sheet-content')?.scrollTop;
  const previousChat=app.querySelector('.chat-history');
  const chatPosition=previousChat?.scrollTop??0;
  const atChatEnd=!previousChat||previousChat.scrollHeight-previousChat.clientHeight-chatPosition<32;
@@ -192,6 +203,7 @@ function render(focus=false,navigating=false) {
  const content=page?page(snapshot,params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
  const path=viewPath(pathname);
  if(!phone&&navigating&&!hadDeferredView&&updateSelectedDetails(content,path,params))return;
+ previousOverlay?.close();
  app.innerHTML=`<header class="mobile-header">${phone?menuButton+brandLink:brandLink+menuButton}</header>
   <aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">${brand}</a>
    <nav class="main-nav" aria-label="Основное меню">${nav}</nav>
@@ -232,7 +244,8 @@ function go(href,restoreFocus,replace=false){
  const next=new URL(href,location.href),path=viewPath(next.pathname);
  const same=viewPath(location.pathname)===path;
  const drawer=phoneLayout.matches&&app.querySelector('#phone-drawer[open]');
- if(drawer&&next.href===location.href){history.back();return;}
+ if(drawer&&next.href===location.href){dismissPhoneOverlay(drawer);return;}
+ closingHistoryTarget=undefined;
  const state=phoneLayout.matches&&same&&phoneDetailLabels.has(path)&&next.searchParams.has(detailParam(path))&&next.href!==location.href
   ?{phoneDetailFrom:location.href}:null;
  history[replace||drawer?'replaceState':'pushState'](state,'',next);
@@ -246,25 +259,62 @@ function go(href,restoreFocus,replace=false){
  if(path==='/grades/ranking')void refreshPublishedRanking();
 }
 
-function closePhoneDetail(){
- app.querySelector('#phone-detail[open]')?.close();
+function closePhoneOverlay(dialog){
+ dialog.close();
+ if(dialog.id==='phone-drawer'){
+  const button=app.querySelector('[data-menu]');
+  button?.setAttribute('aria-expanded','false');
+  button?.focus({preventScroll:true});
+  return;
+ }
  const trigger=[...app.querySelectorAll('main a[href]')].find(link=>link.href===phoneTriggerHref);
- trigger?.focus({preventScroll:true});
+ (trigger??app.querySelector('#main'))?.focus({preventScroll:true});
  phoneDetailReturn=null;
  phoneTriggerHref=null;
 }
 
 function dismissPhoneOverlay(dialog){
- if(dialog.dataset.closing)return;
- if(dialog.id==='phone-drawer'||phoneDetailReturn){
-  dialog.dataset.closing='true';
-  history.back();
-  return;
- }
- const next=new URL(location.href);
- next.searchParams.delete(detailParam(viewPath(next.pathname)));
+ if(!dialog?.open)return;
+ const drawer=dialog.id==='phone-drawer';
+ const overlayEntry=drawer?Boolean(history.state?.phoneDrawer):Boolean(phoneDetailReturn);
+ const next=new URL((drawer?null:phoneDetailReturn)??location.href);
+ if(!drawer&&!phoneDetailReturn)next.searchParams.delete(detailParam(viewPath(next.pathname)));
+ const previous=location.href;
+ closePhoneOverlay(dialog);
  history.replaceState(null,'',next);
- closePhoneDetail();
+ if(deferredInboxView===previous)deferredInboxView=next.href;
+ if(overlayEntry){
+  // The dialog is already closed if the browser suppresses history traversal.
+  closingHistoryTarget=next.href;
+  history.back();
+ }
+}
+
+function updateOpenRequest(dialog,updated){
+ const params=new URLSearchParams(location.search);
+ const content=document.createElement('template');
+ content.innerHTML=requests(updated,params);
+ const next=readView(content.content,'/requests',params);
+ const id=params.get('item');
+ if(!updated.requests.some(item=>item.id===id))return false;
+ const inspector=detailPanels.get('/requests');
+ let panel=content.content.querySelector(inspector);
+ if(next.selection!==id){
+  // A completed request can leave the «В работе» list while its details are open.
+  const detail=document.createElement('template');
+  detail.innerHTML=requests(updated,new URLSearchParams({item:id}));
+  panel=detail.content.querySelector(inspector);
+ }
+ const body=dialog.querySelector('.phone-sheet-content');
+ const scroll=body.scrollTop;
+ const focusedLink=body.contains(document.activeElement)?document.activeElement.closest('a[href]')?.href:null;
+ body.replaceChildren(panel);
+ body.scrollTop=scroll;
+ if(focusedLink)[...body.querySelectorAll('a[href]')].find(link=>link.href===focusedLink)?.focus({preventScroll:true});
+ app.querySelector('#main').replaceChildren(content.content);
+ lastView=next;
+ updateInboxIndicators();
+ return true;
 }
 async function refreshPublishedRanking(){
  const prior=snapshot,next=prior?.ranking.nextSeason;
@@ -306,7 +356,9 @@ async function refreshNotices(force=false){
    const href=focused?.closest('a[href]')?.href;
    const dialog=document.querySelector('dialog[open]');
    const liveRequest=path==='/requests'&&dialog?.id==='phone-detail';
-   if(focused?.matches('input,select,textarea')||dialog&&!liveRequest){
+   if(liveRequest&&!phoneClosePress&&updateOpenRequest(dialog,updated)){
+    deferredInboxView=undefined;
+   }else if(focused?.matches('input,select,textarea')||dialog){
     deferredInboxView=location.href;
     updateInboxIndicators();
    }
@@ -325,8 +377,13 @@ async function refreshNotices(force=false){
  }
 }
 async function load(){
+ if(loading)return;
+ loading=true;
+ const retry=app.querySelector('[data-retry]');
+ if(retry)retry.disabled=true;
  try{snapshot=await api('/api/dashboard');render();}
  catch(error){if(error.status===401){snapshot=undefined;render();}else app.innerHTML='<main id="main" class="page standalone-error"><h1>Кабинет недоступен</h1><p>'+e(error.message)+'</p><button class="button" data-retry>Повторить</button></main>';}
+ finally{loading=false;}
 }
 const mutations={login:['/api/login','POST'],request:['/api/requests','POST'],avatar:['/api/profile','PATCH'],photo:['/api/profile/avatar','PUT'],removePhoto:['/api/profile/avatar','DELETE'],message:['/api/support','POST'],support:['/api/support','POST'],read:['/api/notifications','PATCH'],logout:['/api/logout','POST']};
 function newSubmissionId(){
@@ -340,6 +397,7 @@ function newSubmissionId(){
 }
 async function save(name,body,control,errorBox){
  if(busy)return;busy=true;
+ const requestDialog=name==='request'?errorBox?.closest('dialog'):null;
  if(control){control.disabled=true;control.setAttribute('aria-busy','true');}
  if(errorBox)errorBox.hidden=true;
  try{
@@ -348,7 +406,14 @@ async function save(name,body,control,errorBox){
   if(Array.isArray(result.support))snapshot={...snapshot,support:result.support};
   else snapshot=await api('/api/dashboard');
   const chatDraft=name==='support'?app.querySelector('#chat-message')?.value:null;
-  if(name==='request'){const id=result.request?.id??result.id??snapshot.requests[0]?.id;history.replaceState(null,'',id?'/requests?item='+encodeURIComponent(id):'/requests');}
+  if(requestDialog?.open&&requestDialog.isConnected){
+   const id=result.request?.id??result.id??snapshot.requests[0]?.id;
+   history.replaceState(null,'',id?'/requests?item='+encodeURIComponent(id):'/requests');
+  }else if(name==='request'&&(location.pathname!=='/requests'||app.querySelector('dialog[open]'))){
+   updateInboxIndicators();
+   announce('Заявка подана');
+   return;
+  }
   render(['login','request','avatar'].includes(name));
   if(name==='message'||name==='support'){
    const chat=app.querySelector('.chat-history');
@@ -429,6 +494,22 @@ app.addEventListener('submit',event=>{
  }
  void save(kind,body,event.submitter,form.querySelector('.form-error'));
 });
+app.addEventListener('pointerdown',event=>{
+ if(event.isPrimary&&event.target.closest('[data-phone-dismiss]'))phoneClosePress=event;
+});
+for(const type of ['pointerup','pointercancel','blur'])window.addEventListener(type,event=>{
+ const press=phoneClosePress;
+ if(!press||(type!=='blur'&&event.pointerId!==press.pointerId))return;
+ // Let the click reach the close control before applying a change in sheet height.
+ setTimeout(()=>{
+  if(phoneClosePress!==press)return;
+  phoneClosePress=undefined;
+  const dialog=app.querySelector('#phone-detail[open]');
+  if(dialog&&snapshot&&location.pathname==='/requests'&&deferredInboxView===location.href&&updateOpenRequest(dialog,snapshot)){
+   deferredInboxView=undefined;
+  }
+ },0);
+});
 app.addEventListener('click',event=>{
  if(outsidePhoneOverlay(event)){dismissPhoneOverlay(event.target);return;}
  const button=event.target.closest('button');
@@ -494,6 +575,7 @@ app.addEventListener('click',event=>{
   if(button.hasAttribute('data-retry'))void load();
   if(button.hasAttribute('data-menu')){
    if(phoneLayout.matches){
+    closingHistoryTarget=undefined;
     history.pushState({phoneDrawer:true},'',location.href);
     showPhoneDrawer();
    }else{
@@ -578,24 +660,25 @@ toast.addEventListener('click',event=>{
  if(link&&snapshot){event.preventDefault();toast.hidden=true;go(link.href);}
 });
 window.addEventListener('popstate',()=>{
+ const target=closingHistoryTarget;
+ closingHistoryTarget=undefined;
  const drawer=app.querySelector('#phone-drawer[open]');
  if(drawer&&!history.state?.phoneDrawer&&drawer.dataset.source===location.href){
-  drawer.close();
-  const button=app.querySelector('[data-menu]');
-  button.setAttribute('aria-expanded','false');
-  button.focus({preventScroll:true});
+  closePhoneOverlay(drawer);
   return;
  }
- if(app.querySelector('#phone-detail[open]')&&phoneDetailReturn===location.href){
-  closePhoneDetail();
+ const detail=app.querySelector('#phone-detail[open]');
+ if(detail&&phoneDetailReturn===location.href){
+  closePhoneOverlay(detail);
   return;
  }
+ if(target===location.href&&!drawer&&!detail)return;
  render(false,true);
  void refreshPublishedRanking();
 });
 document.addEventListener('visibilitychange',()=>{
  if(!document.hidden){void refreshNotices(true);void refreshPublishedRanking();}
 });
-window.addEventListener('pageshow',event=>{if(event.persisted)void load();});
+window.addEventListener('pageshow',event=>{if(event.persisted){if(snapshot)void refreshNotices(true);else void load();}});
 void load();
 

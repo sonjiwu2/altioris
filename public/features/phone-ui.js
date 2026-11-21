@@ -19,7 +19,6 @@ export function phoneOverlays(nav,profile){
 export function showPhoneDrawer(){
  const drawer=document.querySelector('#phone-drawer');
  if(!drawer||drawer.open)return;
- delete drawer.dataset.closing;
  drawer.dataset.source=location.href;
  drawer.showModal();
  document.querySelector('[data-menu]')?.setAttribute('aria-expanded','true');

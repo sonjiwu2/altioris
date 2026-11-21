@@ -40,13 +40,13 @@
   overscroll-behavior: contain;
   padding: 0;
   box-shadow: 0 20px 64px #08172b38;
-  transition: translate 240ms var(--flow), opacity 180ms ease, display 240ms allow-discrete, overlay 240ms allow-discrete;
+  transition: translate 240ms var(--flow), opacity 180ms ease;
  }
  dialog.phone-overlay::backdrop {
   background: #08142571;
-  transition: background-color 210ms ease, display 240ms allow-discrete, overlay 240ms allow-discrete;
+  transition: background-color 210ms ease;
  }
- dialog.phone-overlay:not([open])::backdrop { background-color: transparent; }
+ dialog.phone-overlay:not([open]) { display: none; }
  .phone-overlay[open] { display: flex; flex-direction: column; }
  .phone-overlay-heading {
   display: flex;
