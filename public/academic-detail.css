@@ -1,0 +1,81 @@
+.page .academic-inspector {
+ display: block;
+ align-self: start;
+ min-height: 0;
+ min-width: 0;
+ scroll-margin-top: 86px;
+}
+.page .academic-inspector h2 {
+ margin-block: 6px 16px;
+ overflow-wrap: anywhere;
+}
+.academic-inspector .info-line {
+ padding-block: 14px;
+}
+.academic-inspector .info-line :is(.icon,.detail-icon) {
+ width: 32px;
+ height: 32px;
+}
+.academic-inspector .info-line .portrait {
+ width: 51px;
+ height: 51px;
+}
+.academic-inspector .result-summary {
+ margin-block-end: 12px;
+}
+.academic-inspector .person-link {
+ margin-block-start: 12px;
+ padding-block-start: 12px;
+}
+.page .copy-control {
+ display: inline-grid;
+ place-items: center;
+ flex: 0 0 44px;
+ width: 44px;
+ height: 44px;
+ padding: 0;
+ border: 1px solid transparent;
+ border-radius: 10px;
+ color: var(--muted);
+ transition: background-color 160ms var(--flow), border-color 160ms var(--flow), color 160ms var(--flow);
+}
+.page .copy-control > .icon {
+ width: 20px;
+ height: 20px;
+}
+.page .copy-control:is(:hover,[data-copied]) {
+ color: var(--ink);
+ border-color: var(--line);
+ background-color: var(--paper);
+}
+.teacher-bio .teacher-education {
+ font-weight: 700;
+ margin: 0 0 6px;
+}
+@media (min-width: 681px) and (max-width: 1100px) {
+ .schedule-layout .detail-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  column-gap: 20px;
+ }
+ .schedule-layout .detail-content > :is(.badge,h2,.online-card,.empty) { grid-column: 1 / -1; }
+ .schedule-layout .detail-content > .badge { justify-self: start; }
+}
+@media (min-width: 981px) {
+ .page :is(.exam-layout,.academic-layout) .academic-inspector {
+  position: sticky;
+  inset-block-start: 20px;
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  scrollbar-width: thin;
+ }
+}
+@media (min-width: 1101px) {
+ .page .schedule-layout .academic-inspector {
+  position: sticky;
+  inset-block-start: 20px;
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  scrollbar-width: thin;
+ }
+}

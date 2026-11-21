@@ -1,9 +1,9 @@
 import { preparePhoto, disposePhotoPreview } from './features/photo.js';
 import { brand, escape as e, icon, portrait } from './ui.js?v=20261120-15';
-import { exams, onlineRoom, schedule } from './features/campus.js?v=20261120-16';
-import { grades, profile, ranking, teachers } from './features/academic.js?v=20261120-16';
+import { exams, onlineRoom, schedule } from './features/campus.js?v=20261121-5';
+import { grades, profile, ranking, teachers } from './features/academic.js?v=20261121-5';
 import { turnCampusPass } from './features/campus-pass.js?v=20261120-14';
-import { notifications, requests, support } from './features/services.js?v=20261121-4';
+import { notifications, requests, support } from './features/services.js?v=20261121-5';
 import { settings, applyPreferences, setTextScale, setTheme, syncSystemTheme } from './features/settings.js?v=20261120-12';
 import { armNoticeSound, resetLiveNotice, showLiveNotice, toggleNoticeSound } from './features/live-notices.js';
 
@@ -66,11 +66,62 @@ const tabContent=new Map([
 ]);
 const tabGroup=path=>path.startsWith('/schedule')?'schedule':path.startsWith('/grades')?'grades':null;
 const viewPath=path=>path==='/'?'/schedule':path;
+const selectableRows=new Map([
+ ['/schedule','.lesson'],['/schedule/exams','.exam-event'],
+ ['/grades','.grade-row'],['/teachers','.teacher-list .person-link'],
+]);
 const resultsPanels=new Map([
  ['/teachers','.directory'],['/requests','.work-layout'],['/notifications','.notifications-layout'],
  ['/grades/ranking','.rank-strip,.ranking-panel'],['/schedule','.calendar'],
- ['/grades','.academic-layout'],['/schedule/exams','.exam-layout'],
+ ['/grades','.grade-list'],['/schedule/exams','.exam-panel'],
 ]);
+
+function readView(root,path,params){
+ const active=root.querySelector('a[aria-current="true"]');
+ const selected=active?new URL(active.getAttribute('href'),location.href).searchParams:null;
+ return {
+  path,
+  selection:selected?.get('lesson')??selected?.get('item'),
+  scope:path==='/schedule'
+   ? root.querySelector('.week-title')?.textContent
+   : ['q','office','filter','view','term','season'].map(key=>key==='term'?(root.querySelector('.term-picker select')?.value??''):(params.get(key)||'')).join('\n'),
+ };
+}
+
+function updateSelectedDetails(content,path,params){
+ const rowSelector=selectableRows.get(path);
+ if(!rowSelector||lastView?.path!==path)return false;
+ const template=document.createElement('template');
+ template.innerHTML=content;
+ const next=readView(template.content,path,params);
+ if(next.scope!==lastView.scope)return false;
+ const main=app.querySelector('#main');
+ const nextRow=template.content.querySelector(rowSelector+'[aria-current="true"]');
+ const row=[...main.querySelectorAll(rowSelector)].find(link=>link.getAttribute('href')===nextRow?.getAttribute('href'));
+ const inspectorSelector=detailPanels.get(path);
+ const panelSelector=inspectorSelector+' .detail-content';
+ const nextPanel=template.content.querySelector(panelSelector);
+ const inspector=main.querySelector(inspectorSelector);
+ const panel=inspector?.querySelector('.detail-content');
+ if(!row||!panel||!nextPanel)return false;
+ if(next.selection!==lastView.selection){
+  const previousRow=main.querySelector(rowSelector+'[aria-current="true"]');
+  previousRow?.classList.remove('active');
+  previousRow?.removeAttribute('aria-current');
+  row.classList.add('active');
+  row.setAttribute('aria-current','true');
+  panel.replaceWith(nextPanel);
+  inspector.scrollTop=0;
+ }
+ if(path==='/schedule'){
+  const toolbar=main.querySelector('.calendar-tools');
+  const nextToolbar=template.content.querySelector('.calendar-tools');
+  if(toolbar.outerHTML!==nextToolbar.outerHTML)toolbar.replaceWith(nextToolbar);
+ }
+ animateNavigation(lastView,next);
+ lastView=next;
+ return true;
+}
 
 function animateNavigation(previous,current){
  const main=app.querySelector('#main');
@@ -81,14 +132,15 @@ function animateNavigation(previous,current){
   else main.classList.add('section-enter');
   return;
  }
- if(previous.scope!==current.scope){
-  const results=resultsPanels.get(current.path);
-  if(results)main.querySelector(results)?.classList.add('section-enter');
- }
- if(previous.selection!==current.selection || (current.path==='/schedule' && previous.scope!==current.scope)){
+ const scopeChanged=previous.scope!==current.scope;
+ const resultsSelector=scopeChanged&&resultsPanels.get(current.path);
+ const results=resultsSelector?main.querySelector(resultsSelector):null;
+ if(results)results.classList.add('section-enter');
+ if(previous.selection!==current.selection || scopeChanged){
   const target=detailPanels.get(current.path);
-  const detail=target&&main.querySelector(target);
-  if(detail&&!detail.closest('.section-enter'))detail.classList.add('detail-enter');
+  const panel=target&&main.querySelector(target);
+  const detail=panel?.querySelector('.detail-content')??panel;
+  if(detail&&!results?.contains(detail))detail.classList.add('detail-enter');
  }
 }
 async function api(path,method='GET',body) {
@@ -107,6 +159,7 @@ function signIn() {
 }
 function render(focus=false,navigating=false) {
  disposePhotoPreview();
+ const hadDeferredView=Boolean(deferredInboxView);
  deferredInboxView=undefined;
  connectNoticeStream();
  if(!snapshot){signIn();if(focus)app.querySelector('#username').focus();return;}
@@ -123,6 +176,8 @@ function render(focus=false,navigating=false) {
  const currentProfile=pathname==='/profile'?' aria-current="page"':'';
  const page=pages.get(pathname);
  const content=page?page(snapshot,params):'<h1>Страница не найдена</h1><a href="/schedule" class="button">К расписанию</a>';
+ const path=viewPath(pathname);
+ if(navigating&&!hadDeferredView&&updateSelectedDetails(content,path,params))return;
  app.innerHTML=`<header class="mobile-header"><a href="/schedule" aria-label="Altioris University">${brand}</a>
   <button class="icon-button menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">${icon('menu')}</button></header>
   <aside class="sidebar"><a class="brand-link" href="/schedule" aria-label="Altioris University · Расписание">${brand}</a>
@@ -133,16 +188,8 @@ function render(focus=false,navigating=false) {
   <nav id="mobile-nav" class="mobile-nav" aria-label="Основное меню" hidden>${nav}<a class="mobile-profile" href="/profile"${currentProfile}>${portrait(student)}<span>Мой профиль</span></a></nav>
   <div class="workspace"><main id="main" class="page" tabindex="-1">${content}</main><footer class="page-footer">Конкурсный прототип</footer></div>`;
  updateInboxIndicators();
- const path=viewPath(pathname);
  const activeItem=app.querySelector('main a[aria-current="true"]');
- const selected=activeItem?new URL(activeItem.href).searchParams:null;
- const currentView={
-  path,
-  selection:selected?.get('lesson')??selected?.get('item'),
-  scope:path==='/schedule'
-   ? app.querySelector('.week-title')?.textContent
-   : ['q','office','filter','view','term','season'].map(key=>key==='term'?(app.querySelector('.term-picker select')?.value??''):(params.get(key)||'')).join('\n'),
- };
+ const currentView=readView(app.querySelector('#main'),path,params);
  if(lastView?.path===path&&lastView.scope===currentView.scope&&(scrollLeft||scrollTop)){
   const nextScroller=app.querySelector('.calendar-scroll,.teacher-list,.notification-inbox');
   if(nextScroller)nextScroller.scrollTo(scrollLeft,scrollTop);
@@ -160,11 +207,18 @@ function render(focus=false,navigating=false) {
 function go(href,restoreFocus,replace=false){
  const next=new URL(href,location.href),path=viewPath(next.pathname);
  const same=viewPath(location.pathname)===path;
- history[replace?'replaceState':'pushState'](null,'',next);render(!same,true);if(!same)window.scrollTo(0,0);
+ const selectionChanged=next.searchParams.get('item')!==new URLSearchParams(location.search).get('item')||
+  next.searchParams.get('lesson')!==new URLSearchParams(location.search).get('lesson');
+ history[replace?'replaceState':'pushState'](null,'',next);render(!same,true);if(!same)window.scrollTo({top:0,behavior:'instant'});
  const detailSelector=detailPanels.get(path);
- const selectedDetail=detailSelector&&matchMedia('(max-width:680px)').matches&&(next.searchParams.has('item')||next.searchParams.has('lesson'))&&app.querySelector(detailSelector);
+ const selectedDetail=detailSelector&&selectionChanged&&matchMedia('(max-width:680px)').matches&&(next.searchParams.has('item')||next.searchParams.has('lesson'))&&app.querySelector(detailSelector);
  if(restoreFocus){app.querySelector(restoreFocus)?.focus({preventScroll:true});}
- else if(selectedDetail){selectedDetail.tabIndex=-1;selectedDetail.focus({preventScroll:true});selectedDetail.scrollIntoView({block:'start'});}
+ else if(selectedDetail){
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.dataset.motion==='reduce';
+  selectedDetail.tabIndex=-1;
+  selectedDetail.focus({preventScroll:true});
+  selectedDetail.scrollIntoView({block:'start',behavior:reduced?'instant':'smooth'});
+ }
  else if(same){const selected=[...app.querySelectorAll('main a[href]')].find(link=>link.href===next.href);(selected||app.querySelector('main'))?.focus({preventScroll:true});}
  if(!same&&path==='/notifications')void refreshNotices(true);
  if(path==='/grades/ranking')void refreshPublishedRanking();
@@ -348,7 +402,22 @@ app.addEventListener('click',event=>{
    }
    announce('Размер текста сохранён');return;
   }
-  if(button.dataset.copy){navigator.clipboard.writeText(button.dataset.copy).then(()=>announce('Скопировано')).catch(()=>announce('Не удалось скопировать. Выделите текст вручную.'));return;}
+  if(button.dataset.copy){
+   navigator.clipboard.writeText(button.dataset.copy).then(()=>{
+    announce('Скопировано');
+    button.dataset.copied='true';
+    setTimeout(()=>delete button.dataset.copied,1200);
+   }).catch(()=>announce('Не удалось скопировать. Выделите текст вручную.'));
+   return;
+  }
+  if(button.dataset.chatQuestion){
+   const composer=app.querySelector('#chat-message');
+   button.closest('dialog').close();
+   composer.value=button.dataset.chatQuestion;
+   composer.dispatchEvent(new Event('input',{bubbles:true}));
+   composer.focus({preventScroll:true});
+   return;
+  }
   if(button.hasAttribute('data-password')){const input=app.querySelector('#password'),show=input.type==='password';input.type=show?'text':'password';button.setAttribute('aria-pressed',String(show));button.setAttribute('aria-label',show?'Скрыть пароль':'Показать пароль');}
   if(button.dataset.dialog)document.getElementById(button.dataset.dialog)?.showModal();
   if(button.hasAttribute('data-close'))button.closest('dialog')?.close();

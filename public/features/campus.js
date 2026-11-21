@@ -89,7 +89,7 @@ export function schedule({campus},params){
     '<strong>'+monthLabel.format(timestamp)+'</strong></h2>'+(cards||'<p class="calendar-day-empty">Нет пар</p>')+'</div>';
   }).join('')+'</div></div>':empty(mode==='day'?'В этот день занятий нет.':'На этой неделе занятий нет.');
  return header(false)+'<div class="split schedule-layout"><section class="panel calendar" aria-label="Календарь занятий">'+toolbar+grid+
-  '</section><aside class="panel inspector schedule-inspector">'+lessonDetails(selected,campus.teachers)+'</aside></div>';
+  '</section><aside class="panel inspector schedule-inspector academic-inspector" aria-label="Детали занятия"><div class="detail-content">'+lessonDetails(selected,campus.teachers)+'</div></aside></div>';
 }
 
 export function exams({campus,grades},params){
@@ -121,5 +121,5 @@ export function exams({campus,grades},params){
   empty('Выберите экзамен или зачёт.');
  return header(true)+'<div class="split exam-layout"><section class="panel exam-panel"><div class="section-heading"><h2>Экзамены и зачёты</h2>'+
   termPicker('/schedule/exams',periods,period.id)+'</div><div class="exam-timeline">'+cards+'</div>'+
-  '</section><aside class="panel inspector schedule-inspector">'+details+'</aside></div>';
+  '</section><aside class="panel inspector schedule-inspector academic-inspector exam-inspector" aria-label="Детали экзамена или зачёта"><div class="detail-content">'+details+'</div></aside></div>';
 }

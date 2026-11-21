@@ -27,14 +27,14 @@ export function grades(data,params){
   const heading=termIds.length>1?'<h3 class="grade-term-heading">'+e(periods.find(term=>term.id===id).label)+'</h3>':'';
   return heading+courses.filter(grade=>grade.termId===id).map(gradeRow).join('');
  }).join('');
- const details=selected?'<aside class="panel grade-inspector"><p class="eyebrow">Дисциплина</p><h2>'+e(selected.title)+'</h2>'+
+ const details=selected?'<aside class="panel grade-inspector academic-inspector" aria-label="Детали дисциплины"><div class="detail-content"><p class="eyebrow">Дисциплина</p><h2>'+e(selected.title)+'</h2>'+
   '<div class="result-summary '+(selected.published&&(selected.mark===null||selected.mark>=4)?'positive':'')+'"><strong>'+(selected.mark??(selected.published?'✓':'—'))+'</strong>'+
   (selected.mark!==null?'<span>из 10</span>':'')+'<em>'+e(selected.result)+'</em></div>'+
   fields([['Итоговый контроль',selected.assessment,'doc'],['Дата и время контроля',assessmentDateTime(selected.assessmentStart,selected.assessedAt),'calendar'],
    ['Кредиты',selected.credits,'books'],['Академические часы по расписанию',selected.classHours,'clock'],
    ...(selected.currentMark!=null?[['Текущая оценка',selected.currentMark+' из 10 · '+detailedDate(selected.currentMarkedAt),'clipboard']]:[])])+
   (teacher?'<a class="person-link" href="/teachers?item='+e(teacher.id)+'">'+portrait(teacher)+'<span>'+e(teacher.shortName)+'</span></a>':'')+
-  '</aside>':'';
+  '</div></aside>':'';
  return header(false)+'<div class="split academic-layout"><section class="panel grade-list" aria-label="Зачётка">'+
   '<div class="section-heading"><h2>Зачётная книжка</h2>'+termPicker('/grades',periods,period.id)+'</div>'+
   '<p class="grade-progress">Зачётные единицы: '+earned+' из '+credits+'</p>'+
@@ -104,14 +104,14 @@ export function teachers({campus},params){
   const active=person.id===selected?.id;
   return `<a class="person-link${active?' active':''}" href="/teachers?${e(item)}"${active?' aria-current="true"':''}>${portrait(person)}<span><strong>${e(person.shortName)}</strong><small>${e(person.subject)}</small></span></a>`;
  }).join('');
- const detail=selected?`<aside class="panel teacher-details">
+ const detail=selected?`<aside class="panel teacher-details"><div class="detail-content">
    <div class="teacher-identity">${portrait(selected)}<div><h2>${e(selected.name)}</h2>${badge(selected.role)}
     <p class="teacher-department"><span class="teacher-seal seal-${e(selected.sealTone)}" aria-hidden="true">${e(selected.initials)}</span>Кафедра ${e(selected.department)}</p>
    </div></div>
    <div class="teacher-facts">${fact('faculty-tenure','Стаж',selected.experience)}${fact('faculty-office','Кабинет',selected.office)}${fact('faculty-letter','Учебная почта',selected.email,true)}${fact('faculty-consult','Консультации',selected.consultation)}</div>
    <section class="teacher-section"><h3>Дисциплина</h3><div class="subject-chips"><a class="subject-chip" href="/grades?item=${e(selected.courseId)}">${e(selected.subject)}</a></div></section>
-   <section class="teacher-section teacher-bio"><h3>О себе</h3><p>${e(selected.bio)}</p></section>
-  </aside>`:'';
+   <section class="teacher-section teacher-bio"><h3>Образование и профиль</h3><p class="teacher-education">${e(selected.education)}</p><p>${e(selected.bio)}</p></section>
+  </div></aside>`:'';
  return `<h1>Преподаватели</h1>
  <form class="filters teacher-filters" method="get" action="/teachers" data-teacher-filters>
   <label class="search-field">${icon('search')}<span class="sr-only">Имя, фамилия или отчество</span><input type="search" name="q" placeholder="Имя или фамилия" value="${e(query)}"></label>
@@ -122,7 +122,7 @@ export function teachers({campus},params){
   <button class="button button-outline">Найти</button>
  </form><div class="split directory"><section class="panel teacher-list" aria-label="Список преподавателей">${people||empty('Преподаватели не найдены. Попробуйте другой запрос.')}</section>${detail}</div>`;
 }
-function fact(glyph,label,value,copy=false){return '<div class="info-line">'+detailIcon(glyph)+'<span>'+label+'<small>'+e(value)+'</small></span>'+(copy?'<button class="icon-button" type="button" data-copy="'+e(value)+'" aria-label="Скопировать почту">'+icon('copy')+'</button>':'')+'</div>';}
+function fact(glyph,label,value,copy=false){return '<div class="info-line">'+detailIcon(glyph)+'<span>'+label+'<small>'+e(value)+'</small></span>'+(copy?'<button class="icon-button copy-control" type="button" data-copy="'+e(value)+'" aria-label="Скопировать почту" title="Скопировать почту">'+icon('copy')+'</button>':'')+'</div>';}
 export function profile({student,profileDocuments=[]}){
  const hasPhoto=student.avatar==='custom';
  const academicFields=fields([

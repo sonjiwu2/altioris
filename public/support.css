@@ -83,7 +83,7 @@
  justify-content: center;
  flex: 0 0 auto;
  gap: 6px;
- min-height: 38px;
+ min-height: 44px;
  padding: 5px 12px;
  background: var(--surface);
  border: 1px solid var(--line);
@@ -93,6 +93,36 @@
 }
 .chat-shortcuts .icon { width: 23px; height: 23px; }
 .chat .chat-form textarea { min-width: 0; }
+.support-questions {
+ width: min(620px, calc(100% - 28px));
+ max-height: min(720px, 86dvh);
+ overflow-y: auto;
+}
+.support-questions details { border-top: 1px solid var(--line); }
+.support-questions summary {
+ padding: 13px 3px;
+ cursor: pointer;
+ font-weight: 700;
+}
+.support-questions ul {
+ list-style: none;
+ margin: 0 0 8px;
+ padding: 0;
+}
+.support-questions li button {
+ width: 100%;
+ min-height: 44px;
+ padding: 8px 10px;
+ border: 0;
+ border-radius: 8px;
+ background: transparent;
+ color: var(--ink);
+ text-align: left;
+}
+.support-questions li button:hover {
+ background: var(--paper);
+ text-decoration: underline;
+}
 @media (max-width: 680px) {
  .page .chat { height: clamp(500px, calc(100dvh - 150px), 760px); }
  .page .chat-header { padding: 12px 10px; gap: 8px; }
