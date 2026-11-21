@@ -14,6 +14,8 @@ Match requests, support and notifications. Render actual request history, owners
 
 Support answers everyday Russian phrasing, common typos and short follow-ups from owned records and the campus catalog. Ask for clarification when a course is ambiguous. Group messages by Moscow day, provide keyboard-accessible arrows to both ends of history and mark outgoing questions once the assistant has replied.
 
+An open question about campus services should clarify the goal. Reports of missing data should point to a useful next step. Use the current period for generic grade questions and show full result lists on explicit request. Maintain the question bank and verification prompts in docs/support.md.
+
 Publish campus, academic and document-ready notifications server-side even with no connected browser. Show the sender, message paragraphs, receipt time in Moscow and the relevant link. Request jobs persist, issue a distinct PDF by type and record each stage. Only completed issuance triggers a request notification. Show the latest session with grades published by issuance in the transcript. End the request details with the document actions.
 
 ## Completion
